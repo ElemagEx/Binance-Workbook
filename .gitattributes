@@ -1,0 +1,10 @@
+# All text files must have lf eoln
+* text eol=lf
+
+# except Windows-only files
+*.bas text eol=crlf
+*.cls text eol=crlf
+*.frm text eol=crlf
+
+# and binary files
+*.xslm binary

@@ -2,6 +2,9 @@
 # Office temporary files
 ~$*
 
+# Visual Studio
+.vs
+
 # Access database lock files (laccdb, ldb)
 *.[lL][aA][cC][cC][dD][bB]
 *.[lL][dD][bB]
