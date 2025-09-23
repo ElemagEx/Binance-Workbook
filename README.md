@@ -8,3 +8,11 @@ Uses Binance API to import all your Binance activity into Excel workbook
 ' 3. Imported Module -> JsonConverter.bas (from VBA-JSON GitHub)
 ' ====================================================================================
 ```
+
+``` PowerShell
+[Environment]::SetEnvironmentVariable("BINANCE_API_KEY", "<my-binance-api-key>", "User")
+```
+
+``` PowerShell
+[Environment]::SetEnvironmentVariable("BINANCE_API_SECRET", "<my-binance-api-secret>", "User")
+```
