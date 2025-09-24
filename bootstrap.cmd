@@ -1,1 +1,2 @@
 @echo Bootstraping Repo
+copy
