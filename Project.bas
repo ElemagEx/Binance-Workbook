@@ -1,10 +1,12 @@
 Attribute VB_Name = "Project"
-
-Public Function GetProjectFiles() As collection
+Public Function GetProjectFiles(ByVal thirdParty As Boolean) As collection
     Dim files As New collection
 
-    files.Add "VBA-JSON/JsonConverter.bas"
-    files.Add "src/test1.bas"
+    If thirdParty Then
+        files.Add "VBA-JSON/JsonConverter.bas"
+    Else
+        files.Add "src/KeysAndSecrets.bas"
+    End If
 
     Set GetProjectFiles = files
 End Function
