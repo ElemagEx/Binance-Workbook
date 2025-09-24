@@ -107,3 +107,6 @@ Public Sub CleanUpProject()
     HandleFile dir, PROJECT_FILE, False, False, True
 End Sub
 
+Public Function IsProjectCleanedUp() As Boolean
+    IsProjectCleanedUp = (GetComponent(GetNameOfFile(PROJECT_FILE)) Is Nothing)
+End Function

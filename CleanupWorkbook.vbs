@@ -5,7 +5,6 @@ End If
 
 ' Get arguments from the command line
 excelFilePath = WScript.Arguments(0)
-macroName = "CleanUpProject"
 
 ' Create a FileSystemObject to help with path manipulation
 Set fso = CreateObject("Scripting.FileSystemObject")
@@ -28,19 +27,18 @@ objExcel.DisplayAlerts = False
 ' Open the specified Excel workbook
 Set objWorkbook = objExcel.Workbooks.Open(excelFullPath)
 
-' Run the specified macro
-objWorkbook.Application.Run macroName
+' Check for clean-up
+isProjectCleanedUp = objWorkbook.Application.Run("IsProjectCleanedUp")
 
-' Save the workbook
-objWorkbook.Save
+if isProjectCleanedUp = False Then
+    objWorkbook.Application.Run "CleanUpProject"
+    objWorkbook.Save
+end if
 
-' Close the workbook
 objWorkbook.Close
 
-' Quit the Excel application
 objExcel.Quit
 
-' Clean up the objects
 Set objWorkbook = Nothing
 Set objExcel = Nothing
 
