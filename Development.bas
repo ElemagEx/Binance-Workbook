@@ -60,7 +60,7 @@ Private Sub HandleProjectFiles(ByVal dir As String, ByVal export As Boolean, ByV
     Set files = GetProjectFiles(True)
     
     For Each file In files
-        HandleFile dir, file, False, import, override
+        HandleFile dir, file, False, import, (override And Not import)
     Next file
 
     Set files = GetProjectFiles(False)
