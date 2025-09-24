@@ -1,2 +1,3 @@
-@echo Bootstraping Repo
-copy a, b
+@echo Bootstraping Repo...
+@echo Installing pre-commit hook
+@copy /Y pre-commit-windows.sh .git\hooks\pre-commit
