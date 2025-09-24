@@ -1,7 +1,10 @@
 Attribute VB_Name = "BinanceApi"
+Option Explicit
 
 ' --- Binance API base URL
-Private Const BASE_URL As String = "https://api.binance.com"
+Private Const BINANCE_API_BASE_URL As String = "https://api.binance.com"
+
+Public Const BINANCE_MAX_PERIOD_SPOT_TRADING_GET_MY_TRADES = 1
 
 Public Const MAX_PERIOD_WALLET_TRANSFERS As Long = 180
 
@@ -9,6 +12,8 @@ Public Const MAX_PERIOD_SIMPLEEARN_FLEXIBLE_SUBSCRIPTIONS = 90
 Public Const MAX_PERIOD_SIMPLEEARN_FLEXIBLE_REDEMPTIONS = 90
 Public Const MAX_PERIOD_LOCKED_FLEXIBLE_SUBSCRIPTIONS = 90
 Public Const MAX_PERIOD_LOCKED_FLEXIBLE_REDEMPTIONS = 90
+
+Public Const BINANCE_MAX_LIMIT_SPOT_TRADING_GET_MY_TRADES = 1000
 
 Public Const MAX_LIMIT_WALLET_TRANSFERS As Long = 100
 
@@ -19,68 +24,57 @@ Public Const MAX_LIMIT_SIMPLEEARN_LOCKED_POSITIONS = 100
 Public Const MAX_LIMIT_SIMPLEEARN_LOCKED_SUBSCRIPTIONS = 100
 Public Const MAX_LIMIT_SIMPLEEARN_LOCKED_REDEMPTIONS = 100
 
+Private s_CurrentWeight As Long
 '
-' Binance Convert Public API: GET /sapi/v1/convert/tradeFlow
+' Binance SpotTrading Public API: GET /api/v3/ticker/price
 '
-Public Function BinanceApi_Convert_GetConvertHistory( _
-    ByVal startTime As Date, _
-    ByVal endTime As Date, _
-    Optional ByVal limit As Long = -1 _
-    ) As Dictionary
-    '
-    ' WEIGHT=3000
-    '
-    Set BinanceApi_Convert_GetConvertHistory = Nothing
+Public Function BinanceApi_SpotTrading_GetPrice(ByVal symbol As String) As Dictionary
+    xAddWeight 2
     
     Dim params As New Dictionary
+    params.Add "symbol", symbol
     
-    params.Add "startTime", DateToUnixTimestamp(startTime)
-    params.Add "endTime", DateToUnixTimestamp(endTime)
+    Set BinanceApi_SpotTrading_GetPrice = BinanceApi_ExecutePublicGetQuery("/api/v3/ticker/price", params)
+End Function
+'
+' Binance SpotTrading Public API: GET /api/v3/ticker/price
+'
+Public Function BinanceApi_SpotTrading_GetPrices(Optional ByVal symbols As collection = Nothing) As collection
+    xAddWeight 4
     
-    If limit >= 0 Then
-        params.Add "limit", limit
-    End If
-
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/convert/tradeFlow", params)
-
-    If responseText <> "" Then
-        Set BinanceApi_Convert_GetConvertHistory = JsonConverter.ParseJson(responseText)
-    End If
+    Dim params As New Dictionary
+        
+    xAddListParam params, "symbols", symbols
+    
+    Set BinanceApi_SpotTrading_GetPrices = BinanceApi_ExecutePublicGetQuery("/api/v3/ticker/price", params)
 End Function
 '
 ' Binance SpotTrading Public API: GET /api/v3/exchangeInfo
 '
-Public Function BinanceApi_SpotTrading_exchangeInfo(Optional ByVal showPermissionSets As Boolean = True) As Dictionary
-
-    Set BinanceApi_SpotTrading_exchangeInfo = Nothing
+Public Function BinanceApi_SpotTrading_GetExchangeInfo(Optional ByVal showPermissionSets As Variant) As Dictionary
+    xAddWeight 20
     
     Dim params As New Dictionary
-    params.Add "showPermissionSets", IIf(showPermissionSets, "true", "false")
 
-    Dim responseText As String
-    responseText = ExecuteBinancePublicQuery("GET", "/api/v3/exchangeInfo", params)
-
-    If responseText <> "" Then
-        Set BinanceApi_SpotTrading_exchangeInfo = JsonConverter.ParseJson(responseText)
+    If Not IsMissing(showPermissionSets) Then
+        params.Add "showPermissionSets", IIf(CBool(showPermissionSets), "true", "false")
     End If
+
+    Set BinanceApi_SpotTrading_GetExchangeInfo = BinanceApi_ExecutePublicGetQuery("/api/v3/exchangeInfo", params)
 End Function
 '
 ' Binance SpotTrading Signed API: GET /api/v3/account
 '
-Public Function BinanceApi_SpotTrading_GetAccountInfo(Optional ByVal omitZeroBalances As Boolean = True) As Dictionary
-    
-    Set BinanceApi_SpotTrading_GetAccountInfo = Nothing
+Public Function BinanceApi_SpotTrading_GetAccountInfo(Optional ByVal omitZeroBalances As Variant) As Dictionary
+    xAddWeight 20
     
     Dim params As New Dictionary
-    params.Add "omitZeroBalances", IIf(omitZeroBalances, "true", "false")
-
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/api/v3/account", params)
-
-    If responseText <> "" Then
-        Set BinanceApi_SpotTrading_GetAccountInfo = JsonConverter.ParseJson(responseText)
+    
+    If Not IsMissing(omitZeroBalances) Then
+        params.Add "omitZeroBalances", IIf(CBool(omitZeroBalances), "true", "false")
     End If
+
+    Set BinanceApi_SpotTrading_GetAccountInfo = BinanceApi_ExecuteSignedGetQuery("/api/v3/account", params)
 End Function
 '
 ' Binance SpotTrading Signed API: GET /api/v3/myTrades
@@ -89,11 +83,13 @@ Public Function BinanceApi_SpotTrading_GetMyTrades( _
     ByVal symbol As String, _
     Optional ByVal startTime As Date = 0, _
     Optional ByVal endTime As Date = 0, _
-    Optional ByVal limit As Long = -1 _
+    Optional ByVal limit As Long = -1, _
+    Optional ByVal fromId As LongLong = -1, _
+    Optional ByVal orderId As LongLong = -1 _
     ) As collection
     
-    Set BinanceApi_SpotTrading_GetMyTrades = Nothing
-
+    xAddWeight IIf(orderId >= 0, 5, 20)
+    
     Dim params As New Dictionary
     
     params.Add "symbol", symbol
@@ -107,80 +103,57 @@ Public Function BinanceApi_SpotTrading_GetMyTrades( _
     If limit >= 0 Then
         params.Add "limit", limit
     End If
-
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/api/v3/myTrades", params)
-
-    If responseText <> "" Then
-        Set BinanceApi_SpotTrading_GetMyTrades = JsonConverter.ParseJson(responseText)
+    If fromId >= 0 Then
+        params.Add "fromId", fromId
+    End If
+    If fromId >= 0 Then
+        params.Add "orderId", orderId
     End If
 
-    Dim trades As collection
-    Set trades = JsonConverter.ParseJson(responseText)
+    Set BinanceApi_SpotTrading_GetMyTrades = BinanceApi_ExecuteSignedGetQuery("/api/v3/myTrades", params)
 End Function
 '
 ' Binance Wallet Signed API: GET /sapi/v1/capital/config/getall
 '
 Public Function BinanceApi_Wallet_GetAllCoinsInfo() As collection
-
-    Set BinanceApi_Wallet_GetAllCoinsInfo = Nothing
-
+    xAddWeight 10
+    
     Dim params As New Dictionary
 
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/capital/config/getall", params)
-
-    If responseText <> "" Then
-        Set BinanceApi_Wallet_GetAllCoinsInfo = JsonConverter.ParseJson(responseText)
-    End If
+    Set BinanceApi_Wallet_GetAllCoinsInfo = BinanceApi_ExecuteSignedGetQuery("/sapi/v1/capital/config/getall", params)
 End Function
 '
 ' Binance Wallet Signed API: POST /sapi/v3/asset/getUserAsset
 '
-Public Function BinanceApi_Wallet_GetUserAssets(Optional ByVal asset As String = "", Optional ByVal needBtcEvaluation As Variant = Nothing) As collection
-    '
-    ' WEIGHT=5
-    '
-    Set BinanceApi_Wallet_GetUserAssets = Nothing
-
+Public Function BinanceApi_Wallet_GetUserAssets(Optional ByVal asset As String = "", Optional ByVal needBtcEvaluation As Variant) As collection
+    xAddWeight 5
+    
     Dim params As New Dictionary
     If asset <> "" Then
         params.Add "asset", asset
     End If
-    If Not IsEmpty(needBtcEvaluation) Then
+    If Not IsMissing(needBtcEvaluation) Then
         params.Add "needBtcEvaluation", IIf(CBool(needBtcEvaluation), "true", "false")
     End If
     
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("POST", "/sapi/v3/asset/getUserAsset", params)
-
-    If responseText <> "" Then
-        Set BinanceApi_Wallet_GetUserAssets = JsonConverter.ParseJson(responseText)
-    End If
+    Set BinanceApi_Wallet_GetUserAssets = BinanceApi_ExecuteSignedPostQuery("/sapi/v3/asset/getUserAsset", params)
 End Function
 '
 ' Binance Wallet Signed API: POST /sapi/v1/asset/get-funding-asset
 '
-Public Function BinanceApi_Wallet_GetFundingAssets(Optional ByVal asset As String = "", Optional ByVal needBtcEvaluation As Variant = Nothing) As collection
-    '
-    ' WEIGHT=1
-    '
-    Set BinanceApi_Wallet_GetFundingAssets = Nothing
-
+Public Function BinanceApi_Wallet_GetFundingAssets(Optional ByVal asset As String = "", Optional ByVal needBtcEvaluation As Variant) As collection
+    xAddWeight 1
+    
     Dim params As New Dictionary
+    
     If asset <> "" Then
         params.Add "asset", asset
     End If
-    If Not IsEmpty(needBtcEvaluation) Then
+    If Not IsMissing(needBtcEvaluation) Then
         params.Add "needBtcEvaluation", IIf(CBool(needBtcEvaluation), "true", "false")
     End If
 
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("POST", "/sapi/v1/asset/get-funding-asset", params)
-
-    If responseText <> "" Then
-        Set BinanceApi_Wallet_GetFundingAssets = JsonConverter.ParseJson(responseText)
-    End If
+    Set BinanceApi_Wallet_GetFundingAssets = BinanceApi_ExecuteSignedPostQuery("/sapi/v1/asset/get-funding-asset", params)
 End Function
 '
 ' Binance Wallet Signed API: GET /sapi/v1/asset/dribblet
@@ -496,6 +469,35 @@ Public Function BinanceApi_Fiat_GetSells( _
     Set BinanceApi_Fiat_GetSells = BinanceApi_Fiat_Payments("1", beginTime, endTime, rows, page)
 End Function
 '
+' Binance Convert Public API: GET /sapi/v1/convert/tradeFlow
+'
+Public Function BinanceApi_Convert_GetConvertHistory( _
+    ByVal startTime As Date, _
+    ByVal endTime As Date, _
+    Optional ByVal limit As Long = -1 _
+    ) As Dictionary
+    '
+    ' WEIGHT=3000
+    '
+    Set BinanceApi_Convert_GetConvertHistory = Nothing
+    
+    Dim params As New Dictionary
+    
+    params.Add "startTime", DateToUnixTimestamp(startTime)
+    params.Add "endTime", DateToUnixTimestamp(endTime)
+    
+    If limit >= 0 Then
+        params.Add "limit", limit
+    End If
+
+    Dim responseText As String
+    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/convert/tradeFlow", params)
+
+    If responseText <> "" Then
+        Set BinanceApi_Convert_GetConvertHistory = JsonConverter.ParseJson(responseText)
+    End If
+End Function
+'
 ' Binance Simple Earn Signed API: GET /sapi/v1/simple-earn/flexible/position
 '
 Public Function BinanceApi_SimpleEarn_GetFlexiblePositions( _
@@ -732,46 +734,106 @@ End Function
 ' ===                     HELPER FUNCTIONS                        ===
 ' ===================================================================
 
-Private Function ExecuteBinancePublicQuery(ByVal method As String, ByVal api As String, params As Dictionary) As String
+Private Function BinanceApi_ExecutePublicGetQuery(ByVal api As String, params As Dictionary) As Object
+    Set BinanceApi_ExecutePublicGetQuery = Nothing
     
-    ExecuteBinancePublicQuery = ""
-    
-    Debug.Print "Starting Binance Public API query " & method & " " & api & " ..."
+    Debug.Print "Starting Binance Public API query GET " & api & " ..."
 
-    ' STEP 1: Build the query string
-    Dim queryString As String
-    queryString = BuildQueryStringFromDict(params)
-
-    ' STEP 2: Make the public API request ---
-    Dim finalUrl As String
-    finalUrl = BASE_URL & api & "?" & queryString
+    Dim client As New WebClient
+    client.BaseUrl = BINANCE_API_BASE_URL
     
-    Dim http As Object
-    Set http = CreateObject("MSXML2.XMLHTTP.6.0")
+    Dim request As New WebRequest
+    request.method = WebMethod.httpGet
+    request.Resource = api
+    request.Format = WebFormat.Json
     
-    On Error GoTo HttpErrorHandler
+    Dim key As Variant
+    For Each key In params.Keys
+        request.AddQuerystringParam CStr(key), params(key)
+    Next key
     
-    http.Open method, finalUrl, False
-    http.send
-
-    ' STEP 3: Process the response from Binance ---
-    If http.status = 200 Then
-        ExecuteBinancePublicQuery = http.responseText
+    Dim response As WebResponse
+    Set response = client.Execute(request)
+    
+    If response.StatusCode = WebStatusCode.Ok Then
         Debug.Print "Success! Received response from server."
+        Set BinanceApi_ExecutePublicGetQuery = response.Data
     Else
-        ' If something went wrong, Binance sends an error message in the response
         Debug.Print "Binance API Error Occurred!"
-        Debug.Print "Status: " & http.status & " " & http.statusText
-        Debug.Print "Response: " & http.responseText
-        MsgBox "An API error occurred. Status: " & http.status & vbCrLf & "Response: " & http.responseText, vbExclamation
+        Debug.Print "Status: " & response.StatusCode & " " & response.StatusDescription
+        Debug.Print "Response: " & response.Content
+        MsgBox "An API error occurred. Status: " & response.StatusCode & vbCrLf & "Response: " & response.StatusDescription, vbExclamation
     End If
+End Function
 
-    Set http = Nothing
-    Exit Function
+Private Function BinanceApi_ExecuteSignedGetQuery(ByVal api As String, params As Dictionary) As Object
+    Set BinanceApi_ExecuteSignedGetQuery = Nothing
+    
+    Debug.Print "Starting Binance Signed API query GET " & api & " ..."
 
-HttpErrorHandler:
-    MsgBox "A network error occurred: " & Err.Description, vbCritical
-    Set http = Nothing
+    Dim client As New WebClient
+    client.BaseUrl = BINANCE_API_BASE_URL
+    
+    Dim request As New WebRequest
+    request.method = WebMethod.httpGet
+    request.Resource = api
+    request.Format = WebFormat.Json
+    request.Headers.Add WebHelpers.CreateKeyValue("X-MBX-APIKEY", GetApiKey_Binance())
+
+    Dim key As Variant
+    For Each key In params.Keys
+        request.AddQuerystringParam CStr(key), params(key)
+    Next key
+    request.AddQuerystringParam "timestamp", xGetBinanceServerTime()
+    request.AddQuerystringParam "signature", xCreateHMACSHA256Signature(xGetQueryFromFullUrl(client.GetFullUrl(request)))
+    
+    Dim response As WebResponse
+    Set response = client.Execute(request)
+    
+    If response.StatusCode = WebStatusCode.Ok Then
+        Debug.Print "Success! Received response from server."
+        Set BinanceApi_ExecuteSignedGetQuery = response.Data
+    Else
+        Debug.Print "Binance API Error Occurred!"
+        Debug.Print "Status: " & response.StatusCode & " " & response.StatusDescription
+        Debug.Print "Response: " & response.Content
+        MsgBox "An API error occurred. Status: " & response.StatusCode & vbCrLf & "Response: " & response.StatusDescription, vbExclamation
+    End If
+End Function
+
+Private Function BinanceApi_ExecuteSignedPostQuery(ByVal api As String, params As Dictionary) As Object
+    Set BinanceApi_ExecuteSignedPostQuery = Nothing
+    
+    Debug.Print "Starting Binance Signed API query POST " & api & " ..."
+
+    Dim client As New WebClient
+    client.BaseUrl = BINANCE_API_BASE_URL
+    
+    Dim request As New WebRequest
+    request.method = WebMethod.HttpPost
+    request.Resource = api
+    request.Format = WebFormat.Json
+    request.Headers.Add WebHelpers.CreateKeyValue("X-MBX-APIKEY", GetApiKey_Binance())
+
+    Dim key As Variant
+    For Each key In params.Keys
+        request.AddQuerystringParam CStr(key), params(key)
+    Next key
+    request.AddQuerystringParam "timestamp", xGetBinanceServerTime()
+    request.AddQuerystringParam "signature", xCreateHMACSHA256Signature(xGetQueryFromFullUrl(client.GetFullUrl(request)))
+    
+    Dim response As WebResponse
+    Set response = client.Execute(request)
+    
+    If response.StatusCode = WebStatusCode.Ok Then
+        Debug.Print "Success! Received response from server."
+        Set BinanceApi_ExecuteSignedPostQuery = response.Data
+    Else
+        Debug.Print "Binance API Error Occurred!"
+        Debug.Print "Status: " & response.StatusCode & " " & response.StatusDescription
+        Debug.Print "Response: " & response.Content
+        MsgBox "An API error occurred. Status: " & response.StatusCode & vbCrLf & "Response: " & response.StatusDescription, vbExclamation
+    End If
 End Function
 
 Private Function ExecuteBinanceSignedQuery(ByVal method As String, ByVal api As String, params As Dictionary) As String
@@ -782,7 +844,7 @@ Private Function ExecuteBinanceSignedQuery(ByVal method As String, ByVal api As 
 
     ' STEP 1: Get the official server time from Binance. This is critical to avoid "Timestamp for this request was ahead/behind..." errors.
     Dim serverTimestamp As String
-    serverTimestamp = GetBinanceServerTime()
+    serverTimestamp = xGetBinanceServerTime()
 
     If serverTimestamp = "" Then
         MsgBox "Could not get the server time from Binance. The process will stop.", vbCritical
@@ -798,7 +860,7 @@ Private Function ExecuteBinanceSignedQuery(ByVal method As String, ByVal api As 
     queryString = BuildQueryStringFromDict(params)
 
     Dim signature As String
-    signature = CreateHMACSHA256Signature(GetApiSecret_Binance(), queryString)
+    signature = xCreateHMACSHA256Signature(queryString)
 
     ' The final query string includes the signature
     queryString = queryString & "&signature=" & signature
@@ -835,26 +897,22 @@ HttpErrorHandler:
     MsgBox "A network error occurred: " & Err.Description, vbCritical
     Set http = Nothing
 End Function
-
-' Fetches the official server time from Binance to use as a timestamp.
-Private Function GetBinanceServerTime() As String
-    On Error Resume Next
-    Dim http As Object
-    Set http = CreateObject("MSXML2.XMLHTTP.6.0")
-    http.Open "GET", BASE_URL & "/api/v3/time", False
-    http.send
+Private Function xGetBinanceServerTime() As String
+    Dim client As New WebClient
+    client.BaseUrl = BINANCE_API_BASE_URL
     
-    If http.status = 200 Then
-        Dim jsonResponse As Dictionary
-        Set jsonResponse = JsonConverter.ParseJson(http.responseText)
-        ' Using Format(..., "0") prevents VBA from converting a large number to scientific notation
-        GetBinanceServerTime = format(jsonResponse("serverTime"), "0")
+    Dim response As WebResponse
+    Set response = client.GetJson("/api/v3/time")
+    
+    If response.StatusCode = WebStatusCode.Ok Then
+        xGetBinanceServerTime = Format(response.Data("serverTime"), "0")
+    Else
+        xGetBinanceServerTime = "0"
     End If
-    Set http = Nothing
 End Function
 
 ' Creates the required HMAC-SHA256 signature using .NET components.
-Private Function CreateHMACSHA256Signature(ByVal secretKey As String, ByVal message As String) As String
+Private Function xCreateHMACSHA256Signature(ByVal message As String) As String
     On Error GoTo CryptoError
     Dim oEncoder As Object, oHMAC As Object
     Dim keyBytes() As Byte, msgBytes() As Byte, hashBytes() As Byte
@@ -862,7 +920,7 @@ Private Function CreateHMACSHA256Signature(ByVal secretKey As String, ByVal mess
     Set oEncoder = CreateObject("System.Text.UTF8Encoding")
     Set oHMAC = CreateObject("System.Security.Cryptography.HMACSHA256")
     
-    keyBytes = oEncoder.GetBytes_4(secretKey)
+    keyBytes = oEncoder.GetBytes_4(GetApiSecret_Binance())
     msgBytes = oEncoder.GetBytes_4(message)
     
     oHMAC.key = keyBytes
@@ -874,16 +932,21 @@ Private Function CreateHMACSHA256Signature(ByVal secretKey As String, ByVal mess
         sHex = sHex & LCase(Right("0" & Hex(hashBytes(i)), 2))
     Next i
     
-    CreateHMACSHA256Signature = sHex
+    xCreateHMACSHA256Signature = sHex
     Exit Function
 CryptoError:
     MsgBox "Cryptography error. Ensure your system has .NET Framework 3.5 or higher.", vbCritical
+End Function
+Private Function xGetQueryFromFullUrl(ByVal url As String) As String
+    Dim pos As Long
+    pos = InStr(url, "?")
+    xGetQueryFromFullUrl = IIf(pos = 0, "", Mid(url, pos + 1))
 End Function
 
 ' Converts a Dictionary of parameters into a URL query string (e.g., "key=val&key2=val2").
 Private Function BuildQueryStringFromDict(params As Dictionary) As String
     Dim parts() As String
-    ReDim parts(params.count - 1)
+    ReDim parts(params.Count - 1)
     Dim key As Variant, i As Long
     i = 0
     For Each key In params.Keys
@@ -913,3 +976,26 @@ Private Function Str2Dec(ByVal str As String) As Variant
     val = Replace(str, ".", Application.DecimalSeparator)
     Str2Dec = CDec(val)
 End Function
+
+Private Sub xAddWeight(ByVal weight As Long)
+    s_CurrentWeight = s_CurrentWeight + weight
+End Sub
+
+Private Sub xAddListParam(ByVal params As Dictionary, ByVal name As String, ByVal list As collection)
+    If list Is Nothing Then
+        Exit Sub
+    End If
+    If list.Count = 0 Then
+        Exit Sub
+    End If
+    
+    Dim val As String
+    val = "[""" & list(1) & """"
+    Dim i As Long
+    For i = 2 To list.Count
+        val = val & ",""" & list(i) & """"
+    Next i
+    val = val & "]"
+    params.Add name, val
+End Sub
+
