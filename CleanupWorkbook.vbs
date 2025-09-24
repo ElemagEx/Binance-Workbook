@@ -1,6 +1,6 @@
 If WScript.Arguments.Count < 1 Then
     WScript.Echo "Usage: cscript RunMacro.vbs ""<path-to-xlsm>"""
-    WScript.Quit
+    WScript.Quit(0)
 End If
 
 ' Get arguments from the command line
@@ -45,3 +45,5 @@ Set objWorkbook = Nothing
 Set objExcel = Nothing
 
 WScript.Echo "Macro '" & macroName & "' executed successfully in '" & excelFilePath & "'"
+
+WScript.Quit(1)

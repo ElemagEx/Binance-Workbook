@@ -6,6 +6,7 @@
 *.cls text eol=crlf
 *.frm text eol=crlf
 *.cmd text eol=crlf
+*.vbs text eol=crlf
 
 # and binary files
 *.xslm binary
