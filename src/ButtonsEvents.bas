@@ -1,18 +1,16 @@
 Attribute VB_Name = "ButtonsEvents"
 Option Explicit
 
-Public UserInfoTable As New TableUserInfo
+Public Const SHEET_ASSETS As String = "Assets"
+
+Public Function Str2Dec(ByVal str As String) As Variant
+    Dim val As String
+    val = Replace(str, ".", Application.DecimalSeparator)
+    Str2Dec = CDec(val)
+End Function
 
 Public Sub test1()
-    
-    Call UserInfoTable.HelloWorld1
-    
-'    Dim assets As collection
-'    Set assets = BinanceApi_Wallet_GetUserAssets()
-'
-'    Dim asset As Dictionary
-'    For Each asset In assets
-'        Debug.Print asset("asset") & " : " & asset("free")
-'    Next asset
-    
+        
+    TableUserInfo.CleanUpData
+        
 End Sub
