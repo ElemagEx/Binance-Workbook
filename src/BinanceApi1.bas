@@ -1,4 +1,4 @@
-Attribute VB_Name = "BinanceApi"
+Attribute VB_Name = "BinanceApi1"
 Option Explicit
 
 ' --- Binance API base URL
@@ -34,7 +34,7 @@ Public Function BinanceApi_SpotTrading_GetPrice(ByVal symbol As String) As Dicti
     Dim params As New Dictionary
     params.Add "symbol", symbol
     
-    Set BinanceApi_SpotTrading_GetPrice = BinanceApi_ExecutePublicGetQuery("/api/v3/ticker/price", params)
+    Set BinanceApi_SpotTrading_GetPrice = xExecuteWebQuery(False, True, "/api/v3/ticker/price", params)
 End Function
 '
 ' Binance SpotTrading Public API: GET /api/v3/ticker/price
@@ -46,7 +46,7 @@ Public Function BinanceApi_SpotTrading_GetPrices(Optional ByVal symbols As colle
         
     xAddListParam params, "symbols", symbols
     
-    Set BinanceApi_SpotTrading_GetPrices = BinanceApi_ExecutePublicGetQuery("/api/v3/ticker/price", params)
+    Set BinanceApi_SpotTrading_GetPrices = xExecuteWebQuery(False, True, "/api/v3/ticker/price", params)
 End Function
 '
 ' Binance SpotTrading Public API: GET /api/v3/exchangeInfo
@@ -60,7 +60,7 @@ Public Function BinanceApi_SpotTrading_GetExchangeInfo(Optional ByVal showPermis
         params.Add "showPermissionSets", IIf(CBool(showPermissionSets), "true", "false")
     End If
 
-    Set BinanceApi_SpotTrading_GetExchangeInfo = BinanceApi_ExecutePublicGetQuery("/api/v3/exchangeInfo", params)
+    Set BinanceApi_SpotTrading_GetExchangeInfo = xExecuteWebQuery(False, True, "/api/v3/exchangeInfo", params)
 End Function
 '
 ' Binance SpotTrading Signed API: GET /api/v3/account
@@ -74,7 +74,7 @@ Public Function BinanceApi_SpotTrading_GetAccountInfo(Optional ByVal omitZeroBal
         params.Add "omitZeroBalances", IIf(CBool(omitZeroBalances), "true", "false")
     End If
 
-    Set BinanceApi_SpotTrading_GetAccountInfo = BinanceApi_ExecuteSignedGetQuery("/api/v3/account", params)
+    Set BinanceApi_SpotTrading_GetAccountInfo = xExecuteWebQuery(True, True, "/api/v3/account", params)
 End Function
 '
 ' Binance SpotTrading Signed API: GET /api/v3/myTrades
@@ -110,7 +110,7 @@ Public Function BinanceApi_SpotTrading_GetMyTrades( _
         params.Add "orderId", orderId
     End If
 
-    Set BinanceApi_SpotTrading_GetMyTrades = BinanceApi_ExecuteSignedGetQuery("/api/v3/myTrades", params)
+    Set BinanceApi_SpotTrading_GetMyTrades = xExecuteWebQuery(True, True, "/api/v3/myTrades", params)
 End Function
 '
 ' Binance Wallet Signed API: GET /sapi/v1/capital/config/getall
@@ -120,7 +120,7 @@ Public Function BinanceApi_Wallet_GetAllCoinsInfo() As collection
     
     Dim params As New Dictionary
 
-    Set BinanceApi_Wallet_GetAllCoinsInfo = BinanceApi_ExecuteSignedGetQuery("/sapi/v1/capital/config/getall", params)
+    Set BinanceApi_Wallet_GetAllCoinsInfo = xExecuteWebQuery(True, True, "/sapi/v1/capital/config/getall", params)
 End Function
 '
 ' Binance Wallet Signed API: POST /sapi/v3/asset/getUserAsset
@@ -136,7 +136,7 @@ Public Function BinanceApi_Wallet_GetUserAssets(Optional ByVal asset As String =
         params.Add "needBtcEvaluation", IIf(CBool(needBtcEvaluation), "true", "false")
     End If
     
-    Set BinanceApi_Wallet_GetUserAssets = BinanceApi_ExecuteSignedPostQuery("/sapi/v3/asset/getUserAsset", params)
+    Set BinanceApi_Wallet_GetUserAssets = xExecuteWebQuery(True, False, "/sapi/v3/asset/getUserAsset", params)
 End Function
 '
 ' Binance Wallet Signed API: POST /sapi/v1/asset/get-funding-asset
@@ -153,7 +153,7 @@ Public Function BinanceApi_Wallet_GetFundingAssets(Optional ByVal asset As Strin
         params.Add "needBtcEvaluation", IIf(CBool(needBtcEvaluation), "true", "false")
     End If
 
-    Set BinanceApi_Wallet_GetFundingAssets = BinanceApi_ExecuteSignedPostQuery("/sapi/v1/asset/get-funding-asset", params)
+    Set BinanceApi_Wallet_GetFundingAssets = xExecuteWebQuery(True, True, "/sapi/v1/asset/get-funding-asset", params)
 End Function
 '
 ' Binance Wallet Signed API: GET /sapi/v1/asset/dribblet
@@ -730,111 +730,54 @@ Public Function BinanceApi_SimpleEarn_GetLockedRedemptions( _
     End If
 End Function
 
+Private Function xExecuteWebQuery( _
+    ByVal signed As Boolean, _
+    ByVal isGet As Boolean, _
+    ByVal api As String, _
+    ByVal params As Dictionary _
+    )
+    Set xExecuteWebQuery = Nothing
+    
+    Debug.Print "Starting Binance API web query " & api & " ..."
+
+    Dim client As New WebClient
+    client.BaseUrl = BINANCE_API_BASE_URL
+    
+    Dim request As New WebRequest
+    request.method = IIf(isGet, WebMethod.httpGet, WebMethod.HttpPost)
+    request.Resource = api
+    request.Format = WebFormat.Json
+    
+    Dim key As Variant
+    For Each key In params.Keys
+        request.AddQuerystringParam CStr(key), params(key)
+    Next key
+    
+    If signed Then
+        request.Headers.Add WebHelpers.CreateKeyValue("X-MBX-APIKEY", GetApiKey_Binance())
+    
+        request.AddQuerystringParam "timestamp", xGetBinanceServerTime()
+        request.AddQuerystringParam "signature", xCreateHMACSHA256Signature(xGetQueryFromFullUrl(client.GetFullUrl(request)))
+    End If
+    
+    Dim response As WebResponse
+    Set response = client.Execute(request)
+    
+    If response.StatusCode = WebStatusCode.Ok Then
+        Debug.Print "Success! Received response from server."
+        Set xExecuteWebQuery = response.Data
+    Else
+        Debug.Print "Binance API Error Occurred!"
+        Debug.Print "Status: " & response.StatusCode & " " & response.StatusDescription
+        Debug.Print "Response: " & response.Content
+        MsgBox "An API error occurred. Status: " & response.StatusCode & vbCrLf & "Response: " & response.StatusDescription, vbExclamation
+    End If
+End Function
+    
+
 ' ===================================================================
 ' ===                     HELPER FUNCTIONS                        ===
 ' ===================================================================
-
-Private Function BinanceApi_ExecutePublicGetQuery(ByVal api As String, params As Dictionary) As Object
-    Set BinanceApi_ExecutePublicGetQuery = Nothing
-    
-    Debug.Print "Starting Binance Public API query GET " & api & " ..."
-
-    Dim client As New WebClient
-    client.BaseUrl = BINANCE_API_BASE_URL
-    
-    Dim request As New WebRequest
-    request.method = WebMethod.httpGet
-    request.Resource = api
-    request.Format = WebFormat.Json
-    
-    Dim key As Variant
-    For Each key In params.Keys
-        request.AddQuerystringParam CStr(key), params(key)
-    Next key
-    
-    Dim response As WebResponse
-    Set response = client.Execute(request)
-    
-    If response.StatusCode = WebStatusCode.Ok Then
-        Debug.Print "Success! Received response from server."
-        Set BinanceApi_ExecutePublicGetQuery = response.Data
-    Else
-        Debug.Print "Binance API Error Occurred!"
-        Debug.Print "Status: " & response.StatusCode & " " & response.StatusDescription
-        Debug.Print "Response: " & response.Content
-        MsgBox "An API error occurred. Status: " & response.StatusCode & vbCrLf & "Response: " & response.StatusDescription, vbExclamation
-    End If
-End Function
-
-Private Function BinanceApi_ExecuteSignedGetQuery(ByVal api As String, params As Dictionary) As Object
-    Set BinanceApi_ExecuteSignedGetQuery = Nothing
-    
-    Debug.Print "Starting Binance Signed API query GET " & api & " ..."
-
-    Dim client As New WebClient
-    client.BaseUrl = BINANCE_API_BASE_URL
-    
-    Dim request As New WebRequest
-    request.method = WebMethod.httpGet
-    request.Resource = api
-    request.Format = WebFormat.Json
-    request.Headers.Add WebHelpers.CreateKeyValue("X-MBX-APIKEY", GetApiKey_Binance())
-
-    Dim key As Variant
-    For Each key In params.Keys
-        request.AddQuerystringParam CStr(key), params(key)
-    Next key
-    request.AddQuerystringParam "timestamp", xGetBinanceServerTime()
-    request.AddQuerystringParam "signature", xCreateHMACSHA256Signature(xGetQueryFromFullUrl(client.GetFullUrl(request)))
-    
-    Dim response As WebResponse
-    Set response = client.Execute(request)
-    
-    If response.StatusCode = WebStatusCode.Ok Then
-        Debug.Print "Success! Received response from server."
-        Set BinanceApi_ExecuteSignedGetQuery = response.Data
-    Else
-        Debug.Print "Binance API Error Occurred!"
-        Debug.Print "Status: " & response.StatusCode & " " & response.StatusDescription
-        Debug.Print "Response: " & response.Content
-        MsgBox "An API error occurred. Status: " & response.StatusCode & vbCrLf & "Response: " & response.StatusDescription, vbExclamation
-    End If
-End Function
-
-Private Function BinanceApi_ExecuteSignedPostQuery(ByVal api As String, params As Dictionary) As Object
-    Set BinanceApi_ExecuteSignedPostQuery = Nothing
-    
-    Debug.Print "Starting Binance Signed API query POST " & api & " ..."
-
-    Dim client As New WebClient
-    client.BaseUrl = BINANCE_API_BASE_URL
-    
-    Dim request As New WebRequest
-    request.method = WebMethod.HttpPost
-    request.Resource = api
-    request.Format = WebFormat.Json
-    request.Headers.Add WebHelpers.CreateKeyValue("X-MBX-APIKEY", GetApiKey_Binance())
-
-    Dim key As Variant
-    For Each key In params.Keys
-        request.AddQuerystringParam CStr(key), params(key)
-    Next key
-    request.AddQuerystringParam "timestamp", xGetBinanceServerTime()
-    request.AddQuerystringParam "signature", xCreateHMACSHA256Signature(xGetQueryFromFullUrl(client.GetFullUrl(request)))
-    
-    Dim response As WebResponse
-    Set response = client.Execute(request)
-    
-    If response.StatusCode = WebStatusCode.Ok Then
-        Debug.Print "Success! Received response from server."
-        Set BinanceApi_ExecuteSignedPostQuery = response.Data
-    Else
-        Debug.Print "Binance API Error Occurred!"
-        Debug.Print "Status: " & response.StatusCode & " " & response.StatusDescription
-        Debug.Print "Response: " & response.Content
-        MsgBox "An API error occurred. Status: " & response.StatusCode & vbCrLf & "Response: " & response.StatusDescription, vbExclamation
-    End If
-End Function
 
 Private Function ExecuteBinanceSignedQuery(ByVal method As String, ByVal api As String, params As Dictionary) As String
     

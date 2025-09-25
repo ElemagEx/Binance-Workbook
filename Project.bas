@@ -12,8 +12,9 @@ Public Function GetProjectFiles(ByVal thirdParty As Boolean) As collection
         files.Add "VBA-Web/src/IWebAuthenticator.cls"
     Else
         files.Add "src/KeysAndSecrets.bas"
-        files.Add "src/BinanceApi.bas"
+        files.Add "src/BinanceApi1.bas"
         files.Add "src/ButtonsEvents.bas"
+        files.Add "src/TableUserInfo.bas"
     End If
 
     Set GetProjectFiles = files
