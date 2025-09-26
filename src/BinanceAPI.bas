@@ -9,23 +9,24 @@ Public Enum MAX_PERIOD
 End Enum
 Public Enum MAX_LIMIT
     SPOT_TRADING_GET_MY_TRADES = 1000
+
+    SIMPLE_EARN_FLEXIBLE_POSITIONS = 100
+    SIMPLE_EARN_LOCKED_POSITIONS = 100
 End Enum
 
-Public Const MAX_PERIOD_WALLET_TRANSFERS As Long = 180
+Public Const aMAX_PERIOD_WALLET_TRANSFERS As Long = 180
 
-Public Const MAX_PERIOD_SIMPLEEARN_FLEXIBLE_SUBSCRIPTIONS = 90
-Public Const MAX_PERIOD_SIMPLEEARN_FLEXIBLE_REDEMPTIONS = 90
-Public Const MAX_PERIOD_LOCKED_FLEXIBLE_SUBSCRIPTIONS = 90
-Public Const MAX_PERIOD_LOCKED_FLEXIBLE_REDEMPTIONS = 90
+Public Const aMAX_PERIOD_SIMPLEEARN_FLEXIBLE_SUBSCRIPTIONS = 90
+Public Const aMAX_PERIOD_SIMPLEEARN_FLEXIBLE_REDEMPTIONS = 90
+Public Const aMAX_PERIOD_LOCKED_FLEXIBLE_SUBSCRIPTIONS = 90
+Public Const aMAX_PERIOD_LOCKED_FLEXIBLE_REDEMPTIONS = 90
 
-Public Const MAX_LIMIT_WALLET_TRANSFERS As Long = 100
+Public Const aMAX_LIMIT_WALLET_TRANSFERS As Long = 100
 
-Public Const MAX_LIMIT_SIMPLEEARN_FLEXIBLE_POSITIONS = 100
-Public Const MAX_LIMIT_SIMPLEEARN_FLEXIBLE_SUBSCRIPTIONS = 100
-Public Const MAX_LIMIT_SIMPLEEARN_FLEXIBLE_REDEMPTIONS = 100
-Public Const MAX_LIMIT_SIMPLEEARN_LOCKED_POSITIONS = 100
-Public Const MAX_LIMIT_SIMPLEEARN_LOCKED_SUBSCRIPTIONS = 100
-Public Const MAX_LIMIT_SIMPLEEARN_LOCKED_REDEMPTIONS = 100
+Public Const aMAX_LIMIT_SIMPLEEARN_FLEXIBLE_SUBSCRIPTIONS = 100
+Public Const aMAX_LIMIT_SIMPLEEARN_FLEXIBLE_REDEMPTIONS = 100
+Public Const aMAX_LIMIT_SIMPLEEARN_LOCKED_SUBSCRIPTIONS = 100
+Public Const aMAX_LIMIT_SIMPLEEARN_LOCKED_REDEMPTIONS = 100
 
 Private s_CurrentWeight As Long
 '
@@ -156,7 +157,7 @@ Public Function Wallet_GetFundingAssets(Optional ByVal asset As String = "", Opt
         params.Add "needBtcEvaluation", IIf(CBool(needBtcEvaluation), "true", "false")
     End If
 
-    Set Wallet_GetFundingAssets = xExecuteWebQuery(True, True, "/sapi/v1/asset/get-funding-asset", params)
+    Set Wallet_GetFundingAssets = xExecuteWebQuery(True, False, "/sapi/v1/asset/get-funding-asset", params)
 End Function
 '
 ' Binance Wallet Signed API: GET /sapi/v1/asset/dribblet
@@ -509,13 +510,11 @@ Public Function SimpleEarn_GetFlexiblePositions( _
     Optional ByVal page As Long = -1, _
     Optional ByVal productId As String = "" _
     ) As Dictionary
-    '
-    ' WEIGHT=150
-    '
-    Set SimpleEarn_GetFlexiblePositions = Nothing
-
-    Dim params As New Dictionary
     
+    xAddWeight 150
+    
+    Dim params As New Dictionary
+
     If asset <> "" Then
         params.Add "asset", asset
     End If
@@ -528,13 +527,8 @@ Public Function SimpleEarn_GetFlexiblePositions( _
     If productId <> "" Then
         params.Add "productId", productId
     End If
-
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/simple-earn/flexible/position", params)
-
-    If responseText <> "" Then
-        Set SimpleEarn_GetFlexiblePositions = JsonConverter.ParseJson(responseText)
-    End If
+    
+    Set SimpleEarn_GetFlexiblePositions = xExecuteWebQuery(True, True, "/sapi/v1/simple-earn/flexible/position", params)
 End Function
 '
 ' Binance Simple Earn Signed API: GET /sapi/v1/simple-earn/locked/position
@@ -545,10 +539,8 @@ Public Function SimpleEarn_GetLockedPositions( _
     Optional ByVal page As Long = -1, _
     Optional ByVal productId As String = "" _
     ) As Dictionary
-    '
-    ' WEIGHT=150
-    '
-    Set SimpleEarn_GetLockedPositions = Nothing
+    
+    xAddWeight 150
 
     Dim params As New Dictionary
     
@@ -565,12 +557,7 @@ Public Function SimpleEarn_GetLockedPositions( _
         params.Add "productId", productId
     End If
 
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/simple-earn/locked/position", params)
-
-    If responseText <> "" Then
-        Set SimpleEarn_GetLockedPositions = JsonConverter.ParseJson(responseText)
-    End If
+    Set SimpleEarn_GetLockedPositions = xExecuteWebQuery(True, True, "/sapi/v1/simple-earn/locked/position", params)
 End Function
 '
 ' Binance Simple Earn Signed API: GET /sapi/v1/simple-earn/flexible/history/subscriptionRecord
@@ -749,7 +736,7 @@ Private Function xExecuteWebQuery( _
     Dim request As New WebRequest
     request.method = IIf(isGet, WebMethod.httpGet, WebMethod.HttpPost)
     request.Resource = api
-    request.Format = WebFormat.Json
+    request.format = WebFormat.Json
     
     Dim key As Variant
     For Each key In params.Keys
@@ -851,7 +838,7 @@ Private Function xGetBinanceServerTime() As String
     Set response = client.GetJson("/api/v3/time")
     
     If response.StatusCode = WebStatusCode.Ok Then
-        xGetBinanceServerTime = Format(response.Data("serverTime"), "0")
+        xGetBinanceServerTime = format(response.Data("serverTime"), "0")
     Else
         xGetBinanceServerTime = "0"
     End If

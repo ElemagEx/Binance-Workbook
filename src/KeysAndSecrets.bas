@@ -1,4 +1,6 @@
 Attribute VB_Name = "KeysAndSecrets"
+Option Explicit
+
 Private Const ENV_NAME_BINANCE_API_KEY As String = "BINANCE_API_KEY"
 Private Const ENV_NAME_BINANCE_API_SECRET As String = "BINANCE_API_SECRET"
 

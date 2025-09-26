@@ -1,6 +1,7 @@
 Attribute VB_Name = "TableUserInfo"
 Option Explicit
 
+Private Const SHEET_NAME As String = SHEET_ASSETS
 Private Const TABLE_NAME As String = "UserInfo"
 
 Private Const COL_UID As String = "UID"
@@ -12,7 +13,7 @@ Private Const COL_ACTIVITY_START_DATE As String = "Activity Start Date"
 
 Public Function IsDataCleanedUp()
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_ASSETS).ListObjects(TABLE_NAME)
+    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
 
     IsCleanedUp = IsEmpty(table.ListColumns(COL_ACCOUNT_UID).DataBodyRange(1).Value) _
         And IsEmpty(table.ListColumns(COL_ACCOUNT_MAKER_FEE).DataBodyRange(1).Value) _
@@ -23,7 +24,7 @@ End Function
 
 Public Sub CleanUpData()
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_ASSETS).ListObjects(TABLE_NAME)
+    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
     
     table.ListColumns(COL_UID).DataBodyRange.ClearContents
     table.ListColumns(COL_MAKER_FEE).DataBodyRange.ClearContents
@@ -32,7 +33,7 @@ Public Sub CleanUpData()
     table.ListColumns(COL_SELLER_FEE).DataBodyRange.ClearContents
 End Sub
 
-Public Sub RefreshData()
+Public Sub UpdateData()
     Dim account As Dictionary
     Set account = BinanceAPI.SpotTrading_GetAccountInfo()
     
@@ -44,7 +45,7 @@ Public Sub RefreshData()
     Set rates = account("commissionRates")
     
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_ASSETS).ListObjects(TABLE_NAME)
+    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
     
     table.ListColumns(COL_UID).DataBodyRange(1).Value = account("uid")
     table.ListColumns(COL_MAKER_FEE).DataBodyRange(1).Value = Str2Dec(rates("maker"))
@@ -53,3 +54,9 @@ Public Sub RefreshData()
     table.ListColumns(COL_SELLER_FEE).DataBodyRange(1).Value = Str2Dec(rates("seller"))
 End Sub
 
+Public Property Get ActivityStartDate() As Date
+    Dim table As ListObject
+    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
+    
+    ActivityStartDate = CDate(table.ListColumns(COL_ACTIVITY_START_DATE).DataBodyRange(1).Value)
+End Property
