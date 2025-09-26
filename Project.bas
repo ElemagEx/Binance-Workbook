@@ -1,4 +1,6 @@
 Attribute VB_Name = "Project"
+Option Explicit
+
 Public Function GetProjectFiles(ByVal thirdParty As Boolean) As collection
     Dim files As New collection
 
@@ -12,9 +14,16 @@ Public Function GetProjectFiles(ByVal thirdParty As Boolean) As collection
         files.Add "VBA-Web/src/IWebAuthenticator.cls"
     Else
         files.Add "src/KeysAndSecrets.bas"
+        files.Add "src/Main.bas"
         files.Add "src/BinanceAPI.bas"
+        files.Add "src/BinanceCoin.cls"
+        files.Add "src/BinanceCoins.cls"
+        files.Add "src/BinanceAssets.cls"
         files.Add "src/ButtonsEvents.bas"
+        files.Add "src/TableWallet.bas"
         files.Add "src/TableUserInfo.bas"
+        files.Add "src/TableCurrencies.bas"
+        files.Add "src/TableLastUpdate.bas"
     End If
 
     Set GetProjectFiles = files

@@ -1,8 +1,10 @@
 Attribute VB_Name = "ButtonsEvents"
 Option Explicit
 
-Public Sub test1()
+Public Sub onButtonTest1()
         
-    TableWallet.CleanUpData
+    TableCurrencies.UpdateData
+    'TableCurrencies.CompactData
+    'TableCurrencies.UpdateData
 
 End Sub

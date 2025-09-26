@@ -1,3 +1,5 @@
+Option Explicit On
+
 Private Const PROJECT_FILE = "project.bas"
 
 Private Sub CleanUpAllData(ByVal removeLedgerSheets As Boolean)
@@ -70,7 +72,7 @@ Private Sub HandleProjectFiles(ByVal dir As String, ByVal export As Boolean, ByV
     Next file
 End Sub
 
-Public Sub ImportProjectFiles()
+Public Sub Project_ImportFiles()
     Dim dir As String
     dir = ActiveWorkbook.path
 
@@ -79,7 +81,7 @@ Public Sub ImportProjectFiles()
     HandleProjectFiles dir, False, True, True
 End Sub
 
-Public Sub ExportProjectFiles()
+Public Sub Project_ExportFiles()
     If GetComponent(GetNameOfFile(PROJECT_FILE)) Is Nothing Then
         Exit Sub
     End If
@@ -92,7 +94,7 @@ Public Sub ExportProjectFiles()
     HandleFile dir, PROJECT_FILE, True, False, False
 End Sub
 
-Public Sub CleanUpProject()
+Public Sub Project_CleanUp()
     If GetComponent(GetNameOfFile(PROJECT_FILE)) Is Nothing Then
         Exit Sub
     End If
@@ -107,6 +109,10 @@ Public Sub CleanUpProject()
     HandleFile dir, PROJECT_FILE, False, False, True
 End Sub
 
-Public Function IsProjectCleanedUp() As Boolean
-    IsProjectCleanedUp = (GetComponent(GetNameOfFile(PROJECT_FILE)) Is Nothing)
+Public Sub Project_PreferedAction1()
+    ExportProjectFiles
+End Sub
+
+Public Function Project_IsCleanedUp() As Boolean
+    IsProjectCleanedUp = True '(GetComponent(GetNameOfFile(PROJECT_FILE)) Is Nothing)
 End Function

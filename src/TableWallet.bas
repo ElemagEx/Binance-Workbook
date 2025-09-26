@@ -10,6 +10,20 @@ Private Const COL_FUNDING_AMOUNT As String = "Funding Amount"
 Private Const COL_EARN_AMOUNT As String = "Earn Amount"
 Private Const COL_DYNAMIC_AMOUNT As String = "Dynamic Amount"
 
+Public Property Get Tickers() As collection
+    Set Tickers = New collection
+
+    Dim col As ListColumn
+    Set col = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME).ListColumns(COL_TICKER)
+    
+    If Not col.DataBodyRange Is Nothing Then
+        Dim i As Long
+        For i = 1 To col.DataBodyRange.Count
+            Tickers.Add col.DataBodyRange(i).Value
+        Next i
+    End If
+End Property
+
 Public Function IsDataCleanedUp()
     Dim table As ListObject
     Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
@@ -32,10 +46,12 @@ Public Sub ClearData()
     Dim table As ListObject
     Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
     
-    table.ListColumns(COL_SPOT_AMOUNT).DataBodyRange.ClearContents
-    table.ListColumns(COL_FUNDING_AMOUNT).DataBodyRange.ClearContents
-    table.ListColumns(COL_EARN_AMOUNT).DataBodyRange.ClearContents
-    table.ListColumns(COL_DYNAMIC_AMOUNT).DataBodyRange.ClearContents
+    If table.ListRows.Count > 0 Then
+        table.ListColumns(COL_SPOT_AMOUNT).DataBodyRange.ClearContents
+        table.ListColumns(COL_FUNDING_AMOUNT).DataBodyRange.ClearContents
+        table.ListColumns(COL_EARN_AMOUNT).DataBodyRange.ClearContents
+        table.ListColumns(COL_DYNAMIC_AMOUNT).DataBodyRange.ClearContents
+    End If
 
     TableLastUpdate.Wallet = 0
 End Sub

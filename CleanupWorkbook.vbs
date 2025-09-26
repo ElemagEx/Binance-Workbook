@@ -28,10 +28,10 @@ objExcel.DisplayAlerts = False
 Set objWorkbook = objExcel.Workbooks.Open(excelFullPath)
 
 ' Check for clean-up
-isProjectCleanedUp = objWorkbook.Application.Run("IsProjectCleanedUp")
+isProjectCleanedUp = objWorkbook.Application.Run("Project_IsCleanedUp")
 
 if isProjectCleanedUp = False Then
-    objWorkbook.Application.Run "CleanUpProject"
+    objWorkbook.Application.Run "Project_CleanUp"
     objWorkbook.Save
 end if
 

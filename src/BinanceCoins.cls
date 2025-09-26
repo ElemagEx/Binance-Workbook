@@ -16,6 +16,20 @@ Public Property Get ExchangeTimezone() As String
     ExchangeTimezone = m_tz
 End Property
 
+Public Property Get Tickers() As Variant
+    Tickers = m_coins.Keys
+End Property
+
+Public Property Get item(ByVal ticker As String) As BinanceCoin
+    Set item = IIf(m_coins.Exists(ticker), m_coins(ticker), Nothing)
+End Property
+
+Public Sub AddTicker(ByVal ticker As String)
+    If Not m_coins.Exists(ticker) Then
+        m_coins.Add ticker, New BinanceCoin
+    End If
+End Sub
+
 Public Sub collectBasicInfo(ByVal updateOnlyExisting As Boolean)
     Dim list As collection
     Set list = BinanceAPI.Wallet_GetAllCoinsInfo()
@@ -23,21 +37,21 @@ Public Sub collectBasicInfo(ByVal updateOnlyExisting As Boolean)
     If list Is Nothing Then
         Exit Sub
     End If
-    
+
     Dim item As Dictionary
     For Each item In list
         Dim ticker As String
         ticker = item("coin")
-        
+
         Dim coin As BinanceCoin
-        
+
         If m_coins.Exists(ticker) Then
             Set coin = m_coins(ticker)
         ElseIf Not updateOnlyExisting Then
             Set coin = New BinanceCoin
             m_coins.Add ticker, coin
         End If
-        
+
         If Not coin Is Nothing Then
             coin.ticker = ticker
             coin.name = item("name")
