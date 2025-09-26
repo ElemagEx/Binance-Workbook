@@ -1,5 +1,6 @@
 Attribute VB_Name = "BinanceAPI"
 Option Explicit
+Option Private Module
 
 ' --- Binance API base URL
 Private Const BASE_URL As String = "https://api.binance.com"

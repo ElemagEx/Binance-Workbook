@@ -1,5 +1,6 @@
 Attribute VB_Name = "TableUserInfo"
 Option Explicit
+Option Private Module
 
 Private Const SHEET_NAME As String = SHEET_ASSETS
 Private Const TABLE_NAME As String = "UserInfo"

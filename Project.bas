@@ -1,5 +1,6 @@
 Attribute VB_Name = "Project"
 Option Explicit
+Option Private Module
 
 Public Function GetProjectFiles(ByVal thirdParty As Boolean) As collection
     Dim files As New collection

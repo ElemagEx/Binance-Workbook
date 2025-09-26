@@ -83,21 +83,42 @@ Public Sub CompactData()
     Dim col As ListColumn
     Set col = table.ListColumns(COL_KEEP_ON_COMPACT)
     
+    Dim i As Long
+    
     If Not col.DataBodyRange Is Nothing Then
-        Dim i As Long
         For i = col.DataBodyRange.Count To 1 Step -1
             If Not col.DataBodyRange(i).Value Then
                 table.ListRows(i).Delete
             End If
         Next i
     End If
+    For i = table.ListColumns.Count To FIRST_TRADE_COL_INDEX Step -1
+        Set col = table.ListColumns(i)
+    
+        Dim cell As range
+        Set cell = table.ListColumns(COL_TICKER).DataBodyRange.Find(what:=col.name, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
+        
+        If cell Is Nothing Then
+            col.Delete
+        ElseIf WorksheetFunction.CountIf(col.DataBodyRange, True) > 0 Then
+        ElseIf WorksheetFunction.CountIf(col.DataBodyRange, False) > 0 Then
+        Else
+            col.Delete
+        End If
+    Next i
+    
+    Dim formula As String
+    If table.ListColumns.Count < FIRST_TRADE_COL_INDEX Then
+        formula = "=0"
+    Else
+        formula = "=COUNTIF(" & TABLE_NAME & "[@[" & table.ListColumns(FIRST_TRADE_COL_INDEX).name & "]:[" & table.ListColumns(table.ListColumns.Count).name & "]],TRUE)"
+    End If
+
+    table.ListColumns(COL_SYMBOLS).DataBodyRange.formula = formula
 End Sub
 
 Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers)
     Dim coins As New BinanceCoins
-    Dim c As BinanceCoin
-    'coins.AddTicker "ABC"
-    Set c = coins("ABC")
 
     Dim ticker As Variant
     If addSelfTickers Then
@@ -117,24 +138,72 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
     Dim table As ListObject
     Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
     
-    Dim col As ListColumn
-    Set col = table.ListColumns(COL_FORMAT)
-    
     ResetExchangeTimezone coins.ExchangeTimezone
     
+    Dim colIndex As Long
+    Dim rowIndex As Long
+    Dim coin As BinanceCoin
+    
     For Each ticker In coins.Tickers
-        Dim coin As BinanceCoin
-        Set coin = coins(ticker)
+        Set coin = coins.item(ticker)
         
-        Dim rowIndex As Long
         rowIndex = xFindTickerRowIndex(ticker, True)
         
-        table.ListColumns(COL_NAME).DataBodyRange.Value = coin.name
-        table.ListColumns(COL_TYPE).DataBodyRange.Value = IIf(coin.isFiat, STR_FIAT, STR_CRYPTO)
-        table.ListColumns(COL_BASES).DataBodyRange.Value = coin.bases
-        table.ListColumns(COL_QUOTES).DataBodyRange.Value = coin.quotes
-        table.ListColumns(COL_PRECISION).DataBodyRange.Value = coin.precision
+        table.ListColumns(COL_NAME).DataBodyRange(rowIndex).Value = coin.name
+        table.ListColumns(COL_TYPE).DataBodyRange(rowIndex).Value = IIf(coin.isFiat, STR_FIAT, STR_CRYPTO)
+        table.ListColumns(COL_PRECISION).DataBodyRange(rowIndex).Value = coin.precision
     Next ticker
+
+    For Each ticker In coins.Tickers
+        Set coin = coins.item(ticker)
+        
+        If coin.quotes > 0 Then
+            For colIndex = FIRST_TRADE_COL_INDEX To table.ListColumns.Count
+                If ticker = table.ListColumns(colIndex).name Then
+                    Exit For
+                End If
+            Next colIndex
+            If colIndex > table.ListColumns.Count Then
+                table.ListColumns.Add(table.ListColumns.Count + 1).name = ticker
+            End If
+        End If
+    Next ticker
+    
+    Dim formula As String
+    If table.ListColumns.Count < FIRST_TRADE_COL_INDEX Then
+        formula = "=0"
+    Else
+        formula = "=COUNTIF(" & TABLE_NAME & "[@[" & table.ListColumns(FIRST_TRADE_COL_INDEX).name & "]:[" & table.ListColumns(table.ListColumns.Count).name & "]],TRUE)"
+    End If
+
+    For rowIndex = 1 To table.ListRows.Count
+        ticker = table.ListColumns(COL_TICKER).DataBodyRange(rowIndex).Value
+        
+        If Not coins.Contains(ticker) Then
+            table.ListColumns(COL_BASES).DataBodyRange(rowIndex).Value = 0
+            table.ListColumns(COL_QUOTES).DataBodyRange(rowIndex).Value = 0
+            table.ListColumns(COL_SYMBOLS).DataBodyRange(rowIndex).formula = formula
+        
+            For colIndex = FIRST_TRADE_COL_INDEX To table.ListColumns.Count
+                table.ListColumns(colIndex).DataBodyRange(rowIndex).Value = " "
+            Next colIndex
+        Else
+            Set coin = coins.item(ticker)
+            
+            For colIndex = FIRST_TRADE_COL_INDEX To table.ListColumns.Count
+                Dim col As ListColumn
+                Set col = table.ListColumns(colIndex)
+                If Not coin.trades.Exists(col.name) Then
+                    col.DataBodyRange(rowIndex).Value = " "
+                End If
+            Next colIndex
+        
+            table.ListColumns(COL_BASES).DataBodyRange(rowIndex).Value = coin.bases
+            table.ListColumns(COL_QUOTES).DataBodyRange(rowIndex).Value = coin.quotes
+            table.ListColumns(COL_SYMBOLS).DataBodyRange(rowIndex).formula = formula
+        End If
+    Next rowIndex
+
 End Sub
 
 Private Function xFindTickerRowIndex(ByVal ticker As String, ByVal addIfNotFound As Boolean) As Long
@@ -146,19 +215,18 @@ Private Function xFindTickerRowIndex(ByVal ticker As String, ByVal addIfNotFound
         Set cell = table.ListColumns(COL_TICKER).DataBodyRange.Find(what:=ticker, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
     End If
     
-    Dim index As Long
+    Dim rowIndex As Long
     
     If Not cell Is Nothing Then
-        index = cell.row - table.HeaderRowRange.row
+        rowIndex = cell.row - table.HeaderRowRange.row
     ElseIf Not addIfNotFound Then
-        index = 0
+        rowIndex = 0
     Else
-        index = table.ListRows.Add().index
-        table.ListColumns(COL_TICKER).DataBodyRange(index).Value = ticker
-        table.ListColumns(COL_FORMAT).DataBodyRange(index).NumberFormat = "General"
-        table.ListColumns(COL_SYMBOLS).DataBodyRange(index).formula = "=0"
+        rowIndex = table.ListRows.Add().index
+        table.ListColumns(COL_TICKER).DataBodyRange(rowIndex).Value = ticker
+        table.ListColumns(COL_FORMAT).DataBodyRange(rowIndex).NumberFormat = "General"
     End If
     
-    xFindTickerRowIndex = index
+    xFindTickerRowIndex = rowIndex
 End Function
 

@@ -24,6 +24,10 @@ Public Property Get item(ByVal ticker As String) As BinanceCoin
     Set item = IIf(m_coins.Exists(ticker), m_coins(ticker), Nothing)
 End Property
 
+Public Function Contains(ByVal ticker As String) As Boolean
+    Contains = m_coins.Exists(ticker)
+End Function
+
 Public Sub AddTicker(ByVal ticker As String)
     If Not m_coins.Exists(ticker) Then
         m_coins.Add ticker, New BinanceCoin
@@ -58,7 +62,7 @@ Public Sub collectBasicInfo(ByVal updateOnlyExisting As Boolean)
             coin.isFiat = item("isLegalMoney")
             coin.bases = 0
             coin.quotes = 0
-            coin.trades.RemoveAll
+            coin.precision = IIf(coin.isFiat, 2, 8)
         End If
     Next item
 End Sub
@@ -92,7 +96,9 @@ Public Sub collectExchangeInfo()
         
             ticker = symbol("quoteAsset")
             If m_coins.Exists(ticker) Then
-                coin.trades.Add ticker, False
+                If Not coin.trades.Exists(ticker) Then
+                    coin.trades.Add ticker, False
+                End If
                 
                 Set coin = m_coins(ticker)
                 coin.quotes = coin.quotes + 1

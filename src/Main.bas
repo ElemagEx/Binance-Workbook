@@ -1,5 +1,6 @@
 Attribute VB_Name = "Main"
 Option Explicit
+Option Private Module
 
 Public Const SHEET_ASSETS As String = "Assets"
 Public Const SHEET_CURRENCIES As String = "Currencies"
