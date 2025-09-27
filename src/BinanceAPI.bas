@@ -5,30 +5,6 @@ Option Private Module
 ' --- Binance API base URL
 Private Const BASE_URL As String = "https://api.binance.com"
 
-Public Enum MAX_PERIOD
-    SPOT_TRADING_GET_MY_TRADES = 1
-End Enum
-Public Enum MAX_LIMIT
-    SPOT_TRADING_GET_MY_TRADES = 1000
-
-    SIMPLE_EARN_FLEXIBLE_POSITIONS = 100
-    SIMPLE_EARN_LOCKED_POSITIONS = 100
-End Enum
-
-Public Const aMAX_PERIOD_WALLET_TRANSFERS As Long = 180
-
-Public Const aMAX_PERIOD_SIMPLEEARN_FLEXIBLE_SUBSCRIPTIONS = 90
-Public Const aMAX_PERIOD_SIMPLEEARN_FLEXIBLE_REDEMPTIONS = 90
-Public Const aMAX_PERIOD_LOCKED_FLEXIBLE_SUBSCRIPTIONS = 90
-Public Const aMAX_PERIOD_LOCKED_FLEXIBLE_REDEMPTIONS = 90
-
-Public Const aMAX_LIMIT_WALLET_TRANSFERS As Long = 100
-
-Public Const aMAX_LIMIT_SIMPLEEARN_FLEXIBLE_SUBSCRIPTIONS = 100
-Public Const aMAX_LIMIT_SIMPLEEARN_FLEXIBLE_REDEMPTIONS = 100
-Public Const aMAX_LIMIT_SIMPLEEARN_LOCKED_SUBSCRIPTIONS = 100
-Public Const aMAX_LIMIT_SIMPLEEARN_LOCKED_REDEMPTIONS = 100
-
 Private s_CurrentWeight As Long
 '
 ' Binance SpotTrading Public API: GET /api/v3/ticker/price
@@ -44,7 +20,7 @@ End Function
 '
 ' Binance SpotTrading Public API: GET /api/v3/ticker/price
 '
-Public Function SpotTrading_GetPrices(Optional ByVal symbols As collection = Nothing) As collection
+Public Function SpotTrading_GetPrices(Optional ByVal symbols As Collection = Nothing) As Collection
     xAddWeight 4
     
     Dim params As New Dictionary
@@ -91,7 +67,7 @@ Public Function SpotTrading_GetMyTrades( _
     Optional ByVal limit As Long = -1, _
     Optional ByVal fromId As LongLong = -1, _
     Optional ByVal orderId As LongLong = -1 _
-    ) As collection
+    ) As Collection
     
     xAddWeight IIf(orderId >= 0, 5, 20)
     
@@ -120,7 +96,7 @@ End Function
 '
 ' Binance Wallet Signed API: GET /sapi/v1/capital/config/getall
 '
-Public Function Wallet_GetAllCoinsInfo() As collection
+Public Function Wallet_GetAllCoinsInfo() As Collection
     xAddWeight 10
     
     Dim params As New Dictionary
@@ -130,7 +106,7 @@ End Function
 '
 ' Binance Wallet Signed API: POST /sapi/v3/asset/getUserAsset
 '
-Public Function Wallet_GetUserAssets(Optional ByVal asset As String = "", Optional ByVal needBtcEvaluation As Variant) As collection
+Public Function Wallet_GetUserAssets(Optional ByVal asset As String = "", Optional ByVal needBtcEvaluation As Variant) As Collection
     xAddWeight 5
     
     Dim params As New Dictionary
@@ -146,7 +122,7 @@ End Function
 '
 ' Binance Wallet Signed API: POST /sapi/v1/asset/get-funding-asset
 '
-Public Function Wallet_GetFundingAssets(Optional ByVal asset As String = "", Optional ByVal needBtcEvaluation As Variant) As collection
+Public Function Wallet_GetFundingAssets(Optional ByVal asset As String = "", Optional ByVal needBtcEvaluation As Variant) As Collection
     xAddWeight 1
     
     Dim params As New Dictionary
@@ -277,7 +253,7 @@ Public Function Wallet_GetDepositHistory( _
     Optional ByVal limit As Long = -1, _
     Optional ByVal offset As Long = -1, _
     Optional ByVal status As Long = -1 _
-    ) As collection
+    ) As Collection
 
     Set Wallet_GetDepositHistory = Nothing
 
@@ -328,7 +304,7 @@ Public Function Wallet_GetWithdrawHistory( _
     Optional ByVal limit As Long = -1, _
     Optional ByVal offset As Long = -1, _
     Optional ByVal status As Long = -1 _
-    ) As collection
+    ) As Collection
 
     Set Wallet_GetWithdrawHistory = Nothing
 
@@ -397,12 +373,7 @@ Public Function Fiat_Orders( _
         params.Add "page", page
     End If
 
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/fiat/orders", params)
-
-    If responseText <> "" Then
-        Set Fiat_Orders = JsonConverter.ParseJson(responseText)
-    End If
+    Set Fiat_Orders = xExecuteWebQuery(True, True, "/sapi/v1/fiat/orders", params)
 End Function
 Public Function Fiat_GetDeposits( _
     Optional ByVal beginTime As Date = 0, _
@@ -450,12 +421,7 @@ Public Function Fiat_Payments( _
         params.Add "page", page
     End If
 
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/fiat/payments", params)
-
-    If responseText <> "" Then
-        Set Fiat_Payments = JsonConverter.ParseJson(responseText)
-    End If
+    Set Fiat_Payments = xExecuteWebQuery(True, True, "/sapi/v1/fiat/payments", params)
 End Function
 Public Function Fiat_GetBuys( _
     Optional ByVal beginTime As Date = 0, _
@@ -754,9 +720,11 @@ Private Function xExecuteWebQuery( _
     Dim response As WebResponse
     Set response = client.Execute(request)
     
+    xCheckResponseHeaders response.Headers
+    
     If response.StatusCode = WebStatusCode.Ok Then
         Debug.Print "Success! Received response from server."
-        Set xExecuteWebQuery = response.Data
+        Set xExecuteWebQuery = response.data
     Else
         Debug.Print "Binance API Error Occurred!"
         Debug.Print "Status: " & response.StatusCode & " " & response.StatusDescription
@@ -765,6 +733,16 @@ Private Function xExecuteWebQuery( _
     End If
 End Function
     
+Private Sub xCheckResponseHeaders(ByVal responseHeaders As Collection)
+    Dim header As Variant
+    For Each header In responseHeaders
+        Dim name As String
+        name = header("Key")
+        If name = "x-mbx-used-weight" Or name = "x-mbx-used-weight-1m" Then
+            Debug.Print name & ": " & header("Value")
+        End If
+    Next header
+End Sub
 
 ' ===================================================================
 ' ===                     HELPER FUNCTIONS                        ===
@@ -839,7 +817,7 @@ Private Function xGetBinanceServerTime() As String
     Set response = client.GetJson("/api/v3/time")
     
     If response.StatusCode = WebStatusCode.Ok Then
-        xGetBinanceServerTime = format(response.Data("serverTime"), "0")
+        xGetBinanceServerTime = format(response.data("serverTime"), "0")
     Else
         xGetBinanceServerTime = "0"
     End If
@@ -880,7 +858,7 @@ End Function
 ' Converts a Dictionary of parameters into a URL query string (e.g., "key=val&key2=val2").
 Private Function BuildQueryStringFromDict(params As Dictionary) As String
     Dim parts() As String
-    ReDim parts(params.Count - 1)
+    ReDim parts(params.count - 1)
     Dim key As Variant, i As Long
     i = 0
     For Each key In params.Keys
@@ -888,9 +866,6 @@ Private Function BuildQueryStringFromDict(params As Dictionary) As String
         i = i + 1
     Next key
     BuildQueryStringFromDict = Join(parts, "&")
-End Function
-Public Function UnixTimestamp2Date(ByVal unixTime As LongLong) As Date
-    UnixTimestamp2Date = DateAdd("s", unixTime / 1000, "1/1/1970")
 End Function
 
 ' Converts a Unix timestamp (in milliseconds) to a readable VBA date.
@@ -915,18 +890,18 @@ Private Sub xAddWeight(ByVal weight As Long)
     s_CurrentWeight = s_CurrentWeight + weight
 End Sub
 
-Private Sub xAddListParam(ByVal params As Dictionary, ByVal name As String, ByVal list As collection)
+Private Sub xAddListParam(ByVal params As Dictionary, ByVal name As String, ByVal list As Collection)
     If list Is Nothing Then
         Exit Sub
     End If
-    If list.Count = 0 Then
+    If list.count = 0 Then
         Exit Sub
     End If
     
     Dim val As String
     val = "[""" & list(1) & """"
     Dim i As Long
-    For i = 2 To list.Count
+    For i = 2 To list.count
         val = val & ",""" & list(i) & """"
     Next i
     val = val & "]"

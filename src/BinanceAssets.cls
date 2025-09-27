@@ -13,15 +13,15 @@ Private m_wallet As New Dictionary
 '
 '
 '
-Public Property Get Wallet() As Dictionary
-    Set Wallet = m_wallet
+Public Property Get wallet() As Dictionary
+    Set wallet = m_wallet
 End Property
 '
 '
 '
 Public Sub CollectSpotWalletAssets(ByVal name As String, Optional ByVal filter As String = "")
 
-    Dim assets As collection
+    Dim assets As Collection
     Set assets = BinanceAPI.Wallet_GetUserAssets(filter, False)
     
     If assets Is Nothing Then
@@ -46,7 +46,7 @@ End Sub
 '
 Public Sub CollectFundingWalletAssets(ByVal name As String, Optional ByVal filter As String = "")
 
-    Dim assets As collection
+    Dim assets As Collection
     Set assets = BinanceAPI.Wallet_GetFundingAssets(filter, False)
 
     If assets Is Nothing Then
@@ -96,7 +96,7 @@ Public Sub CollectSimpleEarnFlexibleAssets(ByVal name As String, Optional ByVal 
             xAddAmount ticker, name, amount
         Next position
         
-        If positions("rows").Count < MAX_LIMIT.SIMPLE_EARN_FLEXIBLE_POSITIONS Then
+        If positions("rows").count < MAX_LIMIT.SIMPLE_EARN_FLEXIBLE_POSITIONS Then
             Exit For
         End If
     Next page
@@ -130,7 +130,7 @@ Public Sub CollectSimpleEarnLockedAssets(ByVal name As String, Optional ByVal fi
             xAddAmount ticker, name, amount
         Next position
         
-        If positions("rows").Count < MAX_LIMIT.SIMPLE_EARN_LOCKED_POSITIONS Then
+        If positions("rows").count < MAX_LIMIT.SIMPLE_EARN_LOCKED_POSITIONS Then
             Exit For
         End If
     Next page

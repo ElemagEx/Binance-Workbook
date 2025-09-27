@@ -28,10 +28,15 @@ objExcel.DisplayAlerts = False
 Set objWorkbook = objExcel.Workbooks.Open(excelFullPath)
 
 ' Check for clean-up
-isProjectCleanedUp = objWorkbook.Application.Run("Project_IsCleanedUp")
+isProjectCleanedUp = objWorkbook.Application.Run("Project_IsDataCleanedUp")
 
-if isProjectCleanedUp = False Then
-    objWorkbook.Application.Run "Project_CleanUp"
+If isProjectCleanedUp = False Then
+    isProjectCleanedUp = objWorkbook.Application.Run "Project_TryCleanUpData"
+
+    If isProjectCleanedUp = False then
+        WScript.Echo "Failed to clean-up date"
+        WScript.Quit(0)
+    End If
     objWorkbook.Save
 end if
 

@@ -2,8 +2,8 @@ Attribute VB_Name = "Project"
 Option Explicit
 Option Private Module
 
-Public Function GetProjectFiles(ByVal thirdParty As Boolean) As collection
-    Dim files As New collection
+Public Function GetProjectFiles(ByVal thirdParty As Boolean) As Collection
+    Dim files As New Collection
 
     If thirdParty Then
         files.Add "VBA-Dictionary/Dictionary.cls"
@@ -16,11 +16,15 @@ Public Function GetProjectFiles(ByVal thirdParty As Boolean) As collection
     Else
         files.Add "src/KeysAndSecrets.bas"
         files.Add "src/Main.bas"
+        files.Add "src/Actions.bas"
         files.Add "src/BinanceAPI.bas"
+        files.Add "src/BinanceOp.cls"
+        files.Add "src/BinanceOps.cls"
         files.Add "src/BinanceCoin.cls"
         files.Add "src/BinanceCoins.cls"
         files.Add "src/BinanceAssets.cls"
-        files.Add "src/ButtonsEvents.bas"
+        files.Add "src/BinanceLedger.cls"
+        files.Add "src/BinanceLedgers.bas"
         files.Add "src/TableWallet.bas"
         files.Add "src/TableUserInfo.bas"
         files.Add "src/TableCurrencies.bas"

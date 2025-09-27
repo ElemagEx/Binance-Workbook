@@ -11,25 +11,29 @@ Private Const COL_FUNDING_AMOUNT As String = "Funding Amount"
 Private Const COL_EARN_AMOUNT As String = "Earn Amount"
 Private Const COL_DYNAMIC_AMOUNT As String = "Dynamic Amount"
 
-Public Property Get Tickers() As collection
-    Set Tickers = New collection
+Public Property Get Tickers() As Collection
+    Set Tickers = New Collection
 
     Dim col As ListColumn
     Set col = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME).ListColumns(COL_TICKER)
     
     If Not col.DataBodyRange Is Nothing Then
         Dim i As Long
-        For i = 1 To col.DataBodyRange.Count
+        For i = 1 To col.DataBodyRange.count
             Tickers.Add col.DataBodyRange(i).Value
         Next i
     End If
 End Property
 
-Public Function IsDataCleanedUp()
+Public Sub CheckTicker(ByVal ticker As String)
+    xFindTickerRowIndex ticker, True
+End Sub
+
+Public Function IsDataCleanedUp() As Boolean
     Dim table As ListObject
     Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
 
-    IsCleanedUp = (table.ListRows.Count = 0)
+    IsDataCleanedUp = (table.ListRows.count = 0)
 End Function
 
 Public Sub CleanUpData()
@@ -40,21 +44,21 @@ Public Sub CleanUpData()
         table.DataBodyRange.Delete
     End If
 
-    TableLastUpdate.Wallet = 0
+    TableLastUpdate.wallet = 0
 End Sub
 
 Public Sub ClearData()
     Dim table As ListObject
     Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
     
-    If table.ListRows.Count > 0 Then
+    If table.ListRows.count > 0 Then
         table.ListColumns(COL_SPOT_AMOUNT).DataBodyRange.ClearContents
         table.ListColumns(COL_FUNDING_AMOUNT).DataBodyRange.ClearContents
         table.ListColumns(COL_EARN_AMOUNT).DataBodyRange.ClearContents
         table.ListColumns(COL_DYNAMIC_AMOUNT).DataBodyRange.ClearContents
     End If
 
-    TableLastUpdate.Wallet = 0
+    TableLastUpdate.wallet = 0
 End Sub
 
 Public Sub UpdateData()
@@ -71,34 +75,34 @@ Public Sub UpdateData()
     Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
     
     Dim ticker As Variant
-    For Each ticker In assets.Wallet.Keys
+    For Each ticker In assets.wallet.Keys
         
         Dim rowIndex As Long
         rowIndex = xFindTickerRowIndex(ticker, True)
         
         Dim name As Variant
-        For Each name In assets.Wallet(ticker).Keys
-            table.ListColumns(name).DataBodyRange(rowIndex) = assets.Wallet(ticker)(name)
+        For Each name In assets.wallet(ticker).Keys
+            table.ListColumns(name).DataBodyRange(rowIndex) = assets.wallet(ticker)(name)
         Next name
         
     Next ticker
     
-    TableLastUpdate.Wallet = now()
+    TableLastUpdate.wallet = now()
 End Sub
 
 Private Function xFindTickerRowIndex(ByVal ticker As String, ByVal addIfNotFound As Boolean) As Long
     Dim table As ListObject
     Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
     
-    Dim cell As range
-    If table.ListRows.Count > 0 Then
+    Dim cell As Range
+    If table.ListRows.count > 0 Then
         Set cell = table.ListColumns(COL_TICKER).DataBodyRange.Find(what:=ticker, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
     End If
     
     Dim index As Long
     
     If Not cell Is Nothing Then
-        index = cell.row - table.HeaderRowRange.row
+        index = cell.Row - table.HeaderRowRange.Row
     ElseIf Not addIfNotFound Then
         index = 0
     Else

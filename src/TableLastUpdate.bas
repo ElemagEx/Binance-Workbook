@@ -21,7 +21,7 @@ Public Function IsDataCleanedUp()
     Dim table As ListObject
     Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
 
-    IsCleanedUp = IsEmpty(table.ListColumns(COL_WALLET).DataBodyRange(1).Value) _
+    IsDataCleanedUp = IsEmpty(table.ListColumns(COL_WALLET).DataBodyRange(1).Value) _
         And IsEmpty(table.ListColumns(COL_FIAT_BUY).DataBodyRange(1).Value) _
         And IsEmpty(table.ListColumns(COL_FIAT_SELL).DataBodyRange(1).Value) _
         And IsEmpty(table.ListColumns(COL_FIAT_DEPOSIT).DataBodyRange(1).Value) _
@@ -35,10 +35,17 @@ Public Function IsDataCleanedUp()
 End Function
 
 Public Sub CleanUpData()
+    ClearData True
+End Sub
+
+Public Sub ClearData(ByVal clearWalletData As Boolean)
     Dim table As ListObject
     Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
     
-    table.ListColumns(COL_WALLET).DataBodyRange.ClearContents
+    If clearWalletData Then
+        table.ListColumns(COL_WALLET).DataBodyRange.ClearContents
+    End If
+
     table.ListColumns(COL_FIAT_BUY).DataBodyRange.ClearContents
     table.ListColumns(COL_FIAT_SELL).DataBodyRange.ClearContents
     table.ListColumns(COL_FIAT_DEPOSIT).DataBodyRange.ClearContents
@@ -51,16 +58,16 @@ Public Sub CleanUpData()
     table.ListColumns(COL_DRIBBLETS).DataBodyRange.ClearContents
 End Sub
 
-Public Property Get Wallet() As Date
-    Wallet = xGetLastUpdate(COL_WALLET)
+Public Property Get wallet() As Date
+    wallet = xGetLastUpdate(COL_WALLET)
 End Property
 
-Public Property Let Wallet(ByVal val As Date)
+Public Property Let wallet(ByVal val As Date)
     xSetLastUpdate COL_WALLET, val
 End Property
 
 Public Property Get FiatBuy() As Date
-    Wallet = xGetLastUpdate(COL_FIAT_BUY)
+    FiatBuy = xGetLastUpdate(COL_FIAT_BUY)
 End Property
 
 Public Property Let FiatBuy(ByVal val As Date)
@@ -68,20 +75,20 @@ Public Property Let FiatBuy(ByVal val As Date)
 End Property
 
 Public Property Get FiatSell() As Date
-    Wallet = xGetLastUpdate(COL_FIAT_SELL)
+    FiatSell = xGetLastUpdate(COL_FIAT_SELL)
 End Property
 
 Public Property Let FiatSell(ByVal val As Date)
     xSetLastUpdate COL_FIAT_SELL, val
 End Property
 Public Function xGetLastUpdate(ByVal name As String) As Date
-    Dim cell As range
+    Dim cell As Range
     Set cell = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME).ListColumns(name).DataBodyRange(1)
     xGetLastUpdate = IIf(IsEmpty(cell.Value), TableUserInfo.ActivityStartDate, CDate(cell.Value))
 End Function
 
 Public Sub xSetLastUpdate(ByVal name As String, ByVal val As Date)
-    Dim cell As range
+    Dim cell As Range
     Set cell = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME).ListColumns(name).DataBodyRange(1)
     If val = 0 Then
         cell.ClearContents

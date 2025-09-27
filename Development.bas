@@ -1,33 +1,129 @@
-Option Explicit On
+Attribute VB_Name = "Development"
+Option Explicit
 
 Private Const PROJECT_FILE = "project.bas"
+Private Const THIS_FILE = "development.bas"
 
-Private Sub CleanUpAllData(ByVal removeLedgerSheets As Boolean)
-
+Public Sub Project_PreferedAction1()
+    Project_ExportFiles
 End Sub
 
-Private Function GetNameOfFile(ByVal file As String) As String
+Public Sub Project_PreferedAction2()
+    Project_CleanUpData
+End Sub
+
+Public Sub Project_ImportFiles()
+    Dim dir As String
+    dir = ActiveWorkbook.path
+
+    xHandleFile dir, PROJECT_FILE, False, True, True
+
+    xHandleProjectFiles dir, False, True, True
+End Sub
+
+Public Sub Project_ExportFiles()
+    If xIsProjectInactive() Then
+        Exit Sub
+    End If
+
+    Dim dir As String
+    dir = ActiveWorkbook.path
+
+    xHandleProjectFiles dir, True, False, False
+
+    xHandleFile dir, PROJECT_FILE, True, False, False
+    
+    xHandleFile dir, THIS_FILE, True, False, False
+End Sub
+
+Public Sub Project_CleanUpFiles()
+    If xIsProjectInactive() Then
+        Exit Sub
+    End If
+
+    Dim dir As String
+    dir = ActiveWorkbook.path
+
+    xHandleProjectFiles dir, False, True, False
+
+    xHandleFile dir, PROJECT_FILE, False, True, False
+End Sub
+
+Public Sub Project_CleanUpData()
+    If xIsProjectInactive() Then
+        Exit Sub
+    End If
+    
+    xCleanUpDate
+End Sub
+
+Public Function Project_TryCleanUpData() As Boolean
+    Project_TryCleanUpData = False
+    
+    If xIsProjectInactive() Then
+        Exit Function
+    End If
+    
+    xCleanUpDate
+
+    Project_TryCleanUpData = True
+End Function
+
+Public Function Project_IsDataCleanedUp()
+    Project_IsDataCleanedUp = False
+    
+    If xIsProjectInactive() Then
+        Exit Function
+    End If
+    
+    Project_IsDataCleanedUp = xIsDateCleanup()
+End Function
+
+Private Sub xCleanUpDate()
+    TableCurrencies.CleanUpData
+    
+    TableLastUpdate.CleanUpData
+    TableUserInfo.CleanUpData
+    TableWallet.CleanUpData
+    
+    BinanceLedgers.RemoveAll
+End Sub
+
+Private Function xIsDateCleanup() As Boolean
+    xIsDateCleanup = _
+        TableCurrencies.IsDataCleanedUp And _
+        TableLastUpdate.IsDataCleanedUp And _
+        TableUserInfo.IsDataCleanedUp And _
+        TableWallet.IsDataCleanedUp And _
+        Not BinanceLedgers.HasExistingLedgers
+End Function
+
+Public Function xIsProjectInactive() As Boolean
+    xIsProjectInactive = (xGetComponent(xGetNameOfFile(PROJECT_FILE)) Is Nothing)
+End Function
+
+Private Function xGetNameOfFile(ByVal file As String) As String
     Dim name As String
     name = Mid(file, InStrRev(file, "/") + 1)
     name = Left(name, InStr(1, name, ".") - 1)
-    GetNameOfFile = name
+    xGetNameOfFile = name
 End Function
 
-Private Function GetComponent(ByVal name As String) As VBComponent
-    Set GetComponent = Nothing
+Private Function xGetComponent(ByVal name As String) As VBComponent
+    Set xGetComponent = Nothing
     
     Dim component As VBComponent
     For Each component In ThisWorkbook.VBProject.VBComponents
         If StrComp(component.name, name, vbTextCompare) = 0 Then
-            Set GetComponent = component
+            Set xGetComponent = component
             Exit For
         End If
     Next component
 End Function
 
-Private Sub HandleFile(ByVal dir As String, ByVal file As String, ByVal export As Boolean, ByVal import As Boolean, ByVal override As Boolean)
+Private Sub xHandleFile(ByVal dir As String, ByVal file As String, ByVal export As Boolean, ByVal remove As Boolean, ByVal import As Boolean)
     Dim name As String
-    name = GetNameOfFile(file)
+    name = xGetNameOfFile(file)
 
     Dim path As String
     path = dir & "/" & file
@@ -37,7 +133,7 @@ Private Sub HandleFile(ByVal dir As String, ByVal file As String, ByVal export A
     End If
 
     Dim component As VBComponent
-    Set component = GetComponent(name)
+    Set component = xGetComponent(name)
     If component Is Nothing Then
         If import Then
             ThisWorkbook.VBProject.VBComponents.import path
@@ -46,73 +142,28 @@ Private Sub HandleFile(ByVal dir As String, ByVal file As String, ByVal export A
         If export Then
             component.export path
         End If
-        If override Then
-            ThisWorkbook.VBProject.VBComponents.Remove component
+        If remove Then
+            ThisWorkbook.VBProject.VBComponents.remove component
         End If
-        If import And override Then
+        If import Then
             ThisWorkbook.VBProject.VBComponents.import path
         End If
     End If
 End Sub
 
-Private Sub HandleProjectFiles(ByVal dir As String, ByVal export As Boolean, ByVal import As Boolean, ByVal override As Boolean)
+Private Sub xHandleProjectFiles(ByVal dir As String, ByVal export As Boolean, ByVal remove As Boolean, ByVal import As Boolean)
     Dim file As Variant
-    Dim files As collection
+    Dim files As Collection
     
     Set files = GetProjectFiles(True)
     
     For Each file In files
-        HandleFile dir, file, False, import, (override And Not import)
+        xHandleFile dir, file, False, remove, import
     Next file
 
     Set files = GetProjectFiles(False)
-   
+
     For Each file In files
-        HandleFile dir, file, export, import, override
+        xHandleFile dir, file, export, remove, import
     Next file
 End Sub
-
-Public Sub Project_ImportFiles()
-    Dim dir As String
-    dir = ActiveWorkbook.path
-
-    HandleFile dir, PROJECT_FILE, False, True, True
-
-    HandleProjectFiles dir, False, True, True
-End Sub
-
-Public Sub Project_ExportFiles()
-    If GetComponent(GetNameOfFile(PROJECT_FILE)) Is Nothing Then
-        Exit Sub
-    End If
-
-    Dim dir As String
-    dir = ActiveWorkbook.path
-
-    HandleProjectFiles dir, True, False, False
-
-    HandleFile dir, PROJECT_FILE, True, False, False
-End Sub
-
-Public Sub Project_CleanUp()
-    If GetComponent(GetNameOfFile(PROJECT_FILE)) Is Nothing Then
-        Exit Sub
-    End If
-
-    CleanUpAllData True
-
-    Dim dir As String
-    dir = ActiveWorkbook.path
-
-    HandleProjectFiles dir, False, False, True
-
-    HandleFile dir, PROJECT_FILE, False, False, True
-End Sub
-
-Public Sub Project_PreferedAction1()
-    ExportProjectFiles
-End Sub
-
-Public Function Project_IsCleanedUp() As Boolean
-    IsProjectCleanedUp = True '(GetComponent(GetNameOfFile(PROJECT_FILE)) Is Nothing)
-End Function

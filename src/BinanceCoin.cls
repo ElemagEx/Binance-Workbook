@@ -16,5 +16,5 @@ Public bases As Long
 Public quotes As Long
 Public precision As Long
 Public format As String
-Public trades As New Dictionary
+Public markets As New Dictionary
 

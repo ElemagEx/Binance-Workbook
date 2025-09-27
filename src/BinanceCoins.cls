@@ -35,7 +35,7 @@ Public Sub AddTicker(ByVal ticker As String)
 End Sub
 
 Public Sub collectBasicInfo(ByVal updateOnlyExisting As Boolean)
-    Dim list As collection
+    Dim list As Collection
     Set list = BinanceAPI.Wallet_GetAllCoinsInfo()
 
     If list Is Nothing Then
@@ -77,7 +77,7 @@ Public Sub collectExchangeInfo()
     
     m_tz = info("timezone")
     
-    Dim symbols As collection
+    Dim symbols As Collection
     Set symbols = info("symbols")
     
     Dim symbol As Dictionary
@@ -96,8 +96,8 @@ Public Sub collectExchangeInfo()
         
             ticker = symbol("quoteAsset")
             If m_coins.Exists(ticker) Then
-                If Not coin.trades.Exists(ticker) Then
-                    coin.trades.Add ticker, False
+                If Not coin.markets.Exists(ticker) Then
+                    coin.markets.Add ticker, False
                 End If
                 
                 Set coin = m_coins(ticker)

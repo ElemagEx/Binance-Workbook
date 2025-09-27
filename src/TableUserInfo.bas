@@ -16,11 +16,11 @@ Public Function IsDataCleanedUp()
     Dim table As ListObject
     Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
 
-    IsCleanedUp = IsEmpty(table.ListColumns(COL_ACCOUNT_UID).DataBodyRange(1).Value) _
-        And IsEmpty(table.ListColumns(COL_ACCOUNT_MAKER_FEE).DataBodyRange(1).Value) _
-        And IsEmpty(table.ListColumns(COL_ACCOUNT_TAKER_FEE).DataBodyRange(1).Value) _
-        And IsEmpty(table.ListColumns(COL_ACCOUNT_BUYER_FEE).DataBodyRange(1).Value) _
-        And IsEmpty(table.ListColumns(COL_ACCOUNT_SELLER_FEE).DataBodyRange(1).Value)
+    IsDataCleanedUp = IsEmpty(table.ListColumns(COL_UID).DataBodyRange(1).Value) _
+        And IsEmpty(table.ListColumns(COL_MAKER_FEE).DataBodyRange(1).Value) _
+        And IsEmpty(table.ListColumns(COL_TAKER_FEE).DataBodyRange(1).Value) _
+        And IsEmpty(table.ListColumns(COL_BUYER_FEE).DataBodyRange(1).Value) _
+        And IsEmpty(table.ListColumns(COL_SELLER_FEE).DataBodyRange(1).Value)
 End Function
 
 Public Sub CleanUpData()

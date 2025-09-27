@@ -9,47 +9,16 @@ Public Const WALLET_EARN As String = "Earn"
 Public Const WALLET_DYNAMIC As String = "Dynamic"
 
 ' Prefixes A0..FF are reserved for dust log
-Public Const ID_PREFIX_DRIBBLET As String = "FF-"
-Public Const ID_PREFIX_WALLET_IN As String = "WI-"
-Public Const ID_PREFIX_WALLET_OUT As String = "WO-"
-Public Const ID_PREFIX_WALLET_SEI As String = "WS-"
-Public Const ID_PREFIX_WALLET_SEO As String = "WR-"
-
-Private Const ID_PREFIX_CONVERT_IN As String = "VI-"
-Private Const ID_PREFIX_CONVERT_OUT As String = "VO-"
-Private Const ID_PREFIX_CONVERT_FSI As String = "VF-" ' transfer from funding to spot before convert to spot asset
-Private Const ID_PREFIX_CONVERT_FSO As String = "VG-" ' transfer from funding to spot before convert to spot asset
-Private Const ID_PREFIX_CONVERT_ESI As String = "VE-" ' transfer from earn to spot before convert to spot asset
-Private Const ID_PREFIX_CONVERT_ESO As String = "VD-" ' transfer from earn to spot before convert to spot asset
-Private Const ID_PREFIX_CONVERT_EFI As String = "VX-" ' input transfer from earn to funding before convert funding asset
-Private Const ID_PREFIX_CONVERT_EFO As String = "VY-" ' output transfer from earn to funding before convert funding asset
-Private Const ID_PREFIX_DISTRIBUTION As String = "RI-"
-Private Const ID_PREFIX_TRADE As String = "XC-"
-Private Const ID_PREFIX_FIAT_BUY As String = "TB-"
-Private Const ID_PREFIX_FIAT_SELL As String = "TS-"
-Private Const ID_PREFIX_FIAT_DEPOSIT As String = "TD-"
-Private Const ID_PREFIX_FIAT_WITHDRAW As String = "TW-"
-Private Const ID_PREFIX_CRYPTO_DEPOSIT As String = "ND-"
-Private Const ID_PREFIX_CRYPTO_WITHDRAW As String = "NW-"
 
 Private Const SHEET_MISC As String = "Misc"
 Private Const SHEET_ASSETS As String = "Assets"
 Private Const SHEET_CURRENCIES As String = "Currencies"
 Private Const SHEET_LEDGER_TEMPLATE As String = "Ledger Template"
 
-Private Const SHEET_LEDGER_SUFFIX As String = "Ledger"
 
-Private Const TABLE_CURRENCIES As String = "Currencies"
-Private Const TABLE_ACCOUNT As String = "Account"
-Private Const TABLE_ASSETS As String = "Assets"
-Private Const TABLE_LAST_UPDATE As String = "LastUpdate"
 Private Const TABLE_CONVERTS As String = "Converts"
 Private Const TABLE_DRIBBLETS As String = "Dribblets"
 
-Private Const TABLE_INFO As String = "Info"
-Private Const TABLE_SUMMARY As String = "Summary"
-Private Const TABLE_TRADES As String = "Trades"
-Private Const TABLE_DETAILS As String = "Details"
 
 
 Private Const COL_ASSETS_TICKER As String = "Ticker"
@@ -89,60 +58,6 @@ Private Const COL_DRIBBLETS_VOLUME_1 As String = COL_DRIBBLETS_VOLUME_PREFIX & 1
 
 Private Const COL_DRIBBLETS_DIFF = COL_DRIBBLETS_TICKER ' (columns.Count - COL_DRIBBLETS_DIFF) / 4 == <number-of-coins>
 Private Const COL_DRIBBLETS_LAST = COL_DRIBBLETS_VOLUME_1
-
-Private Const COL_INFO_KEY As String = "Key"
-Private Const COL_INFO_VALUE As String = "Value"
-
-Private Const ROW_INFO_TICKER As Long = 1
-Private Const ROW_INFO_NAME As Long = 2
-Private Const ROW_INFO_TYPE As Long = 3
-Private Const ROW_INFO_TOTAL As Long = 4
-Private Const ROW_INFO_BALANCE As Long = 7
-Private Const ROW_INFO_DYNAMIC As Long = 8
-Private Const ROW_INFO_DIVIATION As Long = 9
-Private Const ROW_INFO_ACTIVITY_START_DATE As Long = 10
-
-Private Const ROW_INFO_TRADES As Long = 100
-Private Const ROW_INFO_PRECISION As Long = 101
-Private Const ROW_INFO_FORMAT As Long = 102
-
-Private Const COL_TRADES_TRADES As String = "Trades"
-Private Const COL_TRADES_SYMBOLS As String = "Symbols"
-
-Private Const COL_SUMMARY_ACQUIRED As String = "Acquired"
-Private Const COL_SUMMARY_SPENT As String = "Spent"
-Private Const COL_SUMMARY_CHARGE As String = "Charge"
-Private Const COL_SUMMARY_BALANCE As String = "Balance"
-
-Public Const COL_DETAILS_STAMP As String = "Stamp"
-Public Const COL_DETAILS_WALLET As String = "Wallet"
-Public Const COL_DETAILS_OPERATION As String = "Operation"
-Public Const COL_DETAILS_ACQUIRED As String = "Acquired"
-Public Const COL_DETAILS_SPENT As String = "Spent"
-Public Const COL_DETAILS_TICKER As String = "Ticker"
-Public Const COL_DETAILS_PRICE As String = "Price"
-Public Const COL_DETAILS_AMOUNT As String = "Amount"
-Public Const COL_DETAILS_CHARGE As String = "Charge"
-Public Const COL_DETAILS_BNB_FEE As String = "BNB Fee"
-Public Const COL_DETAILS_NOTE As String = "Note"
-Public Const COL_DETAILS_ID As String = "ID"
-
-Public Const OPERATION_BUY As String = "buy"
-Public Const OPERATION_SELL As String = "sell"
-Public Const OPERATION_INCOME As String = "income"
-Public Const OPERATION_EXPENCE As String = "expence"
-Public Const OPERATION_DUST_IN As String = "dust-in"
-Public Const OPERATION_DUST_OUT As String = "dust-out"
-Public Const OPERATION_FIAT_BUY As String = "fiat-buy"
-Public Const OPERATION_FIAT_SELL As String = "fiat-sell"
-Public Const OPERATION_DEPOSIT As String = "deposit"
-Public Const OPERATION_WITHDRAW As String = "withdraw"
-Public Const OPERATION_WALLET_IN As String = "wallet-in"
-Public Const OPERATION_WALLET_OUT As String = "wallet-out"
-Public Const OPERATION_CONVERT_IN As String = "convert-in"
-Public Const OPERATION_CONVERT_OUT As String = "convert-out"
-Public Const OPERATION_COMMISSION As String = "commission"
-Public Const OPERATION_DISTRIBUTION As String = "distribution"
 
 Private Const COLLECTION_LIMIT_TRADE As Long = 1000
 Private Const COLLECTION_LIMIT_CONVERT As Long = 1000
@@ -1634,39 +1549,6 @@ Private Function findWorksheet(ByVal ticker As String, Optional createIfDoesNotE
         Set findWorksheet = createNewLedgerWorksheet(ticker, name)
     End If
 End Function
-' Creates new ledger worksheet
-Private Function createNewLedgerWorksheet(ByVal ticker As String, ByVal name As String) As Worksheet
-    Set createNewLedgerWorksheet = Nothing
-    Dim lastWorksheet As Worksheet
-    Set lastWorksheet = ThisWorkbook.Sheets(ThisWorkbook.Sheets.count())
-    
-    Dim templateLedgerWorksheet As Worksheet
-    Set templateLedgerWorksheet = ThisWorkbook.Sheets(SHEET_LEDGER_TEMPLATE)
-    
-    templateLedgerWorksheet.Copy After:=lastWorksheet
-    
-    Dim ws As Worksheet
-    Set ws = ThisWorkbook.Sheets(ThisWorkbook.Sheets.count())
-    
-    Set createNewLedgerWorksheet = ws
-    
-    ws.name = name
-    
-    Dim table As ListObject
-    For Each table In ws.ListObjects
-        If InStr(table.name, TABLE_INFO) > 0 Then
-            table.name = ticker & "_" & TABLE_INFO
-        ElseIf InStr(table.name, TABLE_SUMMARY) > 0 Then
-            table.name = ticker & "_" & TABLE_SUMMARY
-        ElseIf InStr(table.name, TABLE_TRADES) > 0 Then
-            table.name = ticker & "_" & TABLE_TRADES
-        ElseIf InStr(table.name, TABLE_DETAILS) > 0 Then
-            table.name = ticker & "_" & TABLE_DETAILS
-        End If
-    Next table
-    
-    Call resetLedgerWorksheet(ws, ticker, True)
-End Function
 
 Private Sub resetAllUpdateTimes()
     Dim table As ListObject
@@ -1678,152 +1560,13 @@ Private Sub resetAllUpdateTimes()
     Next i
 End Sub
 
-Private Sub resetLedgerWorksheet(ByVal ws As Worksheet, ByVal ticker As String, ByVal clearDetails As Boolean)
-    Dim info As Dictionary
-    Set info = BinanceFunc_Currencies_GetTickerInfo(ticker)
-
-    Dim tickerFormat As String
-    If IsEmpty(info(ROW_INFO_TYPE)) Then
-        tickerFormat = "#,##0.0???????"
-    Else
-        tickerFormat = IIf(info(ROW_INFO_TYPE) = "Fiat", "#,##0.00", "#,##0.0" + String(info(ROW_INFO_PRECISION) - 1, "?"))
-    End If
-
-    Dim table As ListObject
-    
-    '
-    ' Init <Ticker>_Info table
-    '
-    Set table = ws.ListObjects(ticker + "_" + TABLE_INFO)
-    
-    Dim key As Variant
-    For Each key In info.Keys
-        If key <= table.ListRows.count Then
-            table.ListColumns(COL_INFO_VALUE).DataBodyRange(key).value = info(key)
-        End If
-    Next key
-    
-    table.ListColumns(COL_INFO_VALUE).DataBodyRange(ROW_INFO_TOTAL).NumberFormat = tickerFormat
-    table.ListColumns(COL_INFO_VALUE).DataBodyRange(ROW_INFO_BALANCE).NumberFormat = tickerFormat
-    table.ListColumns(COL_INFO_VALUE).DataBodyRange(ROW_INFO_DYNAMIC).NumberFormat = tickerFormat
-    table.ListColumns(COL_INFO_VALUE).DataBodyRange(ROW_INFO_DIVIATION).NumberFormat = tickerFormat
-
-    '
-    ' Init <Ticker>_Summary table
-    '
-    Set table = ws.ListObjects(ticker + "_" + TABLE_SUMMARY)
-    
-    table.ListColumns(COL_SUMMARY_ACQUIRED).range.NumberFormat = tickerFormat
-    table.ListColumns(COL_SUMMARY_SPENT).range.NumberFormat = tickerFormat
-    table.ListColumns(COL_SUMMARY_CHARGE).range.NumberFormat = tickerFormat
-    table.ListColumns(COL_SUMMARY_BALANCE).range.NumberFormat = tickerFormat
-    
-    '
-    ' Init <Ticker>_Details table
-    '
-    Set table = ws.ListObjects(ticker + "_" + TABLE_DETAILS)
-    
-    If clearDetails And Not table.DataBodyRange Is Nothing Then
-        table.DataBodyRange.Delete
-    End If
-    
-    table.ListColumns(COL_DETAILS_ACQUIRED).range.NumberFormat = tickerFormat
-    table.ListColumns(COL_DETAILS_SPENT).range.NumberFormat = tickerFormat
-    
-    '
-    ' Init <Ticker>_Trades table
-    '
-    Set table = ws.ListObjects(ticker + "_" + TABLE_TRADES)
-    
-    Do While table.ListColumns.count > 2
-        table.ListColumns(2).Delete
-    Loop
-    
-    Dim trades As Dictionary
-    Set trades = info(ROW_INFO_TRADES)
-    
-    Dim col As ListColumn
-    Dim frm As String
-    
-    Dim trade As Variant
-    For Each trade In trades.Keys
-        If VarType(trades(trade)) = vbBoolean Then
-            Set col = table.ListColumns.Add(table.ListColumns.count)
-            col.name = trade
-            col.DataBodyRange(1).value = trades(trade)
-        End If
-    Next trade
-    
-    If table.ListColumns.count <= 2 Then
-        frm = "=0"
-    Else
-        frm = _
-            "=COUNTIF(" & ticker & "_" & TABLE_TRADES & "[@[" & _
-            table.ListColumns(2).name & _
-            "]:[" & _
-            table.ListColumns(table.ListColumns.count - 1).name & _
-            "]],TRUE)"
-    End If
-    
-    table.ListColumns(COL_TRADES_TRADES).DataBodyRange(1).value = ticker
-    table.ListColumns(COL_TRADES_SYMBOLS).DataBodyRange(1).formula = frm
-End Sub
-Private Sub sortLedgerDetailsRecord(ByVal ws As Worksheet)
-    Dim ticker As String
-    
-    If Not isThisLedgerWorksheet(ws, ticker) Then
-        Exit Sub
-    End If
-    
-    Dim table As ListObject
-    Set table = ws.ListObjects(ticker + "_" + TABLE_DETAILS)
-
-    Dim col As ListColumn
-    Set col = table.ListColumns(COL_DETAILS_STAMP)
-    
-    If Not col.DataBodyRange Is Nothing Then
-        With table.Sort
-            .SortFields.Clear
-            .SortFields.Add key:=col.DataBodyRange, SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
-            .Header = xlYes
-            .Apply
-        End With
-    End If
-End Sub
-Private Sub addLedgerDetailsRecord(ByVal ws As Worksheet, ByVal record As Dictionary)
-    Dim ticker As String
-    
-    If Not isThisLedgerWorksheet(ws, ticker) Then
-        Exit Sub
-    End If
-    
-    Dim table As ListObject
-    Set table = ws.ListObjects(ticker + "_" + TABLE_DETAILS)
-    
-    If table.ListRows.count > 0 Then
-        Dim cell As range
-        Set cell = table.ListColumns(COL_DETAILS_ID).DataBodyRange.Find(what:=record(COL_DETAILS_ID), LookIn:=xlValues, LookAt:=xlWhole)
-    
-        If Not cell Is Nothing Then
-            Exit Sub
-        End If
-    End If
-    
-    Dim rowNum As Long
-    rowNum = table.ListRows.Add().range.row - table.HeaderRowRange.row
-    
-    Dim key As Variant
-    For Each key In record.Keys
-        table.ListColumns(key).DataBodyRange(rowNum).value = record(key)
-    Next key
-End Sub
 Private Sub delLedgerDetailsRecord(ByVal ws As Worksheet, ByVal record As Dictionary)
     Dim ticker As String
-    
+
     If Not isThisLedgerWorksheet(ws, ticker) Then
         Exit Sub
     End If
-    
+
     Dim table As ListObject
     Set table = ws.ListObjects(ticker + "_" + TABLE_DETAILS)
     
@@ -1943,44 +1686,6 @@ Private Function setLastUpdate(ByVal colName As String, Optional ByVal newTime A
     setLastUpdate = IIf(newTime <> 0, newTime, now())
     
     cell.value = setLastUpdate
-End Function
-
-Private Function BinanceFunc_Currencies_GetTickerInfo(ByVal ticker As String) As Dictionary
-    Dim info As New Dictionary
-    
-    Set BinanceFunc_Currencies_GetTickerInfo = info
-    
-    Dim currenciesTable As ListObject
-    Set currenciesTable = ThisWorkbook.Sheets(SHEET_CURRENCIES).ListObjects(TABLE_CURRENCIES)
-
-    Dim currenciesTickerCol As ListColumn
-    Set currenciesTickerCol = currenciesTable.ListColumns(COL_CURRENCIES_TICKER)
-    
-    Dim trades As New Dictionary
-    
-    Dim cell As range
-    Set cell = currenciesTickerCol.DataBodyRange.Find(what:=ticker, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
-
-    If cell Is Nothing Then
-        info.Add ROW_INFO_TICKER, ticker
-    Else
-        Dim rowNum As Long
-        rowNum = cell.row - currenciesTable.HeaderRowRange.row
-        info.Add ROW_INFO_TICKER, currenciesTable.ListColumns(COL_CURRENCIES_TICKER).DataBodyRange(rowNum).value
-        info.Add ROW_INFO_NAME, currenciesTable.ListColumns(COL_CURRENCIES_NAME).DataBodyRange(rowNum).value
-        info.Add ROW_INFO_TYPE, currenciesTable.ListColumns(COL_CURRENCIES_TYPE).DataBodyRange(rowNum).value
-        info.Add ROW_INFO_PRECISION, currenciesTable.ListColumns(COL_CURRENCIES_PRECISION).DataBodyRange(rowNum).value
-        info.Add ROW_INFO_FORMAT, currenciesTable.ListColumns(COL_CURRENCIES_FORMAT).DataBodyRange(rowNum).NumberFormat
-        
-        Dim i As Long
-        For i = CURRENCIES_FIRST_TRADE_COLUMN_INDEX To currenciesTable.ListColumns.count
-            Dim col As ListColumn
-            Set col = currenciesTable.ListColumns(i)
-            trades.Add col.name, col.DataBodyRange(rowNum).value
-        Next i
-    End If
-
-    info.Add ROW_INFO_TRADES, trades
 End Function
 
 Private Function BinanceFunc_Currencies_GetTickerQuotes(ByVal ticker As String) As collection
