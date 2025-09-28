@@ -168,7 +168,7 @@ Private Sub xReset(ByVal clearDetails)
     Set table = m_ws.ListObjects(xTableName(TABLE_TRIVIA))
     
     table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TICKER).Value = coin.ticker
-    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_NAME).Value = coin.ticker
+    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_NAME).Value = coin.name
     table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TYPE).Value = IIf(coin.isFiat, STR_FIAT, STR_CRYPTO)
     
     table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TOTAL).NumberFormat = numFormat

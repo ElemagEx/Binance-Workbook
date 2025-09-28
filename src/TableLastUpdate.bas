@@ -81,6 +81,22 @@ End Property
 Public Property Let FiatSell(ByVal val As Date)
     xSetLastUpdate COL_FIAT_SELL, val
 End Property
+
+Public Property Get FiatDeposit() As Date
+    FiatDeposit = xGetLastUpdate(COL_FIAT_DEPOSIT)
+End Property
+
+Public Property Let FiatDeposit(ByVal val As Date)
+    xSetLastUpdate COL_FIAT_DEPOSIT, val
+End Property
+
+Public Property Get FiatWithdraw() As Date
+    FiatWithdraw = xGetLastUpdate(COL_FIAT_WITHDRAW)
+End Property
+
+Public Property Let FiatWithdraw(ByVal val As Date)
+    xSetLastUpdate COL_FIAT_WITHDRAW, val
+End Property
 Public Function xGetLastUpdate(ByVal name As String) As Date
     Dim cell As Range
     Set cell = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME).ListColumns(name).DataBodyRange(1)

@@ -1,17 +1,17 @@
 Attribute VB_Name = "Actions"
 Option Explicit
 
-Public Sub Action_ClearWallet()
+Public Sub Action_ClearAssets()
     ThisWorkbook.Sheets(SHEET_ASSETS).Activate
     TableWallet.ClearData
 End Sub
 
-Public Sub Action_UpdateWallet()
+Public Sub Action_UpdateAssets()
     ThisWorkbook.Sheets(SHEET_ASSETS).Activate
     TableWallet.UpdateData
 End Sub
 
-Public Sub Action_UpdateUsedCurrencies()
+Public Sub Action_CollectUsedCurrencies()
     ThisWorkbook.Sheets(SHEET_CURRENCIES).Activate
     TableCurrencies.UpdateData
 End Sub
@@ -25,11 +25,75 @@ Public Sub Action_CompactCurrencies()
     ThisWorkbook.Sheets(SHEET_CURRENCIES).Activate
     TableCurrencies.CompactData
 End Sub
+
+Public Sub Action_UpdateTransfers()
+
+End Sub
+
+Public Sub Action_UpdateConversions()
+
+End Sub
+
+Public Sub Action_UpdateDustLog()
+
+End Sub
+
 Public Sub Action_UpdateFiatBuys()
     Dim ops As New BinanceOps
     
     ops.Collect_FiatBuys TableLastUpdate.FiatBuy
     
     BinanceLedgers.PopulateOperations ops
+    
+    TableLastUpdate.FiatBuy = ops.endDate
 End Sub
 
+Public Sub Action_UpdateFiatSells()
+    Dim ops As New BinanceOps
+    
+    ops.Collect_FiatSells TableLastUpdate.FiatSell
+    
+    BinanceLedgers.PopulateOperations ops
+    
+    TableLastUpdate.FiatSell = ops.endDate
+End Sub
+
+Public Sub Action_UpdateFiatDeposits()
+    Dim ops As New BinanceOps
+    
+    ops.Collect_FiatDeposits TableLastUpdate.FiatDeposit
+    
+    BinanceLedgers.PopulateOperations ops
+    
+    TableLastUpdate.FiatDeposit = ops.endDate
+End Sub
+
+Public Sub Action_UpdateFiatWithdraws()
+    Dim ops As New BinanceOps
+    
+    ops.Collect_FiatWithdraws TableLastUpdate.FiatWithdraw
+    
+    BinanceLedgers.PopulateOperations ops
+    
+    TableLastUpdate.FiatWithdraw = ops.endDate
+End Sub
+
+Public Sub Action_UpdateCryptoDeposits()
+
+End Sub
+
+Public Sub Action_UpdateCryptoWithdraws()
+
+End Sub
+
+Public Sub Action_UpdateCryptoDividents()
+
+End Sub
+
+Public Sub Action_UpdateFlexibleEarn()
+
+End Sub
+
+Public Sub Action_UpdateLockedEarn()
+
+End Sub

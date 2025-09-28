@@ -33,6 +33,14 @@ Private Const ID_PREFIX_CRYPTO_DEPOSIT As String = "ND-"
 Private Const ID_PREFIX_CRYPTO_WITHDRAW As String = "NW-"
 
 Private m_ops As New Dictionary
+Private m_endDate As Date
+
+Public Property Get endDate() As Date
+    endDate = IIf(m_endDate = 0, now(), m_endDate)
+End Property
+Public Property Let endDate(ByVal newEndDate As Date)
+    m_endDate = newEndDate
+End Property
 
 Public Property Get Tickers() As Variant
     Tickers = m_ops.Keys
@@ -55,7 +63,7 @@ End Sub
 Public Sub Collect_FiatBuys(ByVal lastUpdateTime As Date)
     Dim startTime, endTime, opTime As Date
     
-    endTime = now()
+    endTime = Me.endDate
     
     Do
         If endTime < lastUpdateTime Then
@@ -92,11 +100,11 @@ Public Sub Collect_FiatBuys(ByVal lastUpdateTime As Date)
                 End If
                 
                 If item("status") = "Completed" Then
-                    Dim ticker As String
-                    ticker = item("fiatCurrency")
-                    
                     Dim op As BinanceOp
                     
+                    Dim ticker As String
+                    
+                    ticker = item("fiatCurrency")
                     xAddTicker ticker
                     
                     Set op = New BinanceOp
@@ -134,7 +142,6 @@ Public Sub Collect_FiatBuys(ByVal lastUpdateTime As Date)
                     xAddOp ticker, op
                 
                     ticker = item("cryptoCurrency")
-                
                     xAddTicker ticker
                     
                     Set op = New BinanceOp
@@ -145,13 +152,278 @@ Public Sub Collect_FiatBuys(ByVal lastUpdateTime As Date)
                     op.acquired = item("obtainAmount")
                     op.spent = 0
                     op.ticker = item("fiatCurrency")
-                    op.price = Round(Str2Dec(item("obtainAmount")) / (Str2Dec(item("sourceAmount")) - Str2Dec(item("totalFee"))), 8)
+                    op.price = item("price")
                     op.amount = Str2Dec(item("sourceAmount")) - Str2Dec(item("totalFee"))
                     op.charge = 0
                     op.bnb_fee = 0
                     op.note = "FIAT:BUY"
                     op.id = ID_PREFIX_CONVERT_IN & item("orderNo")
                 
+                    xAddOp ticker, op
+                End If
+            Next item
+            
+            If list.count < MAX_LIMIT.FIAT_OPERATIONS Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            Else
+                endTime = DateAdd("s", -1, endTime)
+            End If
+        Loop
+    Loop
+End Sub
+
+Public Sub Collect_FiatSells(ByVal lastUpdateTime As Date)
+    Dim startTime, endTime, opTime As Date
+    
+    endTime = Me.endDate
+    
+    Do
+        If endTime < lastUpdateTime Then
+            Exit Do
+        End If
+        
+        startTime = DateAdd("d", -MAX_PERIOD.FIAT_OPERATIONS, endTime)
+        
+        If startTime < lastUpdateTime Then
+            startTime = lastUpdateTime
+        End If
+        
+        Do
+            Dim data As Dictionary
+            Set data = BinanceAPI.Fiat_GetSells(startTime, endTime, MAX_LIMIT.FIAT_OPERATIONS)
+            
+            If data Is Nothing Then
+                Exit Sub
+            End If
+            If Not data.Exists("data") Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            End If
+            
+            Dim list As Collection
+            Set list = data("data")
+    
+            Dim item As Dictionary
+            For Each item In list
+                opTime = UnixTimestamp2Date(item("updateTime"))
+                
+                If endTime > opTime Then
+                    endTime = opTime
+                End If
+                
+                If item("status") = "Completed" Then
+                    Dim op As BinanceOp
+                    
+                    Dim ticker As String
+                    
+                    ticker = item("cryptoCurrency")
+                    xAddTicker ticker
+                    
+                    Set op = New BinanceOp
+
+                    op.stamp = DateAdd("s", -1, opTime)
+                    op.wallet = WALLET_SPOT
+                    op.operation = OPERATION_CONVERT_OUT
+                    op.acquired = 0
+                    op.spent = item("obtainAmount")
+                    op.ticker = item("fiatCurrency")
+                    op.price = item("price")
+                    op.amount = Str2Dec(item("sourceAmount")) + Str2Dec(item("totalFee"))
+                    op.charge = 0
+                    op.bnb_fee = 0
+                    op.note = "FIAT:SELL"
+                    op.id = ID_PREFIX_CONVERT_OUT & item("orderNo")
+                
+                    xAddOp ticker, op
+                    
+                    ticker = item("fiatCurrency")
+                    xAddTicker ticker
+                    
+                    Set op = New BinanceOp
+                    
+                    op.stamp = DateAdd("s", -1, opTime)
+                    op.wallet = WALLET_SPOT
+                    op.operation = OPERATION_CONVERT_IN
+                    op.acquired = Str2Dec(item("sourceAmount")) + Str2Dec(item("totalFee"))
+                    op.spent = 0
+                    op.ticker = item("cryptoCurrency")
+                    op.price = Round(Str2Dec(item("obtainAmount")) / (Str2Dec(item("sourceAmount")) + Str2Dec(item("totalFee"))), 8)
+                    op.amount = item("obtainAmount")
+                    op.charge = 0
+                    op.bnb_fee = 0
+                    op.note = "FIAT:SELL"
+                    op.id = ID_PREFIX_CONVERT_IN & item("orderNo")
+                    
+                    xAddOp ticker, op
+                    
+                    Set op = New BinanceOp
+                    
+                    op.stamp = opTime
+                    op.wallet = WALLET_SPOT
+                    op.operation = OPERATION_FIAT_SELL
+                    op.acquired = 0
+                    op.spent = item("sourceAmount")
+                    op.ticker = ticker
+                    op.price = 0
+                    op.amount = 0
+                    op.charge = item("totalFee")
+                    op.bnb_fee = 0
+                    op.note = STR_NA
+                    op.id = ID_PREFIX_FIAT_SELL & item("orderNo")
+                    
+                    xAddOp ticker, op
+                End If
+            Next item
+            
+            If list.count < MAX_LIMIT.FIAT_OPERATIONS Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            Else
+                endTime = DateAdd("s", -1, endTime)
+            End If
+        Loop
+    Loop
+End Sub
+
+Public Sub Collect_FiatDeposits(ByVal lastUpdateTime As Date)
+    Dim startTime, endTime, opTime As Date
+    
+    endTime = Me.endDate
+    
+    Do
+        If endTime < lastUpdateTime Then
+            Exit Do
+        End If
+        
+        startTime = DateAdd("d", -MAX_PERIOD.FIAT_OPERATIONS, endTime)
+        
+        If startTime < lastUpdateTime Then
+            startTime = lastUpdateTime
+        End If
+        
+        Do
+            Dim data As Dictionary
+            Set data = BinanceAPI.Fiat_GetDeposits(startTime, endTime, MAX_LIMIT.FIAT_OPERATIONS)
+            
+            If data Is Nothing Then
+                Exit Sub
+            End If
+            If Not data.Exists("data") Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            End If
+            
+            Dim list As Collection
+            Set list = data("data")
+    
+            Dim item As Dictionary
+            For Each item In list
+                opTime = UnixTimestamp2Date(item("updateTime"))
+                
+                If endTime > opTime Then
+                    endTime = opTime
+                End If
+                
+                If item("status") = "Successful" Then
+                    Dim op As BinanceOp
+                    
+                    Dim ticker As String
+                    
+                    ticker = item("fiatCurrency")
+                    xAddTicker ticker
+                    
+                    Set op = New BinanceOp
+                    
+                    op.stamp = opTime
+                    op.wallet = WALLET_SPOT
+                    op.operation = OPERATION_DEPOSIT
+                    op.acquired = item("indicatedAmount")
+                    op.spent = 0
+                    op.ticker = ticker
+                    op.price = 0
+                    op.amount = 0
+                    op.charge = item("totalFee")
+                    op.bnb_fee = 0
+                    op.note = item("method")
+                    op.id = ID_PREFIX_FIAT_DEPOSIT & item("orderNo")
+                    
+                    xAddOp ticker, op
+                End If
+            Next item
+            
+            If list.count < MAX_LIMIT.FIAT_OPERATIONS Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            Else
+                endTime = DateAdd("s", -1, endTime)
+            End If
+        Loop
+    Loop
+End Sub
+
+Public Sub Collect_FiatWithdraws(ByVal lastUpdateTime As Date)
+    Dim startTime, endTime, opTime As Date
+    
+    endTime = Me.endDate
+    
+    Do
+        If endTime < lastUpdateTime Then
+            Exit Do
+        End If
+        
+        startTime = DateAdd("d", -MAX_PERIOD.FIAT_OPERATIONS, endTime)
+        
+        If startTime < lastUpdateTime Then
+            startTime = lastUpdateTime
+        End If
+        
+        Do
+            Dim data As Dictionary
+            Set data = BinanceAPI.Fiat_GetWithdraws(startTime, endTime, MAX_LIMIT.FIAT_OPERATIONS)
+            
+            If data Is Nothing Then
+                Exit Sub
+            End If
+            If Not data.Exists("data") Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            End If
+            
+            Dim list As Collection
+            Set list = data("data")
+    
+            Dim item As Dictionary
+            For Each item In list
+                opTime = UnixTimestamp2Date(item("updateTime"))
+                
+                If endTime > opTime Then
+                    endTime = opTime
+                End If
+                
+                If item("status") = "Successful" Then
+                    Dim op As BinanceOp
+                    
+                    Dim ticker As String
+                    
+                    ticker = item("fiatCurrency")
+                    xAddTicker ticker
+                    
+                    Set op = New BinanceOp
+                    
+                    op.stamp = opTime
+                    op.wallet = WALLET_SPOT
+                    op.operation = OPERATION_WITHDRAW
+                    op.acquired = 0
+                    op.spent = item("amount")
+                    op.ticker = ticker
+                    op.price = 0
+                    op.amount = 0
+                    op.charge = item("totalFee")
+                    op.bnb_fee = 0
+                    op.note = item("method")
+                    op.id = ID_PREFIX_FIAT_WITHDRAW & item("orderNo")
+                    
                     xAddOp ticker, op
                 End If
             Next item
