@@ -86,8 +86,14 @@ Public Sub Action_UpdateCryptoWithdraws()
 
 End Sub
 
-Public Sub Action_UpdateCryptoDividents()
-
+Public Sub Action_UpdateCryptoDistributions()
+    Dim ops As New BinanceOps
+    
+    ops.Collect_Distributions TableLastUpdate.Distribution
+    
+    BinanceLedgers.PopulateOperations ops
+    
+    TableLastUpdate.Distribution = ops.endDate
 End Sub
 
 Public Sub Action_UpdateFlexibleEarn()

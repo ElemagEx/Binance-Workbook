@@ -217,8 +217,8 @@ Public Function Wallet_GetDividendHistory( _
     Optional ByVal endTime As Date = 0, _
     Optional ByVal limit As Long = -1 _
     ) As Dictionary
-
-    Set Wallet_GetDividendHistory = Nothing
+    
+    xAddWeight 10
 
     Dim params As New Dictionary
     
@@ -235,12 +235,7 @@ Public Function Wallet_GetDividendHistory( _
         params.Add "limit", limit
     End If
 
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/asset/assetDividend", params)
-
-    If responseText <> "" Then
-        Set Wallet_GetDividendHistory = JsonConverter.ParseJson(responseText)
-    End If
+    Set Wallet_GetDividendHistory = xExecuteWebQuery(True, True, "/sapi/v1/asset/assetDividend", params)
 End Function
 '
 ' Binance Wallet Signed API: GET /sapi/v1/capital/deposit/hisrec

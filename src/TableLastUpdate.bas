@@ -97,6 +97,15 @@ End Property
 Public Property Let FiatWithdraw(ByVal val As Date)
     xSetLastUpdate COL_FIAT_WITHDRAW, val
 End Property
+
+Public Property Get Distribution() As Date
+    Distribution = xGetLastUpdate(COL_DISTRIBUTION)
+End Property
+
+Public Property Let Distribution(ByVal val As Date)
+    xSetLastUpdate COL_DISTRIBUTION, val
+End Property
+
 Public Function xGetLastUpdate(ByVal name As String) As Date
     Dim cell As Range
     Set cell = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME).ListColumns(name).DataBodyRange(1)

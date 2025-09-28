@@ -161,15 +161,22 @@ Private Sub xReset(ByVal clearDetails)
     Set coin = TableCurrencies.GetTickerInfo(m_ticker)
     
     Dim numFormat As String
-    numFormat = IIf(coin.isFiat, "#,##0.00", "#,##0.0" + String(coin.precision - 1, "?"))
+    If coin Is Nothing Then
+        numFormat = "#,##0.00??????"
+    Else
+        numFormat = IIf(coin.isFiat, "#,##0.00", "#,##0.0" + String(coin.precision - 1, "?"))
+    End If
     
     Dim table As ListObject
     
     Set table = m_ws.ListObjects(xTableName(TABLE_TRIVIA))
     
-    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TICKER).Value = coin.ticker
-    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_NAME).Value = coin.name
-    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TYPE).Value = IIf(coin.isFiat, STR_FIAT, STR_CRYPTO)
+    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TICKER).Value = m_ticker
+    
+    If Not coin Is Nothing Then
+        table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_NAME).Value = coin.name
+        table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TYPE).Value = IIf(coin.isFiat, STR_FIAT, STR_CRYPTO)
+    End If
     
     table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TOTAL).NumberFormat = numFormat
     table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_BALANCE).NumberFormat = numFormat
@@ -198,13 +205,15 @@ Private Sub xReset(ByVal clearDetails)
         table.ListColumns(2).Delete
     Loop
 
-    Dim market As Variant
-    For Each market In coin.markets.Keys
-        Dim col As ListColumn
-        Set col = table.ListColumns.Add(table.ListColumns.count)
-        col.name = market
-        col.DataBodyRange(1).Value = coin.markets(market)
-    Next market
+    If Not coin Is Nothing Then
+        Dim market As Variant
+        For Each market In coin.markets.Keys
+            Dim col As ListColumn
+            Set col = table.ListColumns.Add(table.ListColumns.count)
+            col.name = market
+            col.DataBodyRange(1).Value = coin.markets(market)
+        Next market
+    End If
     
     Dim observedFormula As String
     If table.ListColumns.count <= 2 Then

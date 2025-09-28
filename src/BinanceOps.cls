@@ -100,13 +100,12 @@ Public Sub Collect_FiatBuys(ByVal lastUpdateTime As Date)
                 End If
                 
                 If item("status") = "Completed" Then
-                    Dim op As BinanceOp
-                    
                     Dim ticker As String
-                    
                     ticker = item("fiatCurrency")
+                    
                     xAddTicker ticker
                     
+                    Dim op As BinanceOp
                     Set op = New BinanceOp
                     
                     op.stamp = DateAdd("s", -1, opTime)
@@ -142,6 +141,7 @@ Public Sub Collect_FiatBuys(ByVal lastUpdateTime As Date)
                     xAddOp ticker, op
                 
                     ticker = item("cryptoCurrency")
+                    
                     xAddTicker ticker
                     
                     Set op = New BinanceOp
@@ -213,13 +213,12 @@ Public Sub Collect_FiatSells(ByVal lastUpdateTime As Date)
                 End If
                 
                 If item("status") = "Completed" Then
-                    Dim op As BinanceOp
-                    
                     Dim ticker As String
-                    
                     ticker = item("cryptoCurrency")
+                    
                     xAddTicker ticker
                     
+                    Dim op As BinanceOp
                     Set op = New BinanceOp
 
                     op.stamp = DateAdd("s", -1, opTime)
@@ -238,6 +237,7 @@ Public Sub Collect_FiatSells(ByVal lastUpdateTime As Date)
                     xAddOp ticker, op
                     
                     ticker = item("fiatCurrency")
+                    
                     xAddTicker ticker
                     
                     Set op = New BinanceOp
@@ -326,13 +326,12 @@ Public Sub Collect_FiatDeposits(ByVal lastUpdateTime As Date)
                 End If
                 
                 If item("status") = "Successful" Then
-                    Dim op As BinanceOp
-                    
                     Dim ticker As String
-                    
                     ticker = item("fiatCurrency")
+                    
                     xAddTicker ticker
                     
+                    Dim op As BinanceOp
                     Set op = New BinanceOp
                     
                     op.stamp = opTime
@@ -402,13 +401,12 @@ Public Sub Collect_FiatWithdraws(ByVal lastUpdateTime As Date)
                 End If
                 
                 If item("status") = "Successful" Then
-                    Dim op As BinanceOp
-                    
                     Dim ticker As String
-                    
                     ticker = item("fiatCurrency")
+                    
                     xAddTicker ticker
                     
+                    Dim op As BinanceOp
                     Set op = New BinanceOp
                     
                     op.stamp = opTime
@@ -429,6 +427,79 @@ Public Sub Collect_FiatWithdraws(ByVal lastUpdateTime As Date)
             Next item
             
             If list.count < MAX_LIMIT.FIAT_OPERATIONS Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            Else
+                endTime = DateAdd("s", -1, endTime)
+            End If
+        Loop
+    Loop
+End Sub
+
+Public Sub Collect_Distributions(ByVal lastUpdateTime As Date, Optional ByVal filter As String = "")
+    Dim startTime, endTime, opTime As Date
+    
+    endTime = Me.endDate
+    
+    Do
+        If endTime < lastUpdateTime Then
+            Exit Do
+        End If
+        
+        startTime = DateAdd("d", -MAX_PERIOD.WALLET_DIVIDEND_HISTORY, endTime)
+        
+        If startTime < lastUpdateTime Then
+            startTime = lastUpdateTime
+        End If
+        
+        Do
+            Dim data As Dictionary
+            Set data = BinanceAPI.Wallet_GetDividendHistory(filter, startTime, endTime, MAX_LIMIT.WALLET_DIVIDEND_HISTORY)
+            
+            If data Is Nothing Then
+                Exit Sub
+            End If
+            If Not data.Exists("rows") Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            End If
+            
+            Dim list As Collection
+            Set list = data("rows")
+    
+            Dim item As Dictionary
+            For Each item In list
+                opTime = UnixTimestamp2Date(item("divTime"))
+                
+                If endTime > opTime Then
+                    endTime = opTime
+                End If
+                
+                Dim ticker As String
+                ticker = item("asset")
+                
+                xAddTicker ticker
+                
+                Dim op As BinanceOp
+                Set op = New BinanceOp
+                
+                op.stamp = opTime
+                op.wallet = WALLET_SPOT
+                op.operation = OPERATION_DISTRIBUTION
+                op.acquired = item("amount")
+                op.spent = 0
+                op.ticker = ""
+                op.price = 0
+                op.amount = 0
+                op.charge = 0
+                op.bnb_fee = 0
+                op.note = item("enInfo")
+                op.id = ID_PREFIX_DISTRIBUTION & item("id")
+                
+                xAddOp ticker, op
+            Next item
+            
+            If list.count < MAX_LIMIT.WALLET_DIVIDEND_HISTORY Then
                 endTime = DateAdd("s", -1, startTime)
                 Exit Do
             Else
