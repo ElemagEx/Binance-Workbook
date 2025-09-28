@@ -436,6 +436,142 @@ Public Sub Collect_FiatWithdraws(ByVal lastUpdateTime As Date)
     Loop
 End Sub
 
+Public Sub Collect_CryptoDeposits(ByVal lastUpdateTime As Date, Optional ByVal filter As String = "")
+    Dim startTime, endTime, opTime As Date
+    
+    endTime = Me.endDate
+    
+    Do
+        If endTime < lastUpdateTime Then
+            Exit Do
+        End If
+        
+        startTime = DateAdd("d", -MAX_PERIOD.WALLET_DEPOSIT_HISTORY, endTime)
+        
+        If startTime < lastUpdateTime Then
+            startTime = lastUpdateTime
+        End If
+        
+        Do
+            Dim list As Collection
+            Set list = BinanceAPI.Wallet_GetDepositHistory(filter, startTime, endTime, MAX_LIMIT.WALLET_DEPOSIT_HISTORY)
+            
+            If list Is Nothing Then
+                Exit Sub
+            End If
+    
+            Dim item As Dictionary
+            For Each item In list
+                opTime = UnixTimestamp2Date(item("completeTime"))
+                
+                If endTime > opTime Then
+                    endTime = opTime
+                End If
+                
+                If item("status") = 1 Then
+                    Dim ticker As String
+                    ticker = item("coin")
+                    
+                    xAddTicker ticker
+                    
+                    Dim op As BinanceOp
+                    Set op = New BinanceOp
+                    
+                    op.stamp = opTime
+                    op.wallet = IIf(item("walletType") = 0, WALLET_SPOT, WALLET_FUNDING)
+                    op.operation = OPERATION_DEPOSIT
+                    op.acquired = item("amount")
+                    op.spent = 0
+                    op.ticker = ""
+                    op.price = 0
+                    op.amount = 0
+                    op.charge = 0
+                    op.bnb_fee = 0
+                    op.note = item("network") & ":" & item("sourceAddress")
+                    op.id = ID_PREFIX_CRYPTO_DEPOSIT & item("id")
+                    
+                    xAddOp ticker, op
+                End If
+            Next item
+            
+            If list.count < MAX_LIMIT.WALLET_DEPOSIT_HISTORY Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            Else
+                endTime = DateAdd("s", -1, endTime)
+            End If
+        Loop
+    Loop
+End Sub
+
+Public Sub Collect_CryptoWithdraws(ByVal lastUpdateTime As Date, Optional ByVal filter As String = "")
+    Dim startTime, endTime, opTime As Date
+    
+    endTime = Me.endDate
+    
+    Do
+        If endTime < lastUpdateTime Then
+            Exit Do
+        End If
+        
+        startTime = DateAdd("d", -MAX_PERIOD.WALLET_WITHDRAW_HISTORY, endTime)
+        
+        If startTime < lastUpdateTime Then
+            startTime = lastUpdateTime
+        End If
+        
+        Do
+            Dim list As Collection
+            Set list = BinanceAPI.Wallet_GetWithdrawHistory(filter, startTime, endTime, MAX_LIMIT.WALLET_WITHDRAW_HISTORY)
+            
+            If list Is Nothing Then
+                Exit Sub
+            End If
+    
+            Dim item As Dictionary
+            For Each item In list
+                opTime = item("completeTime")
+                
+                If endTime > opTime Then
+                    endTime = opTime
+                End If
+                
+                If item("status") = 6 Then
+                    Dim ticker As String
+                    ticker = item("coin")
+                    
+                    xAddTicker ticker
+                    
+                    Dim op As BinanceOp
+                    Set op = New BinanceOp
+                    
+                    op.stamp = opTime
+                    op.wallet = IIf(item("walletType") = 0, WALLET_SPOT, WALLET_FUNDING)
+                    op.operation = OPERATION_WITHDRAW
+                    op.acquired = 0
+                    op.spent = item("amount")
+                    op.ticker = ticker
+                    op.price = 0
+                    op.amount = 0
+                    op.charge = item("transactionFee")
+                    op.bnb_fee = 0
+                    op.note = item("network") & ":" & item("address")
+                    op.id = ID_PREFIX_CRYPTO_WITHDRAW & item("id")
+                    
+                    xAddOp ticker, op
+                End If
+            Next item
+            
+            If list.count < MAX_LIMIT.WALLET_WITHDRAW_HISTORY Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            Else
+                endTime = DateAdd("s", -1, endTime)
+            End If
+        Loop
+    Loop
+End Sub
+
 Public Sub Collect_Distributions(ByVal lastUpdateTime As Date, Optional ByVal filter As String = "")
     Dim startTime, endTime, opTime As Date
     

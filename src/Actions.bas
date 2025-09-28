@@ -3,11 +3,13 @@ Option Explicit
 
 Public Sub Action_ClearAssets()
     ThisWorkbook.Sheets(SHEET_ASSETS).Activate
+    TableUserInfo.ClearData
     TableWallet.ClearData
 End Sub
 
 Public Sub Action_UpdateAssets()
     ThisWorkbook.Sheets(SHEET_ASSETS).Activate
+    TableUserInfo.UpdateData
     TableWallet.UpdateData
 End Sub
 
@@ -79,11 +81,23 @@ Public Sub Action_UpdateFiatWithdraws()
 End Sub
 
 Public Sub Action_UpdateCryptoDeposits()
-
+    Dim ops As New BinanceOps
+    
+    ops.Collect_CryptoDeposits TableLastUpdate.CryptoDeposit
+    
+    BinanceLedgers.PopulateOperations ops
+    
+    TableLastUpdate.CryptoDeposit = ops.endDate
 End Sub
 
 Public Sub Action_UpdateCryptoWithdraws()
-
+    Dim ops As New BinanceOps
+    
+    ops.Collect_CryptoWithdraws TableLastUpdate.CryptoWithdraw
+    
+    BinanceLedgers.PopulateOperations ops
+    
+    TableLastUpdate.CryptoWithdraw = ops.endDate
 End Sub
 
 Public Sub Action_UpdateCryptoDistributions()

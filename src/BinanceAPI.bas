@@ -241,27 +241,18 @@ End Function
 ' Binance Wallet Signed API: GET /sapi/v1/capital/deposit/hisrec
 '
 Public Function Wallet_GetDepositHistory( _
-    Optional ByVal includeSource = False, _
     Optional ByVal coin = "", _
     Optional ByVal startTime As Date = 0, _
     Optional ByVal endTime As Date = 0, _
     Optional ByVal limit As Long = -1, _
     Optional ByVal offset As Long = -1, _
-    Optional ByVal status As Long = -1 _
+    Optional ByVal status As Long = -1, _
+    Optional ByVal includeSource As Variant _
     ) As Collection
 
-    Set Wallet_GetDepositHistory = Nothing
-
-    If beginTime <> 0 And endTime <> 0 Then
-        If DateDiff("d", beginTime, endTime) > 90 Then
-            MsgBox "Time interval must be less than 90 days"
-            Exit Function
-        End If
-    End If
+    xAddWeight 1
 
     Dim params As New Dictionary
-    
-    params.Add "includeSource", includeSource
     
     If coin <> "" Then
         params.Add "coin", coin
@@ -281,13 +272,11 @@ Public Function Wallet_GetDepositHistory( _
     If status >= 0 Then
         params.Add "status", status
     End If
-
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/capital/deposit/hisrec", params)
-
-    If responseText <> "" Then
-        Set Wallet_GetDepositHistory = JsonConverter.ParseJson(responseText)
+    If Not IsMissing(includeSource) Then
+        params.Add "includeSource", IIf(CBool(includeSource), "true", "false")
     End If
+
+    Set Wallet_GetDepositHistory = xExecuteWebQuery(True, True, "/sapi/v1/capital/deposit/hisrec", params)
 End Function
 '
 ' Binance Wallet Signed API: GET /sapi/v1/capital/withdraw/history
@@ -301,15 +290,8 @@ Public Function Wallet_GetWithdrawHistory( _
     Optional ByVal status As Long = -1 _
     ) As Collection
 
-    Set Wallet_GetWithdrawHistory = Nothing
-
-    If beginTime <> 0 And endTime <> 0 Then
-        If DateDiff("d", beginTime, endTime) > 90 Then
-            MsgBox "Time interval must be less than 90 days"
-            Exit Function
-        End If
-    End If
-
+    xAddWeight 18000
+    
     Dim params As New Dictionary
     
     If coin <> "" Then
@@ -331,12 +313,7 @@ Public Function Wallet_GetWithdrawHistory( _
         params.Add "status", status
     End If
 
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/capital/withdraw/history", params)
-
-    If responseText <> "" Then
-        Set Wallet_GetWithdrawHistory = JsonConverter.ParseJson(responseText)
-    End If
+    Set Wallet_GetWithdrawHistory = xExecuteWebQuery(True, True, "/sapi/v1/capital/withdraw/history", params)
 End Function
 '
 ' Binance Fiat Signed API: GET /sapi/v1/fiat/orders
@@ -348,6 +325,8 @@ Public Function Fiat_Orders( _
     Optional ByVal rows = -1, _
     Optional ByVal page = -1 _
     ) As Dictionary
+    
+    xAddWeight 45000
     
     Set Fiat_Orders = Nothing
 
@@ -396,6 +375,8 @@ Public Function Fiat_Payments( _
     Optional ByVal rows = -1, _
     Optional ByVal page = -1 _
     ) As Dictionary
+    
+    xAddWeight 1
     
     Set Fiat_Payments = Nothing
 

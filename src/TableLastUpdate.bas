@@ -98,6 +98,22 @@ Public Property Let FiatWithdraw(ByVal val As Date)
     xSetLastUpdate COL_FIAT_WITHDRAW, val
 End Property
 
+Public Property Get CryptoDeposit() As Date
+    CryptoDeposit = xGetLastUpdate(COL_CRYPTO_DEPOSIT)
+End Property
+
+Public Property Let CryptoDeposit(ByVal val As Date)
+    xSetLastUpdate COL_CRYPTO_DEPOSIT, val
+End Property
+
+Public Property Get CryptoWithdraw() As Date
+    CryptoWithdraw = xGetLastUpdate(COL_CRYPTO_WITHDRAW)
+End Property
+
+Public Property Let CryptoWithdraw(ByVal val As Date)
+    xSetLastUpdate COL_CRYPTO_WITHDRAW, val
+End Property
+
 Public Property Get Distribution() As Date
     Distribution = xGetLastUpdate(COL_DISTRIBUTION)
 End Property

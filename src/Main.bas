@@ -21,6 +21,7 @@ Public Const TABLE_MARKETS As String = "Markets"
 Public Const TABLE_DETAILS As String = "Details"
 
 Public Const WALLET_SPOT As String = "Spot"
+Public Const WALLET_FUNDING As String = "Funding"
 
 Public Const OPERATION_BUY As String = "buy"
 Public Const OPERATION_SELL As String = "sell"
@@ -49,6 +50,8 @@ Public Enum MAX_PERIOD
     
     SPOT_TRADING_GET_MY_TRADES = 1
     
+    WALLET_DEPOSIT_HISTORY = 90
+    WALLET_WITHDRAW_HISTORY = 90
     WALLET_DIVIDEND_HISTORY = 180
 End Enum
 Public Enum MAX_LIMIT
@@ -56,6 +59,8 @@ Public Enum MAX_LIMIT
     
     SPOT_TRADING_GET_MY_TRADES = 1000
 
+    WALLET_DEPOSIT_HISTORY = 1000
+    WALLET_WITHDRAW_HISTORY = 1000
     WALLET_DIVIDEND_HISTORY = 500
     
     SIMPLE_EARN_FLEXIBLE_POSITIONS = 100

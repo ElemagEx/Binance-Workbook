@@ -34,6 +34,10 @@ Public Sub CleanUpData()
     table.ListColumns(COL_SELLER_FEE).DataBodyRange.ClearContents
 End Sub
 
+Public Sub ClearData()
+    CleanUpData
+End Sub
+
 Public Sub UpdateData()
     Dim account As Dictionary
     Set account = BinanceAPI.SpotTrading_GetAccountInfo()
