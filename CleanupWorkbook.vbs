@@ -31,7 +31,7 @@ Set objWorkbook = objExcel.Workbooks.Open(excelFullPath)
 isProjectCleanedUp = objWorkbook.Application.Run("Project_IsDataCleanedUp")
 
 If isProjectCleanedUp = False Then
-    isProjectCleanedUp = objWorkbook.Application.Run "Project_TryCleanUpData"
+    isProjectCleanedUp = objWorkbook.Application.Run("Project_TryCleanUpData")
 
     If isProjectCleanedUp = False then
         WScript.Echo "Failed to clean-up date"
