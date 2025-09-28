@@ -9,4 +9,4 @@
 *.vbs text eol=crlf
 
 # and binary files
-*.xslm binary
+*.xlsm binary
