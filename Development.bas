@@ -4,14 +4,6 @@ Option Explicit
 Private Const PROJECT_FILE = "project.bas"
 Private Const THIS_FILE = "development.bas"
 
-Public Sub Project_PreferedAction1()
-    Project_ExportFiles
-End Sub
-
-Public Sub Project_PreferedAction2()
-    Project_CleanUpData
-End Sub
-
 Public Sub Project_ImportFiles()
     Dim dir As String
     dir = ActiveWorkbook.path

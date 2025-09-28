@@ -13,7 +13,7 @@ Private Const COL_BASES As String = "Bases"
 Private Const COL_QUOTES As String = "Quotes"
 Private Const COL_FORMAT As String = "Format"
 Private Const COL_KEEP_ON_COMPACT As String = "Keep on Compact"
-Private Const COL_SYMBOLS As String = "Symbols"
+Private Const COL_MARKETS As String = "Markets"
 
 Private Const FIRST_TRADE_COL_INDEX As Long = 11
 
@@ -89,7 +89,7 @@ Public Sub CleanUpData()
             Else
                 table.ListColumns(COL_BASES).DataBodyRange(i).Value = 0
                 table.ListColumns(COL_QUOTES).DataBodyRange(i).Value = 0
-                table.ListColumns(COL_SYMBOLS).DataBodyRange(i).formula = "=0"
+                table.ListColumns(COL_MARKETS).DataBodyRange(i).formula = "=0"
             End If
         Next i
     End If
@@ -147,7 +147,7 @@ Public Sub CompactData()
         formula = "=COUNTIF(" & TABLE_NAME & "[@[" & table.ListColumns(FIRST_TRADE_COL_INDEX).name & "]:[" & table.ListColumns(table.ListColumns.count).name & "]],TRUE)"
     End If
 
-    table.ListColumns(COL_SYMBOLS).DataBodyRange.formula = formula
+    table.ListColumns(COL_MARKETS).DataBodyRange.formula = formula
 End Sub
 
 Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers)
@@ -167,6 +167,7 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
     
     coins.collectBasicInfo (addSelfTickers Or addWalletTickers)
     coins.collectExchangeInfo
+    coins.RemoveUncollected
     
     Dim table As ListObject
     Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
@@ -215,7 +216,7 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
         If Not coins.Contains(ticker) Then
             table.ListColumns(COL_BASES).DataBodyRange(rowIndex).Value = 0
             table.ListColumns(COL_QUOTES).DataBodyRange(rowIndex).Value = 0
-            table.ListColumns(COL_SYMBOLS).DataBodyRange(rowIndex).formula = formula
+            table.ListColumns(COL_MARKETS).DataBodyRange(rowIndex).formula = formula
         
             For colIndex = FIRST_TRADE_COL_INDEX To table.ListColumns.count
                 table.ListColumns(colIndex).DataBodyRange(rowIndex).Value = " "
@@ -233,7 +234,7 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
         
             table.ListColumns(COL_BASES).DataBodyRange(rowIndex).Value = coin.bases
             table.ListColumns(COL_QUOTES).DataBodyRange(rowIndex).Value = coin.quotes
-            table.ListColumns(COL_SYMBOLS).DataBodyRange(rowIndex).formula = formula
+            table.ListColumns(COL_MARKETS).DataBodyRange(rowIndex).formula = formula
         End If
     Next rowIndex
 

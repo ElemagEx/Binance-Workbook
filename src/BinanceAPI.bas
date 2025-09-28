@@ -714,7 +714,7 @@ Private Function xExecuteWebQuery( _
         request.Headers.Add WebHelpers.CreateKeyValue("X-MBX-APIKEY", GetApiKey_Binance())
     
         request.AddQuerystringParam "timestamp", xGetBinanceServerTime()
-        request.AddQuerystringParam "signature", xCreateHMACSHA256Signature(xGetQueryFromFullUrl(client.GetFullUrl(request)))
+        request.AddQuerystringParam "signature", HMACSHA256(xGetQueryFromFullUrl(client.GetFullUrl(request)), GetApiSecret_Binance())
     End If
     
     Dim response As WebResponse
@@ -772,7 +772,7 @@ Private Function ExecuteBinanceSignedQuery(ByVal method As String, ByVal api As 
     queryString = BuildQueryStringFromDict(params)
 
     Dim signature As String
-    signature = xCreateHMACSHA256Signature(queryString)
+    signature = "" ' xCreateHMACSHA256Signature(queryString)
 
     ' The final query string includes the signature
     queryString = queryString & "&signature=" & signature
@@ -823,32 +823,6 @@ Private Function xGetBinanceServerTime() As String
     End If
 End Function
 
-' Creates the required HMAC-SHA256 signature using .NET components.
-Private Function xCreateHMACSHA256Signature(ByVal message As String) As String
-    On Error GoTo CryptoError
-    Dim oEncoder As Object, oHMAC As Object
-    Dim keyBytes() As Byte, msgBytes() As Byte, hashBytes() As Byte
-    
-    Set oEncoder = CreateObject("System.Text.UTF8Encoding")
-    Set oHMAC = CreateObject("System.Security.Cryptography.HMACSHA256")
-    
-    keyBytes = oEncoder.GetBytes_4(GetApiSecret_Binance())
-    msgBytes = oEncoder.GetBytes_4(message)
-    
-    oHMAC.key = keyBytes
-    hashBytes = oHMAC.ComputeHash_2(msgBytes)
-    
-    ' Convert the hashed bytes into a lowercase hexadecimal string
-    Dim i As Long, sHex As String
-    For i = 0 To UBound(hashBytes)
-        sHex = sHex & LCase(Right("0" & Hex(hashBytes(i)), 2))
-    Next i
-    
-    xCreateHMACSHA256Signature = sHex
-    Exit Function
-CryptoError:
-    MsgBox "Cryptography error. Ensure your system has .NET Framework 3.5 or higher.", vbCritical
-End Function
 Private Function xGetQueryFromFullUrl(ByVal url As String) As String
     Dim pos As Long
     pos = InStr(url, "?")

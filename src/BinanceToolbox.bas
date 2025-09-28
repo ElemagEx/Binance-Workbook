@@ -11,8 +11,6 @@ Public Const WALLET_DYNAMIC As String = "Dynamic"
 ' Prefixes A0..FF are reserved for dust log
 
 Private Const SHEET_MISC As String = "Misc"
-Private Const SHEET_ASSETS As String = "Assets"
-Private Const SHEET_CURRENCIES As String = "Currencies"
 Private Const SHEET_LEDGER_TEMPLATE As String = "Ledger Template"
 
 
