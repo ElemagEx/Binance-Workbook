@@ -15,7 +15,7 @@ Private Const COL_CRYPTO_WITHDRAW As String = "Crypto Withdraw"
 Private Const COL_CONVERT As String = "Convert"
 Private Const COL_DISTRIBUTION As String = "Distribution"
 Private Const COL_TRANSFER As String = "Transfer"
-Private Const COL_DRIBBLETS As String = "Dribblets"
+Private Const COL_DUST_LOG As String = "Dust Log"
 
 Public Function IsDataCleanedUp()
     Dim table As ListObject
@@ -31,7 +31,7 @@ Public Function IsDataCleanedUp()
         And IsEmpty(table.ListColumns(COL_CONVERT).DataBodyRange(1).Value) _
         And IsEmpty(table.ListColumns(COL_DISTRIBUTION).DataBodyRange(1).Value) _
         And IsEmpty(table.ListColumns(COL_TRANSFER).DataBodyRange(1).Value) _
-        And IsEmpty(table.ListColumns(COL_DRIBBLETS).DataBodyRange(1).Value)
+        And IsEmpty(table.ListColumns(COL_DUST_LOG).DataBodyRange(1).Value)
 End Function
 
 Public Sub CleanUpData()
@@ -55,7 +55,7 @@ Public Sub ClearData(ByVal clearWalletData As Boolean)
     table.ListColumns(COL_CONVERT).DataBodyRange.ClearContents
     table.ListColumns(COL_DISTRIBUTION).DataBodyRange.ClearContents
     table.ListColumns(COL_TRANSFER).DataBodyRange.ClearContents
-    table.ListColumns(COL_DRIBBLETS).DataBodyRange.ClearContents
+    table.ListColumns(COL_DUST_LOG).DataBodyRange.ClearContents
 End Sub
 
 Public Property Get wallet() As Date

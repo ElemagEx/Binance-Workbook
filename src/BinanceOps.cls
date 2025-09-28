@@ -454,7 +454,7 @@ Public Sub Collect_CryptoDeposits(ByVal lastUpdateTime As Date, Optional ByVal f
         
         Do
             Dim list As Collection
-            Set list = BinanceAPI.Wallet_GetDepositHistory(filter, startTime, endTime, MAX_LIMIT.WALLET_DEPOSIT_HISTORY)
+            Set list = BinanceAPI.Wallet_GetDepositHistory(filter, startTime, endTime, MAX_LIMIT.WALLET_DEPOSIT_HISTORY, includeSource:=True)
             
             If list Is Nothing Then
                 Exit Sub
