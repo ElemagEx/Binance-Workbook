@@ -45,6 +45,9 @@ Public Const STR_BNB As String = "BNB"
 Public Const STR_FIAT As String = "Fiat"
 Public Const STR_CRYPTO As String = "Crypto"
 
+Public Const ERR_ASSERTION_FAIL = 2000
+Public Const ERR_UNKNOWN_WALLET = 2001
+
 Public Enum MAX_PERIOD
     FIAT_OPERATIONS = 180
     
@@ -53,6 +56,7 @@ Public Enum MAX_PERIOD
     WALLET_DEPOSIT_HISTORY = 90
     WALLET_WITHDRAW_HISTORY = 90
     WALLET_DIVIDEND_HISTORY = 180
+    WALLET_TRANSFER_HISTORY = 180
 End Enum
 Public Enum MAX_LIMIT
     FIAT_OPERATIONS = 500
@@ -62,6 +66,7 @@ Public Enum MAX_LIMIT
     WALLET_DEPOSIT_HISTORY = 1000
     WALLET_WITHDRAW_HISTORY = 1000
     WALLET_DIVIDEND_HISTORY = 500
+    WALLET_TRANSFER_HISTORY = 100
     
     SIMPLE_EARN_FLEXIBLE_POSITIONS = 100
     SIMPLE_EARN_LOCKED_POSITIONS = 100
@@ -80,6 +85,18 @@ Public Const aMAX_LIMIT_SIMPLEEARN_FLEXIBLE_SUBSCRIPTIONS = 100
 Public Const aMAX_LIMIT_SIMPLEEARN_FLEXIBLE_REDEMPTIONS = 100
 Public Const aMAX_LIMIT_SIMPLEEARN_LOCKED_SUBSCRIPTIONS = 100
 Public Const aMAX_LIMIT_SIMPLEEARN_LOCKED_REDEMPTIONS = 100
+
+#Const IN_DEVELOPMENT = True
+
+Public Sub Assert_Fail(Optional ByVal source As String = "", Optional ByVal desc As String = "")
+#If IN_DEVELOPMENT Then
+    Debug.Print "Assertion Failed: " & desc
+    Debug.Print "Source: " & source
+    Stop
+#Else
+    Err.Raise ERR_ASSERTION_FAIL, source, desc
+#End If
+End Sub
 
 Public Function GetExchangeTimezone() As String
     Dim table As ListObject

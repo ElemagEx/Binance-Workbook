@@ -47,6 +47,6 @@ objExcel.Quit
 Set objWorkbook = Nothing
 Set objExcel = Nothing
 
-WScript.Echo "Macro '" & macroName & "' executed successfully in '" & excelFilePath & "'"
+WScript.Echo "Macros are executed successfully in '" & excelFilePath & "'"
 
 WScript.Quit(1)

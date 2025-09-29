@@ -174,11 +174,9 @@ Public Function Wallet_GetTransferHistory( _
     Optional ByVal toSymbol As String = "", _
     Optional ByVal fromSymbol As String = "" _
     ) As Dictionary
-    '
-    ' WEIGHT = 1
-    '
-    Set Wallet_GetTransferHistory = Nothing
-
+    
+    xAddWeight 1
+    
     Dim params As New Dictionary
     params.Add "type", transferType
     
@@ -201,12 +199,7 @@ Public Function Wallet_GetTransferHistory( _
         params.Add "fromSymbol", fromSymbol
     End If
 
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/asset/transfer", params)
-
-    If responseText <> "" Then
-        Set Wallet_GetTransferHistory = JsonConverter.ParseJson(responseText)
-    End If
+    Set Wallet_GetTransferHistory = xExecuteWebQuery(True, True, "/sapi/v1/asset/transfer", params)
 End Function
 '
 ' Binance Wallet Signed API: GET /sapi/v1/asset/assetDividend

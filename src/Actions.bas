@@ -29,7 +29,13 @@ Public Sub Action_CompactCurrencies()
 End Sub
 
 Public Sub Action_UpdateTransfers()
-
+    Dim ops As New BinanceOps
+    
+    ops.Collect_Transfers TableLastUpdate.Transfers
+    
+    BinanceLedgers.PopulateOperations ops
+    
+    TableLastUpdate.Transfers = ops.endDate
 End Sub
 
 Public Sub Action_UpdateConversions()
@@ -43,75 +49,75 @@ End Sub
 Public Sub Action_UpdateFiatBuys()
     Dim ops As New BinanceOps
     
-    ops.Collect_FiatBuys TableLastUpdate.FiatBuy
+    ops.Collect_FiatBuys TableLastUpdate.FiatBuys
     
     BinanceLedgers.PopulateOperations ops
     
-    TableLastUpdate.FiatBuy = ops.endDate
+    TableLastUpdate.FiatBuys = ops.endDate
 End Sub
 
 Public Sub Action_UpdateFiatSells()
     Dim ops As New BinanceOps
     
-    ops.Collect_FiatSells TableLastUpdate.FiatSell
+    ops.Collect_FiatSells TableLastUpdate.FiatSells
     
     BinanceLedgers.PopulateOperations ops
     
-    TableLastUpdate.FiatSell = ops.endDate
+    TableLastUpdate.FiatSells = ops.endDate
 End Sub
 
 Public Sub Action_UpdateFiatDeposits()
     Dim ops As New BinanceOps
     
-    ops.Collect_FiatDeposits TableLastUpdate.FiatDeposit
+    ops.Collect_FiatDeposits TableLastUpdate.FiatDeposits
     
     BinanceLedgers.PopulateOperations ops
     
-    TableLastUpdate.FiatDeposit = ops.endDate
+    TableLastUpdate.FiatDeposits = ops.endDate
 End Sub
 
 Public Sub Action_UpdateFiatWithdraws()
     Dim ops As New BinanceOps
     
-    ops.Collect_FiatWithdraws TableLastUpdate.FiatWithdraw
+    ops.Collect_FiatWithdraws TableLastUpdate.FiatWithdraws
     
     BinanceLedgers.PopulateOperations ops
     
-    TableLastUpdate.FiatWithdraw = ops.endDate
+    TableLastUpdate.FiatWithdraws = ops.endDate
 End Sub
 
 Public Sub Action_UpdateCryptoDeposits()
     Dim ops As New BinanceOps
     
-    ops.Collect_CryptoDeposits TableLastUpdate.CryptoDeposit
+    ops.Collect_CryptoDeposits TableLastUpdate.CryptoDeposits
     
     BinanceLedgers.PopulateOperations ops
     
-    TableLastUpdate.CryptoDeposit = ops.endDate
+    TableLastUpdate.CryptoDeposits = ops.endDate
 End Sub
 
 Public Sub Action_UpdateCryptoWithdraws()
     Dim ops As New BinanceOps
     
-    ops.Collect_CryptoWithdraws TableLastUpdate.CryptoWithdraw
+    ops.Collect_CryptoWithdraws TableLastUpdate.CryptoWithdraws
     
     BinanceLedgers.PopulateOperations ops
     
-    TableLastUpdate.CryptoWithdraw = ops.endDate
+    TableLastUpdate.CryptoWithdraws = ops.endDate
 End Sub
 
 Public Sub Action_UpdateCryptoDistributions()
     Dim ops As New BinanceOps
     
-    ops.Collect_Distributions TableLastUpdate.Distribution
+    ops.Collect_Distributions TableLastUpdate.Distributions
     
     BinanceLedgers.PopulateOperations ops
     
-    TableLastUpdate.Distribution = ops.endDate
+    TableLastUpdate.Distributions = ops.endDate
 End Sub
 
 Public Sub Action_UpdateFlexibleEarn()
-
+    
 End Sub
 
 Public Sub Action_UpdateLockedEarn()
