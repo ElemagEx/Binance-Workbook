@@ -116,6 +116,17 @@ Public Function UnixTimestamp2Date(ByVal unixTime As LongLong) As Date
     UnixTimestamp2Date = DateAdd("s", unixTime / 1000, "1/1/1970")
 End Function
 
+Public Function UnixTimestampToDate(ByVal unixTime As Double) As Date
+    UnixTimestampToDate = DateAdd("s", unixTime / 1000, "1/1/1970")
+End Function
+
+Public Function DateToUnixTimestamp(ByVal dateTime As Date) As String
+    Dim val As LongLong
+    val = DateDiff("s", #1/1/1970#, dateTime)
+    val = val * 1000
+    DateToUnixTimestamp = CStr(val)
+End Function
+
 Public Function Str2Dec(ByVal str As String) As Variant
     Dim val As String
     val = Replace(str, ".", Application.DecimalSeparator)

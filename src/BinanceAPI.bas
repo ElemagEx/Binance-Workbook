@@ -3,59 +3,61 @@ Option Explicit
 Option Private Module
 
 ' --- Binance API base URL
-Private Const BASE_URL As String = "https://api.binance.com"
+Public Const BASE_URL As String = "https://api.binance.com"
 
 Private s_CurrentWeight As Long
 '
 ' Binance SpotTrading Public API: GET /api/v3/ticker/price
 '
 Public Function SpotTrading_GetPrice(ByVal symbol As String) As Dictionary
-    xAddWeight 2
+    Dim query As New BinanceWebQuery
     
-    Dim params As New Dictionary
-    params.Add "symbol", symbol
+    query.api = "/api/v3/ticker/price"
+    query.weight = 2
     
-    Set SpotTrading_GetPrice = xExecuteWebQuery(False, True, "/api/v3/ticker/price", params)
+    query.AddStringParam "symbol", symbol
+    
+    Set SpotTrading_GetPrice = xExecuteWebQuery(query)
 End Function
 '
 ' Binance SpotTrading Public API: GET /api/v3/ticker/price
 '
 Public Function SpotTrading_GetPrices(Optional ByVal symbols As Collection = Nothing) As Collection
-    xAddWeight 4
+    Dim query As New BinanceWebQuery
     
-    Dim params As New Dictionary
-        
-    xAddListParam params, "symbols", symbols
+    query.api = "/api/v3/ticker/price"
+    query.weight = 4
     
-    Set SpotTrading_GetPrices = xExecuteWebQuery(False, True, "/api/v3/ticker/price", params)
+    query.AddListParam "symbols", symbols
+    
+    Set SpotTrading_GetPrices = xExecuteWebQuery(query)
 End Function
 '
 ' Binance SpotTrading Public API: GET /api/v3/exchangeInfo
 '
 Public Function SpotTrading_GetExchangeInfo(Optional ByVal showPermissionSets As Variant) As Dictionary
-    xAddWeight 20
+    Dim query As New BinanceWebQuery
     
-    Dim params As New Dictionary
-
-    If Not IsMissing(showPermissionSets) Then
-        params.Add "showPermissionSets", IIf(CBool(showPermissionSets), "true", "false")
-    End If
-
-    Set SpotTrading_GetExchangeInfo = xExecuteWebQuery(False, True, "/api/v3/exchangeInfo", params)
+    query.api = "/api/v3/exchangeInfo"
+    query.weight = 20
+    
+    query.AddBooleanParam "showPermissionSets", showPermissionSets
+    
+    Set SpotTrading_GetExchangeInfo = xExecuteWebQuery(query)
 End Function
 '
 ' Binance SpotTrading Signed API: GET /api/v3/account
 '
 Public Function SpotTrading_GetAccountInfo(Optional ByVal omitZeroBalances As Variant) As Dictionary
-    xAddWeight 20
+    Dim query As New BinanceWebQuery
     
-    Dim params As New Dictionary
+    query.api = "/api/v3/account"
+    query.weight = 20
     
-    If Not IsMissing(omitZeroBalances) Then
-        params.Add "omitZeroBalances", IIf(CBool(omitZeroBalances), "true", "false")
-    End If
-
-    Set SpotTrading_GetAccountInfo = xExecuteWebQuery(True, True, "/api/v3/account", params)
+    query.AddBooleanParam "omitZeroBalances", omitZeroBalances
+    query.Sign
+    
+    Set SpotTrading_GetAccountInfo = xExecuteWebQuery(query)
 End Function
 '
 ' Binance SpotTrading Signed API: GET /api/v3/myTrades
@@ -68,73 +70,68 @@ Public Function SpotTrading_GetMyTrades( _
     Optional ByVal fromId As LongLong = -1, _
     Optional ByVal orderId As LongLong = -1 _
     ) As Collection
+    Dim query As New BinanceWebQuery
     
-    xAddWeight IIf(orderId >= 0, 5, 20)
+    query.api = "/api/v3/myTrades"
+    query.weight = IIf(orderId >= 0, 5, 20)
     
-    Dim params As New Dictionary
-    
-    params.Add "symbol", symbol
-    
-    If startTime <> 0 Then
-        params.Add "startTime", DateToUnixTimestamp(startTime)
-    End If
-    If endTime <> 0 Then
-        params.Add "endTime", DateToUnixTimestamp(endTime)
-    End If
-    If limit >= 0 Then
-        params.Add "limit", limit
-    End If
-    If fromId >= 0 Then
-        params.Add "fromId", fromId
-    End If
-    If fromId >= 0 Then
-        params.Add "orderId", orderId
-    End If
+    query.AddBooleanParam "omitZeroBalances", omitZeroBalances
+    query.AddStringParam "symbol", symbol
+    query.AddDateParam "startTime", startTime
+    query.AddDateParam "endTime", endTime
+    query.AddLongParam "limit", limit
+    query.AddLongLongParam "fromId", fromId
+    query.AddLongLongParam "orderId", orderId
+    query.Sign
 
-    Set SpotTrading_GetMyTrades = xExecuteWebQuery(True, True, "/api/v3/myTrades", params)
+    Set SpotTrading_GetMyTrades = xExecuteWebQuery(query)
 End Function
 '
 ' Binance Wallet Signed API: GET /sapi/v1/capital/config/getall
 '
 Public Function Wallet_GetAllCoinsInfo() As Collection
-    xAddWeight 10
+    Dim query As New BinanceWebQuery
     
-    Dim params As New Dictionary
-
-    Set Wallet_GetAllCoinsInfo = xExecuteWebQuery(True, True, "/sapi/v1/capital/config/getall", params)
+    query.api = "/sapi/v1/capital/config/getall"
+    query.weight = 10
+    
+    query.Sign
+    
+    Set Wallet_GetAllCoinsInfo = xExecuteWebQuery(query)
 End Function
 '
 ' Binance Wallet Signed API: POST /sapi/v3/asset/getUserAsset
 '
 Public Function Wallet_GetUserAssets(Optional ByVal asset As String = "", Optional ByVal needBtcEvaluation As Variant) As Collection
-    xAddWeight 5
+    Dim query As New BinanceWebQuery
     
-    Dim params As New Dictionary
-    If asset <> "" Then
-        params.Add "asset", asset
-    End If
-    If Not IsMissing(needBtcEvaluation) Then
-        params.Add "needBtcEvaluation", IIf(CBool(needBtcEvaluation), "true", "false")
-    End If
+    query.isPost = True
+    query.api = "/sapi/v3/asset/getUserAsset"
+    query.weight = 5
     
-    Set Wallet_GetUserAssets = xExecuteWebQuery(True, False, "/sapi/v3/asset/getUserAsset", params)
+    query.AddStringParam "asset", asset
+    query.AddBooleanParam "needBtcEvaluation", needBtcEvaluation
+    
+    query.Sign
+    
+    Set Wallet_GetUserAssets = xExecuteWebQuery(query)
 End Function
 '
 ' Binance Wallet Signed API: POST /sapi/v1/asset/get-funding-asset
 '
 Public Function Wallet_GetFundingAssets(Optional ByVal asset As String = "", Optional ByVal needBtcEvaluation As Variant) As Collection
-    xAddWeight 1
+    Dim query As New BinanceWebQuery
     
-    Dim params As New Dictionary
+    query.isPost = True
+    query.api = "/sapi/v1/asset/get-funding-asset"
+    query.weight = 1
     
-    If asset <> "" Then
-        params.Add "asset", asset
-    End If
-    If Not IsMissing(needBtcEvaluation) Then
-        params.Add "needBtcEvaluation", IIf(CBool(needBtcEvaluation), "true", "false")
-    End If
+    query.AddStringParam "asset", asset
+    query.AddBooleanParam "needBtcEvaluation", needBtcEvaluation
+    
+    query.Sign
 
-    Set Wallet_GetFundingAssets = xExecuteWebQuery(True, False, "/sapi/v1/asset/get-funding-asset", params)
+    Set Wallet_GetFundingAssets = xExecuteWebQuery(query)
 End Function
 '
 ' Binance Wallet Signed API: GET /sapi/v1/asset/dribblet
@@ -143,24 +140,16 @@ Public Function Wallet_GetDustLog( _
     Optional ByVal startTime As Date = 0, _
     Optional ByVal endTime As Date = 0 _
     ) As Dictionary
-
-    Set Wallet_GetDustLog = Nothing
-
-    Dim params As New Dictionary
+    Dim query As New BinanceWebQuery
     
-    If startTime <> 0 Then
-        params.Add "startTime", DateToUnixTimestamp(startTime)
-    End If
-    If endTime <> 0 Then
-        params.Add "endTime", DateToUnixTimestamp(endTime)
-    End If
+    query.api = "/sapi/v1/asset/dribblet"
+    query.weight = 1
+    
+    query.AddDateParam "startTime", startTime
+    query.AddDateParam "endTime", endTime
+    query.Sign
 
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/asset/dribblet", params)
-
-    If responseText <> "" Then
-        Set Wallet_GetDustLog = JsonConverter.ParseJson(responseText)
-    End If
+    Set Wallet_GetDustLog = xExecuteWebQuery(query)
 End Function
 '
 ' Binance Wallet Signed API: GET /sapi/v1/asset/transfer
@@ -174,32 +163,21 @@ Public Function Wallet_GetTransferHistory( _
     Optional ByVal toSymbol As String = "", _
     Optional ByVal fromSymbol As String = "" _
     ) As Dictionary
+    Dim query As New BinanceWebQuery
     
-    xAddWeight 1
+    query.api = "/sapi/v1/asset/transfer"
+    query.weight = 1
     
-    Dim params As New Dictionary
-    params.Add "type", transferType
+    query.AddStringParam "type", transferType
+    query.AddDateParam "startTime", startTime
+    query.AddDateParam "endTime", endTime
+    query.AddLongParam "size", size
+    query.AddLongParam "current", current
+    query.AddStringParam "toSymbol", toSymbol
+    query.AddStringParam "fromSymbol", fromSymbol
+    query.Sign
     
-    If startTime <> 0 Then
-        params.Add "startTime", DateToUnixTimestamp(startTime)
-    End If
-    If endTime <> 0 Then
-        params.Add "endTime", DateToUnixTimestamp(endTime)
-    End If
-    If size >= 0 Then
-        params.Add "size", size
-    End If
-    If current >= 0 Then
-        params.Add "current", current
-    End If
-    If toSymbol <> "" Then
-        params.Add "toSymbol", toSymbol
-    End If
-    If fromSymbol <> "" Then
-        params.Add "fromSymbol", fromSymbol
-    End If
-
-    Set Wallet_GetTransferHistory = xExecuteWebQuery(True, True, "/sapi/v1/asset/transfer", params)
+    Set Wallet_GetTransferHistory = xExecuteWebQuery(query)
 End Function
 '
 ' Binance Wallet Signed API: GET /sapi/v1/asset/assetDividend
@@ -210,25 +188,18 @@ Public Function Wallet_GetDividendHistory( _
     Optional ByVal endTime As Date = 0, _
     Optional ByVal limit As Long = -1 _
     ) As Dictionary
+    Dim query As New BinanceWebQuery
     
-    xAddWeight 10
-
-    Dim params As New Dictionary
+    query.api = "/sapi/v1/asset/assetDividend"
+    query.weight = 10
     
-    If asset <> "" Then
-        params.Add "asset", asset
-    End If
-    If startTime <> 0 Then
-        params.Add "startTime", DateToUnixTimestamp(startTime)
-    End If
-    If endTime <> 0 Then
-        params.Add "endTime", DateToUnixTimestamp(endTime)
-    End If
-    If limit >= 0 Then
-        params.Add "limit", limit
-    End If
-
-    Set Wallet_GetDividendHistory = xExecuteWebQuery(True, True, "/sapi/v1/asset/assetDividend", params)
+    query.AddStringParam "asset", asset
+    query.AddDateParam "startTime", startTime
+    query.AddDateParam "endTime", endTime
+    query.AddLongParam "limit", limit
+    query.Sign
+    
+    Set Wallet_GetDividendHistory = xExecuteWebQuery(query)
 End Function
 '
 ' Binance Wallet Signed API: GET /sapi/v1/capital/deposit/hisrec
@@ -242,34 +213,21 @@ Public Function Wallet_GetDepositHistory( _
     Optional ByVal status As Long = -1, _
     Optional ByVal includeSource As Variant _
     ) As Collection
-
-    xAddWeight 1
-
-    Dim params As New Dictionary
+    Dim query As New BinanceWebQuery
     
-    If coin <> "" Then
-        params.Add "coin", coin
-    End If
-    If startTime <> 0 Then
-        params.Add "startTime", DateToUnixTimestamp(startTime)
-    End If
-    If endTime <> 0 Then
-        params.Add "endTime", DateToUnixTimestamp(endTime)
-    End If
-    If limit >= 0 Then
-        params.Add "limit", limit
-    End If
-    If offset >= 0 Then
-        params.Add "offset", offset
-    End If
-    If status >= 0 Then
-        params.Add "status", status
-    End If
-    If Not IsMissing(includeSource) Then
-        params.Add "includeSource", IIf(CBool(includeSource), "true", "false")
-    End If
-
-    Set Wallet_GetDepositHistory = xExecuteWebQuery(True, True, "/sapi/v1/capital/deposit/hisrec", params)
+    query.api = "/sapi/v1/capital/deposit/hisrec"
+    query.weight = 1
+    
+    query.AddStringParam "coin", coin
+    query.AddDateParam "startTime", startTime
+    query.AddDateParam "endTime", endTime
+    query.AddLongParam "limit", limit
+    query.AddLongParam "offset", offset
+    query.AddLongParam "status", status
+    query.AddBooleanParam "includeSource", includeSource
+    query.Sign
+    
+    Set Wallet_GetDepositHistory = xExecuteWebQuery(query)
 End Function
 '
 ' Binance Wallet Signed API: GET /sapi/v1/capital/withdraw/history
@@ -282,31 +240,20 @@ Public Function Wallet_GetWithdrawHistory( _
     Optional ByVal offset As Long = -1, _
     Optional ByVal status As Long = -1 _
     ) As Collection
-
-    xAddWeight 18000
+    Dim query As New BinanceWebQuery
     
-    Dim params As New Dictionary
+    query.api = "/sapi/v1/capital/withdraw/history"
+    query.weight = 18000
     
-    If coin <> "" Then
-        params.Add "coin", coin
-    End If
-    If startTime <> 0 Then
-        params.Add "startTime", DateToUnixTimestamp(startTime)
-    End If
-    If endTime <> 0 Then
-        params.Add "endTime", DateToUnixTimestamp(endTime)
-    End If
-    If limit >= 0 Then
-        params.Add "limit", limit
-    End If
-    If offset >= 0 Then
-        params.Add "offset", offset
-    End If
-    If status >= 0 Then
-        params.Add "status", status
-    End If
-
-    Set Wallet_GetWithdrawHistory = xExecuteWebQuery(True, True, "/sapi/v1/capital/withdraw/history", params)
+    query.AddStringParam "coin", coin
+    query.AddDateParam "startTime", startTime
+    query.AddDateParam "endTime", endTime
+    query.AddLongParam "limit", limit
+    query.AddLongParam "offset", offset
+    query.AddLongParam "status", status
+    query.Sign
+    
+    Set Wallet_GetWithdrawHistory = xExecuteWebQuery(query)
 End Function
 '
 ' Binance Fiat Signed API: GET /sapi/v1/fiat/orders
@@ -318,29 +265,19 @@ Public Function Fiat_Orders( _
     Optional ByVal rows = -1, _
     Optional ByVal page = -1 _
     ) As Dictionary
+    Dim query As New BinanceWebQuery
     
-    xAddWeight 45000
+    query.api = "/sapi/v1/fiat/orders"
+    query.weight = 45000
     
-    Set Fiat_Orders = Nothing
+    query.AddStringParam "transactionType", txType
+    query.AddDateParam "beginTime", beginTime
+    query.AddDateParam "endTime", endTime
+    query.AddLongParam "rows", rows
+    query.AddLongParam "page", page
+    query.Sign
 
-    Dim params As New Dictionary
-    
-    params.Add "transactionType", txType
-    
-    If beginTime <> 0 Then
-        params.Add "beginTime", DateToUnixTimestamp(beginTime)
-    End If
-    If endTime <> 0 Then
-        params.Add "endTime", DateToUnixTimestamp(endTime)
-    End If
-    If rows >= 0 Then
-        params.Add "rows", rows
-    End If
-    If page >= 0 Then
-        params.Add "page", page
-    End If
-
-    Set Fiat_Orders = xExecuteWebQuery(True, True, "/sapi/v1/fiat/orders", params)
+    Set Fiat_Orders = xExecuteWebQuery(query)
 End Function
 Public Function Fiat_GetDeposits( _
     Optional ByVal beginTime As Date = 0, _
@@ -368,29 +305,19 @@ Public Function Fiat_Payments( _
     Optional ByVal rows = -1, _
     Optional ByVal page = -1 _
     ) As Dictionary
+    Dim query As New BinanceWebQuery
     
-    xAddWeight 1
+    query.api = "/sapi/v1/fiat/payments"
+    query.weight = 1
     
-    Set Fiat_Payments = Nothing
+    query.AddStringParam "transactionType", txType
+    query.AddDateParam "beginTime", beginTime
+    query.AddDateParam "endTime", endTime
+    query.AddLongParam "rows", rows
+    query.AddLongParam "page", page
+    query.Sign
 
-    Dim params As New Dictionary
-    
-    params.Add "transactionType", txType
-    
-    If beginTime <> 0 Then
-        params.Add "beginTime", DateToUnixTimestamp(beginTime)
-    End If
-    If endTime <> 0 Then
-        params.Add "endTime", DateToUnixTimestamp(endTime)
-    End If
-    If rows >= 0 Then
-        params.Add "rows", rows
-    End If
-    If page >= 0 Then
-        params.Add "page", page
-    End If
-
-    Set Fiat_Payments = xExecuteWebQuery(True, True, "/sapi/v1/fiat/payments", params)
+    Set Fiat_Payments = xExecuteWebQuery(query)
 End Function
 Public Function Fiat_GetBuys( _
     Optional ByVal beginTime As Date = 0, _
@@ -416,26 +343,17 @@ Public Function Convert_GetConvertHistory( _
     ByVal endTime As Date, _
     Optional ByVal limit As Long = -1 _
     ) As Dictionary
-    '
-    ' WEIGHT=3000
-    '
-    Set Convert_GetConvertHistory = Nothing
+    Dim query As New BinanceWebQuery
     
-    Dim params As New Dictionary
+    query.api = "/sapi/v1/convert/tradeFlow"
+    query.weight = 3000
     
-    params.Add "startTime", DateToUnixTimestamp(startTime)
-    params.Add "endTime", DateToUnixTimestamp(endTime)
+    query.AddDateParam "startTime", startTime
+    query.AddDateParam "endTime", endTime
+    query.AddLongParam "limit", limit
+    query.Sign
     
-    If limit >= 0 Then
-        params.Add "limit", limit
-    End If
-
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/convert/tradeFlow", params)
-
-    If responseText <> "" Then
-        Set Convert_GetConvertHistory = JsonConverter.ParseJson(responseText)
-    End If
+    Set Convert_GetConvertHistory = xExecuteWebQuery(query)
 End Function
 '
 ' Binance Simple Earn Signed API: GET /sapi/v1/simple-earn/flexible/position
@@ -446,25 +364,18 @@ Public Function SimpleEarn_GetFlexiblePositions( _
     Optional ByVal page As Long = -1, _
     Optional ByVal productId As String = "" _
     ) As Dictionary
+    Dim query As New BinanceWebQuery
     
-    xAddWeight 150
+    query.api = "/sapi/v1/simple-earn/flexible/position"
+    query.weight = 150
     
-    Dim params As New Dictionary
-
-    If asset <> "" Then
-        params.Add "asset", asset
-    End If
-    If size >= 0 Then
-        params.Add "size", size
-    End If
-    If page >= 0 Then
-        params.Add "page", page
-    End If
-    If productId <> "" Then
-        params.Add "productId", productId
-    End If
+    query.AddStringParam "asset", asset
+    query.AddLongParam "size", size
+    query.AddLongParam "page", page
+    query.AddStringParam "productId", productId
+    query.Sign
     
-    Set SimpleEarn_GetFlexiblePositions = xExecuteWebQuery(True, True, "/sapi/v1/simple-earn/flexible/position", params)
+    Set SimpleEarn_GetFlexiblePositions = xExecuteWebQuery(query)
 End Function
 '
 ' Binance Simple Earn Signed API: GET /sapi/v1/simple-earn/locked/position
@@ -475,25 +386,18 @@ Public Function SimpleEarn_GetLockedPositions( _
     Optional ByVal page As Long = -1, _
     Optional ByVal productId As String = "" _
     ) As Dictionary
+    Dim query As New BinanceWebQuery
     
-    xAddWeight 150
-
-    Dim params As New Dictionary
+    query.api = "/sapi/v1/simple-earn/locked/position"
+    query.weight = 150
     
-    If asset <> "" Then
-        params.Add "asset", asset
-    End If
-    If size >= 0 Then
-        params.Add "size", size
-    End If
-    If page >= 0 Then
-        params.Add "page", page
-    End If
-    If productId <> "" Then
-        params.Add "productId", productId
-    End If
-
-    Set SimpleEarn_GetLockedPositions = xExecuteWebQuery(True, True, "/sapi/v1/simple-earn/locked/position", params)
+    query.AddStringParam "asset", asset
+    query.AddLongParam "size", size
+    query.AddLongParam "page", page
+    query.AddStringParam "productId", productId
+    query.Sign
+    
+    Set SimpleEarn_GetLockedPositions = xExecuteWebQuery(query)
 End Function
 '
 ' Binance Simple Earn Signed API: GET /sapi/v1/simple-earn/flexible/history/subscriptionRecord
@@ -504,38 +408,24 @@ Public Function SimpleEarn_GetFlexibleSubscriptions( _
     Optional ByVal endTime As Date = 0, _
     Optional ByVal size As Long = -1, _
     Optional ByVal current As Long = -1, _
-    Optional ByVal productId As String = "" _
+    Optional ByVal productId As String = "", _
+    Optional ByVal purchaseId As String = "" _
     ) As Dictionary
+    Dim query As New BinanceWebQuery
     
-    Set SimpleEarn_GetFlexibleSubscriptions = Nothing
-
-    Dim params As New Dictionary
+    query.api = "/sapi/v1/simple-earn/flexible/history/subscriptionRecord"
+    query.weight = 150
     
-    If asset <> "" Then
-        params.Add "asset", asset
-    End If
-    If startTime <> 0 Then
-        params.Add "startTime", DateToUnixTimestamp(startTime)
-    End If
-    If endTime <> 0 Then
-        params.Add "endTime", DateToUnixTimestamp(endTime)
-    End If
-    If size >= 0 Then
-        params.Add "size", size
-    End If
-    If current >= 0 Then
-        params.Add "current", current
-    End If
-    If productId <> "" Then
-        params.Add "productId", productId
-    End If
-
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/simple-earn/flexible/history/subscriptionRecord", params)
-
-    If responseText <> "" Then
-        Set SimpleEarn_GetFlexibleSubscriptions = JsonConverter.ParseJson(responseText)
-    End If
+    query.AddStringParam "asset", asset
+    query.AddDateParam "startTime", startTime
+    query.AddDateParam "endTime", endTime
+    query.AddLongParam "size", size
+    query.AddLongParam "current", current
+    query.AddStringParam "productId", productId
+    query.AddStringParam "purchaseId", purchaseId
+    query.Sign
+    
+    Set SimpleEarn_GetFlexibleSubscriptions = xExecuteWebQuery(query)
 End Function
 '
 ' Binance Simple Earn Signed API: GET /sapi/v1/simple-earn/locked/history/subscriptionRecord
@@ -545,35 +435,23 @@ Public Function SimpleEarn_GetLockedSubscriptions( _
     Optional ByVal startTime As Date = 0, _
     Optional ByVal endTime As Date = 0, _
     Optional ByVal size As Long = -1, _
-    Optional ByVal current As Long = -1 _
+    Optional ByVal current As Long = -1, _
+    Optional ByVal purchaseId As String = "" _
     ) As Dictionary
+    Dim query As New BinanceWebQuery
     
-    Set SimpleEarn_GetLockedSubscriptions = Nothing
-
-    Dim params As New Dictionary
+    query.api = "/sapi/v1/simple-earn/locked/history/subscriptionRecord"
+    query.weight = 150
     
-    If asset <> "" Then
-        params.Add "asset", asset
-    End If
-    If startTime <> 0 Then
-        params.Add "startTime", DateToUnixTimestamp(startTime)
-    End If
-    If endTime <> 0 Then
-        params.Add "endTime", DateToUnixTimestamp(endTime)
-    End If
-    If size >= 0 Then
-        params.Add "size", size
-    End If
-    If current >= 0 Then
-        params.Add "current", current
-    End If
-
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/simple-earn/locked/history/subscriptionRecord", params)
-
-    If responseText <> "" Then
-        Set SimpleEarn_GetLockedSubscriptions = JsonConverter.ParseJson(responseText)
-    End If
+    query.AddStringParam "asset", asset
+    query.AddDateParam "startTime", startTime
+    query.AddDateParam "endTime", endTime
+    query.AddLongParam "size", size
+    query.AddLongParam "current", current
+    query.AddStringParam "purchaseId", purchaseId
+    query.Sign
+    
+    Set SimpleEarn_GetLockedSubscriptions = xExecuteWebQuery(query)
 End Function
 '
 ' Binance Simple Earn Signed API: GET /sapi/v1/simple-earn/flexible/history/redemptionRecord
@@ -584,38 +462,24 @@ Public Function SimpleEarn_GetFlexibleRedemptions( _
     Optional ByVal endTime As Date = 0, _
     Optional ByVal size As Long = -1, _
     Optional ByVal current As Long = -1, _
-    Optional ByVal productId As String = "" _
+    Optional ByVal redeemId As String = "", _
+    Optional ByVal purchaseId As String = "" _
     ) As Dictionary
+    Dim query As New BinanceWebQuery
     
-    Set SimpleEarn_GetFlexibleRedemptions = Nothing
-
-    Dim params As New Dictionary
+    query.api = "/sapi/v1/simple-earn/flexible/history/redemptionRecord"
+    query.weight = 150
     
-    If asset <> "" Then
-        params.Add "asset", asset
-    End If
-    If startTime <> 0 Then
-        params.Add "startTime", DateToUnixTimestamp(startTime)
-    End If
-    If endTime <> 0 Then
-        params.Add "endTime", DateToUnixTimestamp(endTime)
-    End If
-    If size >= 0 Then
-        params.Add "size", size
-    End If
-    If current >= 0 Then
-        params.Add "current", current
-    End If
-    If productId <> "" Then
-        params.Add "productId", productId
-    End If
-
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/simple-earn/flexible/history/redemptionRecord", params)
-
-    If responseText <> "" Then
-        Set SimpleEarn_GetFlexibleRedemptions = JsonConverter.ParseJson(responseText)
-    End If
+    query.AddStringParam "asset", asset
+    query.AddDateParam "startTime", startTime
+    query.AddDateParam "endTime", endTime
+    query.AddLongParam "size", size
+    query.AddLongParam "current", current
+    query.AddStringParam "redeemId", redeemId
+    query.AddStringParam "purchaseId", purchaseId
+    query.Sign
+    
+    Set SimpleEarn_GetFlexibleRedemptions = xExecuteWebQuery(query)
 End Function
 '
 ' Binance Simple Earn Signed API: GET /sapi/v1/simple-earn/locked/history/redemptionRecord
@@ -625,65 +489,47 @@ Public Function SimpleEarn_GetLockedRedemptions( _
     Optional ByVal startTime As Date = 0, _
     Optional ByVal endTime As Date = 0, _
     Optional ByVal size As Long = -1, _
-    Optional ByVal current As Long = -1 _
+    Optional ByVal current As Long = -1, _
+    Optional ByVal redeemId As String = "", _
+    Optional ByVal positionId As String = "" _
     ) As Dictionary
+    Dim query As New BinanceWebQuery
     
-    Set SimpleEarn_GetLockedRedemptions = Nothing
-
-    Dim params As New Dictionary
+    query.api = "/sapi/v1/simple-earn/locked/history/redemptionRecord"
+    query.weight = 150
     
-    If asset <> "" Then
-        params.Add "asset", asset
-    End If
-    If startTime <> 0 Then
-        params.Add "startTime", DateToUnixTimestamp(startTime)
-    End If
-    If endTime <> 0 Then
-        params.Add "endTime", DateToUnixTimestamp(endTime)
-    End If
-    If size >= 0 Then
-        params.Add "size", size
-    End If
-    If current >= 0 Then
-        params.Add "current", current
-    End If
-
-    Dim responseText As String
-    responseText = ExecuteBinanceSignedQuery("GET", "/sapi/v1/simple-earn/locked/history/redemptionRecord", params)
-
-    If responseText <> "" Then
-        Set SimpleEarn_GetLockedRedemptions = JsonConverter.ParseJson(responseText)
-    End If
+    query.AddStringParam "asset", asset
+    query.AddDateParam "startTime", startTime
+    query.AddDateParam "endTime", endTime
+    query.AddLongParam "size", size
+    query.AddLongParam "current", current
+    query.AddStringParam "redeemId", redeemId
+    query.AddStringParam "positionId", positionId
+    query.Sign
+    
+    Set SimpleEarn_GetLockedRedemptions = xExecuteWebQuery(query)
 End Function
 
-Private Function xExecuteWebQuery( _
-    ByVal signed As Boolean, _
-    ByVal isGet As Boolean, _
-    ByVal api As String, _
-    ByVal params As Dictionary _
-    )
+Private Function xExecuteWebQuery(ByVal query As BinanceWebQuery)
     Set xExecuteWebQuery = Nothing
     
-    Debug.Print "Starting Binance API web query " & api & " ..."
+    Debug.Print "Starting Binance API web query " & query.api & " ..."
 
     Dim client As New WebClient
     client.BaseUrl = BASE_URL
     
     Dim request As New WebRequest
-    request.method = IIf(isGet, WebMethod.httpGet, WebMethod.HttpPost)
-    request.Resource = api
+    request.method = IIf(query.isPost, WebMethod.HttpPost, WebMethod.httpGet)
+    request.Resource = query.api
     request.format = WebFormat.Json
-    
+
     Dim key As Variant
-    For Each key In params.Keys
-        request.AddQuerystringParam CStr(key), params(key)
+    For Each key In query.params.Keys
+        request.AddQuerystringParam CStr(key), query.params(key)
     Next key
     
-    If signed Then
+    If query.isSigned Then
         request.Headers.Add WebHelpers.CreateKeyValue("X-MBX-APIKEY", GetApiKey_Binance())
-    
-        request.AddQuerystringParam "timestamp", xGetBinanceServerTime()
-        request.AddQuerystringParam "signature", HMACSHA256(xGetQueryFromFullUrl(client.GetFullUrl(request)), GetApiSecret_Binance())
     End If
     
     Dim response As WebResponse
@@ -712,142 +558,3 @@ Private Sub xCheckResponseHeaders(ByVal responseHeaders As Collection)
         End If
     Next header
 End Sub
-
-' ===================================================================
-' ===                     HELPER FUNCTIONS                        ===
-' ===================================================================
-
-Private Function ExecuteBinanceSignedQuery(ByVal method As String, ByVal api As String, params As Dictionary) As String
-    
-    ExecuteBinanceSignedQuery = ""
-    
-    Debug.Print "Starting Binance Signed API query " & method & " " & api & " ..."
-
-    ' STEP 1: Get the official server time from Binance. This is critical to avoid "Timestamp for this request was ahead/behind..." errors.
-    Dim serverTimestamp As String
-    serverTimestamp = xGetBinanceServerTime()
-
-    If serverTimestamp = "" Then
-        MsgBox "Could not get the server time from Binance. The process will stop.", vbCritical
-        Exit Function
-    End If
-
-    ' STEP 2: Prepare the parameters for the API request
-    params.Add "timestamp", serverTimestamp
-    Debug.Print "Using Binance Server Timestamp: " & serverTimestamp
-
-    ' STEP 3: Build the query string and create the signature
-    Dim queryString As String
-    queryString = BuildQueryStringFromDict(params)
-
-    Dim signature As String
-    signature = "" ' xCreateHMACSHA256Signature(queryString)
-
-    ' The final query string includes the signature
-    queryString = queryString & "&signature=" & signature
-
-    ' STEP 4: Make the signed API request ---
-    Dim finalUrl As String
-    finalUrl = BASE_URL & api & "?" & queryString
-    
-    Dim http As Object
-    Set http = CreateObject("MSXML2.XMLHTTP.6.0")
-    
-    On Error GoTo HttpErrorHandler
-    
-    http.Open method, finalUrl, False
-    http.SetRequestHeader "X-MBX-APIKEY", GetApiKey_Binance() ' The API key goes in the header
-    http.send
-
-    ' STEP 5: Process the response from Binance ---
-    If http.status = 200 Then
-        ExecuteBinanceSignedQuery = http.responseText
-        Debug.Print "Success! Received response from server."
-    Else
-        ' If something went wrong, Binance sends an error message in the response
-        Debug.Print "Binance API Error Occurred!"
-        Debug.Print "Status: " & http.status & " " & http.statusText
-        Debug.Print "Response: " & http.responseText
-        MsgBox "An API error occurred. Status: " & http.status & vbCrLf & "Response: " & http.responseText, vbExclamation
-    End If
-
-    Set http = Nothing
-    Exit Function
-
-HttpErrorHandler:
-    MsgBox "A network error occurred: " & Err.Description, vbCritical
-    Set http = Nothing
-End Function
-Private Function xGetBinanceServerTime() As String
-    Dim client As New WebClient
-    client.BaseUrl = BASE_URL
-    
-    Dim response As WebResponse
-    Set response = client.GetJson("/api/v3/time")
-    
-    If response.StatusCode = WebStatusCode.Ok Then
-        xGetBinanceServerTime = format(response.data("serverTime"), "0")
-    Else
-        xGetBinanceServerTime = "0"
-    End If
-End Function
-
-Private Function xGetQueryFromFullUrl(ByVal url As String) As String
-    Dim pos As Long
-    pos = InStr(url, "?")
-    xGetQueryFromFullUrl = IIf(pos = 0, "", Mid(url, pos + 1))
-End Function
-
-' Converts a Dictionary of parameters into a URL query string (e.g., "key=val&key2=val2").
-Private Function BuildQueryStringFromDict(params As Dictionary) As String
-    Dim parts() As String
-    ReDim parts(params.count - 1)
-    Dim key As Variant, i As Long
-    i = 0
-    For Each key In params.Keys
-        parts(i) = key & "=" & params(key)
-        i = i + 1
-    Next key
-    BuildQueryStringFromDict = Join(parts, "&")
-End Function
-
-' Converts a Unix timestamp (in milliseconds) to a readable VBA date.
-Public Function UnixTimestampToDate(ByVal unixTime As Double) As Date
-    UnixTimestampToDate = DateAdd("s", unixTime / 1000, "1/1/1970")
-End Function
-
-Private Function DateToUnixTimestamp(ByVal dateTime As Date) As String
-    Dim val As LongLong
-    val = DateDiff("s", #1/1/1970#, dateTime)
-    val = val * 1000
-    DateToUnixTimestamp = CStr(val)
-End Function
-
-Private Function Str2Dec(ByVal str As String) As Variant
-    Dim val As String
-    val = Replace(str, ".", Application.DecimalSeparator)
-    Str2Dec = CDec(val)
-End Function
-
-Private Sub xAddWeight(ByVal weight As Long)
-    s_CurrentWeight = s_CurrentWeight + weight
-End Sub
-
-Private Sub xAddListParam(ByVal params As Dictionary, ByVal name As String, ByVal list As Collection)
-    If list Is Nothing Then
-        Exit Sub
-    End If
-    If list.count = 0 Then
-        Exit Sub
-    End If
-    
-    Dim val As String
-    val = "[""" & list(1) & """"
-    Dim i As Long
-    For i = 2 To list.count
-        val = val & ",""" & list(i) & """"
-    Next i
-    val = val & "]"
-    params.Add name, val
-End Sub
-
