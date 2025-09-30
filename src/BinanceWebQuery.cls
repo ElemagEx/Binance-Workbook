@@ -41,7 +41,7 @@ End Sub
 
 Public Sub AddDateParam(ByVal key As String, ByVal val As Date)
     If val <> 0 Then
-        params.Add key, DateToUnixTimestamp(val)
+        params.Add key, xDateToUnixTimestamp(val)
     End If
 End Sub
 
@@ -94,3 +94,11 @@ Private Function xGetBinanceServerTime() As String
         xGetBinanceServerTime = "0"
     End If
 End Function
+
+Public Function xDateToUnixTimestamp(ByVal dateTime As Date) As String
+    Dim val As LongLong
+    val = DateDiff("s", #1/1/1970#, dateTime)
+    val = val * 1000
+    xDateToUnixTimestamp = CStr(val)
+End Function
+

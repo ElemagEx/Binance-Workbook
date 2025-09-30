@@ -10,10 +10,13 @@ Attribute VB_Exposed = False
 Option Explicit
 
 'Public Const ID_PREFIX_DRIBBLET As String = "FF-"
-Private Const ID_PREFIX_WALLET_IN As String = "WI-"
-Private Const ID_PREFIX_WALLET_OUT As String = "WO-"
-Private Const ID_PREFIX_WALLET_SEI As String = "WS-"
-Private Const ID_PREFIX_WALLET_SEO As String = "WR-"
+Private Const ID_PREFIX_WALLET_IN As String = "WI-"  ' Universal Transfer In
+Private Const ID_PREFIX_WALLET_OUT As String = "WO-" ' Universal Transfer Out
+Private Const ID_PREFIX_WALLET_CVT As String = "WC-" ' Locked Earn to Flexible Earn Transfer
+Private Const ID_PREFIX_WALLET_STE As String = "WS-" ' Spot to Flexible/Locked Earn
+Private Const ID_PREFIX_WALLET_ETS As String = "WE-" ' Flexible/Locked Earn to Spot
+Private Const ID_PREFIX_WALLET_FTE As String = "WF-" ' Funding to Flexible/Locked Earn
+Private Const ID_PREFIX_WALLET_ETF As String = "WA-" ' Flexible/Locked Earn to Funding
 
 Private Const ID_PREFIX_CONVERT_IN As String = "VI-"
 Private Const ID_PREFIX_CONVERT_OUT As String = "VO-"
@@ -109,7 +112,7 @@ Public Sub Collect_Transfers(ByVal lastUpdateTime As Date)
     
                 Dim item As Dictionary
                 For Each item In list
-                    stamp = UnixTimestamp2Date(item("timestamp"))
+                    stamp = xUnixTimestampToDate(item("timestamp"))
                     
                     If endTime > stamp Then
                         endTime = stamp
@@ -138,46 +141,12 @@ Public Sub Collect_Transfers(ByVal lastUpdateTime As Date)
     Next transferType
 End Sub
 
-Private Sub xAddWalletTransferOp( _
-    ByVal ticker As String, _
-    ByVal stamp As Date, _
-    ByVal wallet As String, _
-    ByVal operation As String, _
-    ByVal acquired As Variant, _
-    ByVal spent As Variant, _
-    ByVal note As String, _
-    ByVal id As String _
-    )
-    xAddTicker ticker
-    
-    Dim op As BinanceOp
-    Set op = New BinanceOp
-    
-    op.stamp = stamp
-    op.wallet = wallet
-    op.operation = operation
-    op.acquired = acquired
-    op.spent = spent
-    op.ticker = ""
-    op.price = 0
-    op.amount = 0
-    op.charge = 0
-    op.bnb_fee = 0
-    op.note = note
-    op.id = id
-    
-    xAddOp ticker, op
-End Sub
-
 Public Sub Collect_FiatBuys(ByVal lastUpdateTime As Date)
     Dim startTime, endTime, stamp As Date
     
     endTime = Me.endDate
     
-    Do
-        If endTime < lastUpdateTime Then
-            Exit Do
-        End If
+    Do While endTime >= lastUpdateTime
         
         startTime = DateAdd("d", -MAX_PERIOD.FIAT_OPERATIONS, endTime)
         
@@ -202,7 +171,7 @@ Public Sub Collect_FiatBuys(ByVal lastUpdateTime As Date)
     
             Dim item As Dictionary
             For Each item In list
-                stamp = UnixTimestamp2Date(item("updateTime"))
+                stamp = xUnixTimestampToDate(item("updateTime"))
                 
                 If endTime > stamp Then
                     endTime = stamp
@@ -287,10 +256,7 @@ Public Sub Collect_FiatSells(ByVal lastUpdateTime As Date)
     
     endTime = Me.endDate
     
-    Do
-        If endTime < lastUpdateTime Then
-            Exit Do
-        End If
+    Do While endTime >= lastUpdateTime
         
         startTime = DateAdd("d", -MAX_PERIOD.FIAT_OPERATIONS, endTime)
         
@@ -315,7 +281,7 @@ Public Sub Collect_FiatSells(ByVal lastUpdateTime As Date)
     
             Dim item As Dictionary
             For Each item In list
-                stamp = UnixTimestamp2Date(item("updateTime"))
+                stamp = xUnixTimestampToDate(item("updateTime"))
                 
                 If endTime > stamp Then
                     endTime = stamp
@@ -400,10 +366,7 @@ Public Sub Collect_FiatDeposits(ByVal lastUpdateTime As Date)
     
     endTime = Me.endDate
     
-    Do
-        If endTime < lastUpdateTime Then
-            Exit Do
-        End If
+    Do While endTime >= lastUpdateTime
         
         startTime = DateAdd("d", -MAX_PERIOD.FIAT_OPERATIONS, endTime)
         
@@ -428,7 +391,7 @@ Public Sub Collect_FiatDeposits(ByVal lastUpdateTime As Date)
     
             Dim item As Dictionary
             For Each item In list
-                stamp = UnixTimestamp2Date(item("updateTime"))
+                stamp = xUnixTimestampToDate(item("updateTime"))
                 
                 If endTime > stamp Then
                     endTime = stamp
@@ -475,10 +438,7 @@ Public Sub Collect_FiatWithdraws(ByVal lastUpdateTime As Date)
     
     endTime = Me.endDate
     
-    Do
-        If endTime < lastUpdateTime Then
-            Exit Do
-        End If
+    Do While endTime >= lastUpdateTime
         
         startTime = DateAdd("d", -MAX_PERIOD.FIAT_OPERATIONS, endTime)
         
@@ -503,7 +463,7 @@ Public Sub Collect_FiatWithdraws(ByVal lastUpdateTime As Date)
     
             Dim item As Dictionary
             For Each item In list
-                stamp = UnixTimestamp2Date(item("updateTime"))
+                stamp = xUnixTimestampToDate(item("updateTime"))
                 
                 If endTime > stamp Then
                     endTime = stamp
@@ -550,10 +510,7 @@ Public Sub Collect_CryptoDeposits(ByVal lastUpdateTime As Date, Optional ByVal f
     
     endTime = Me.endDate
     
-    Do
-        If endTime < lastUpdateTime Then
-            Exit Do
-        End If
+    Do While endTime >= lastUpdateTime
         
         startTime = DateAdd("d", -MAX_PERIOD.WALLET_DEPOSIT_HISTORY, endTime)
         
@@ -571,7 +528,7 @@ Public Sub Collect_CryptoDeposits(ByVal lastUpdateTime As Date, Optional ByVal f
     
             Dim item As Dictionary
             For Each item In list
-                stamp = UnixTimestamp2Date(item("completeTime"))
+                stamp = xUnixTimestampToDate(item("completeTime"))
                 
                 If endTime > stamp Then
                     endTime = stamp
@@ -618,10 +575,7 @@ Public Sub Collect_CryptoWithdraws(ByVal lastUpdateTime As Date, Optional ByVal 
     
     endTime = Me.endDate
     
-    Do
-        If endTime < lastUpdateTime Then
-            Exit Do
-        End If
+    Do While endTime >= lastUpdateTime
         
         startTime = DateAdd("d", -MAX_PERIOD.WALLET_WITHDRAW_HISTORY, endTime)
         
@@ -686,10 +640,7 @@ Public Sub Collect_Distributions(ByVal lastUpdateTime As Date, Optional ByVal fi
     
     endTime = Me.endDate
     
-    Do
-        If endTime < lastUpdateTime Then
-            Exit Do
-        End If
+    Do While endTime >= lastUpdateTime
         
         startTime = DateAdd("d", -MAX_PERIOD.WALLET_DIVIDEND_HISTORY, endTime)
         
@@ -714,7 +665,7 @@ Public Sub Collect_Distributions(ByVal lastUpdateTime As Date, Optional ByVal fi
     
             Dim item As Dictionary
             For Each item In list
-                stamp = UnixTimestamp2Date(item("divTime"))
+                stamp = xUnixTimestampToDate(item("divTime"))
                 
                 If endTime > stamp Then
                     endTime = stamp
@@ -754,6 +705,280 @@ Public Sub Collect_Distributions(ByVal lastUpdateTime As Date, Optional ByVal fi
     Loop
 End Sub
 
+Public Sub Collect_FlexibleEarnSubscriptions(ByVal lastUpdateTime As Date, Optional ByVal filter As String = "")
+    Dim startTime, endTime, stamp As Date
+    
+    endTime = Me.endDate
+
+    Do While endTime >= lastUpdateTime
+    
+        startTime = DateAdd("d", -MAX_PERIOD.SIMPLE_EARN_OPERATIONS, endTime)
+        
+        If startTime < lastUpdateTime Then
+            startTime = lastUpdateTime
+        End If
+        
+        Do
+            Dim data As Dictionary
+            Set data = BinanceAPI.SimpleEarn_GetFlexibleSubscriptions(filter, startTime, endTime, MAX_LIMIT.SIMPLE_EARN_OPERATIONS)
+        
+            If data Is Nothing Then
+                Exit Sub
+            End If
+            If Not data.Exists("rows") Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            End If
+            
+            Dim list As Collection
+            Set list = data("rows")
+        
+            Dim item As Dictionary
+            For Each item In list
+                stamp = xUnixTimestampToDate(item("time"))
+                
+                If endTime > stamp Then
+                    endTime = stamp
+                End If
+                
+                If item("status") = "SUCCESS" Then
+                    Dim amount As Variant
+                    Dim ticker, tranId As String
+                    
+                    ticker = item("asset")
+                    amount = item("amount")
+                    tranId = item("purchaseId")
+                    
+                    Select Case item("type")
+                        Case "CONVERT"
+                            xAddWalletTransferOp ticker, stamp, WALLET_LOCKED_EARN, OPERATION_WALLET_OUT, 0, amount, "cvt:" & WALLET_FLEXIBLE_EARN, ID_PREFIX_WALLET_CVT & tranId
+                        
+                        Case "AUTO", "NORMAL"
+                            If item("sourceAccount") = "SPOT" Or (item("sourceAccount") = "SPOTANDFUNDING" And item("amtFromSpot") > 0) Then
+                                amount = IIf(item("sourceAccount") = "SPOT", amount, item("amtFromSpot"))
+
+                                xAddWalletTransferOp ticker, stamp, WALLET_SPOT, OPERATION_WALLET_OUT, 0, amount, "to:" & WALLET_FLEXIBLE_EARN, ID_PREFIX_WALLET_STE & tranId
+                            End If
+                            If item("sourceAccount") = "FUNDING" Or (item("sourceAccount") = "SPOTANDFUNDING" And item("amtFromFunding") > 0) Then
+                                amount = IIf(item("sourceAccount") = "FUNDING", amount, item("amtFromFunding"))
+
+                                xAddWalletTransferOp ticker, stamp, WALLET_FUNDING, OPERATION_WALLET_OUT, 0, amount, "to:" & WALLET_FLEXIBLE_EARN, ID_PREFIX_WALLET_FTE & tranId
+                            End If
+                    End Select
+                End If
+            Next item
+
+            If list.count < MAX_LIMIT.SIMPLE_EARN_OPERATIONS Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            Else
+                endTime = DateAdd("s", -1, endTime)
+            End If
+        Loop
+    Loop
+End Sub
+
+Public Sub Collect_FlexibleEarnRedemptions(ByVal lastUpdateTime As Date, Optional ByVal filter As String = "")
+    Dim startTime, endTime, stamp As Date
+    
+    endTime = Me.endDate
+
+    Do While endTime >= lastUpdateTime
+    
+        startTime = DateAdd("d", -MAX_PERIOD.SIMPLE_EARN_OPERATIONS, endTime)
+        
+        If startTime < lastUpdateTime Then
+            startTime = lastUpdateTime
+        End If
+        
+        Do
+            Dim data As Dictionary
+            Set data = BinanceAPI.SimpleEarn_GetFlexibleRedemptions(filter, startTime, endTime, MAX_LIMIT.SIMPLE_EARN_OPERATIONS)
+        
+            If data Is Nothing Then
+                Exit Sub
+            End If
+            If Not data.Exists("rows") Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            End If
+            
+            Dim list As Collection
+            Set list = data("rows")
+        
+            Dim item As Dictionary
+            For Each item In list
+                stamp = xUnixTimestampToDate(item("time"))
+                
+                If endTime > stamp Then
+                    endTime = stamp
+                End If
+                
+                If item("status") = "PAID" Then
+                    Dim amount As Variant
+                    Dim ticker, tranId As String
+                    
+                    ticker = item("asset")
+                    amount = item("amount")
+                    tranId = item("redeemId")
+                    
+                    Select Case item("destAccount")
+                        Case "SPOT"
+                            xAddWalletTransferOp ticker, stamp, WALLET_SPOT, OPERATION_WALLET_IN, amount, 0, "from:" & WALLET_FLEXIBLE_EARN, ID_PREFIX_WALLET_ETS & tranId
+                        Case "FUNDING"
+                            xAddWalletTransferOp ticker, stamp, WALLET_FUNDING, OPERATION_WALLET_IN, amount, 0, "from:" & WALLET_FLEXIBLE_EARN, ID_PREFIX_WALLET_ETF & tranId
+                    End Select
+                End If
+            Next item
+        
+            If list.count < MAX_LIMIT.SIMPLE_EARN_OPERATIONS Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            Else
+                endTime = DateAdd("s", -1, endTime)
+            End If
+        Loop
+    Loop
+End Sub
+
+Public Sub Collect_LockedEarnSubscriptions(ByVal lastUpdateTime As Date, Optional ByVal filter As String = "")
+
+    Dim startTime, endTime, stamp As Date
+    
+    endTime = Me.endDate
+
+    Do While endTime >= lastUpdateTime
+    
+        startTime = DateAdd("d", -MAX_PERIOD.SIMPLE_EARN_OPERATIONS, endTime)
+        
+        If startTime < lastUpdateTime Then
+            startTime = lastUpdateTime
+        End If
+        
+        Do
+            Dim data As Dictionary
+            Set data = BinanceAPI.SimpleEarn_GetLockedSubscriptions(filter, startTime, endTime, MAX_LIMIT.SIMPLE_EARN_OPERATIONS)
+
+            If data Is Nothing Then
+                Exit Sub
+            End If
+            If Not data.Exists("rows") Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            End If
+            
+            Dim list As Collection
+            Set list = data("rows")
+        
+            Dim item As Dictionary
+            For Each item In list
+                stamp = xUnixTimestampToDate(item("time"))
+                
+                If endTime > stamp Then
+                    endTime = stamp
+                End If
+                
+                If item("status") = "SUCCESS" Then
+                    Dim amount As Variant
+                    Dim ticker, tranId As String
+                    
+                    ticker = item("asset")
+                    amount = item("amount")
+                    tranId = item("purchaseId")
+                    
+                    Select Case item("type")
+                        Case "AUTO", "NORMAL"
+                            If item("sourceAccount") = "SPOT" Or (item("sourceAccount") = "SPOTANDFUNDING" And item("amtFromSpot") > 0) Then
+                                amount = IIf(item("sourceAccount") = "SPOT", amount, item("amtFromSpot"))
+
+                                xAddWalletTransferOp ticker, stamp, WALLET_SPOT, OPERATION_WALLET_OUT, 0, amount, "to:" & WALLET_LOCKED_EARN, ID_PREFIX_WALLET_STE & tranId
+                                xAddWalletTransferOp ticker, stamp, WALLET_LOCKED_EARN, OPERATION_WALLET_IN, amount, 0, "from:" & WALLET_SPOT, ID_PREFIX_WALLET_ETS & tranId
+                            End If
+                            If item("sourceAccount") = "FUNDING" Or (item("sourceAccount") = "SPOTANDFUNDING" And item("amtFromFunding") > 0) Then
+                                amount = IIf(item("sourceAccount") = "FUNDING", amount, item("amtFromFunding"))
+
+                                xAddWalletTransferOp ticker, stamp, WALLET_FUNDING, OPERATION_WALLET_OUT, 0, amount, "to:" & WALLET_LOCKED_EARN, ID_PREFIX_WALLET_FTE & tranId
+                                xAddWalletTransferOp ticker, stamp, WALLET_LOCKED_EARN, OPERATION_WALLET_IN, amount, 0, "from:" & WALLET_FUNDING, ID_PREFIX_WALLET_ETF & tranId
+                            End If
+                    End Select
+                End If
+            Next item
+        
+            If list.count < MAX_LIMIT.SIMPLE_EARN_OPERATIONS Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            Else
+                endTime = DateAdd("s", -1, endTime)
+            End If
+        Loop
+    Loop
+End Sub
+
+Public Sub Collect_LockedEarnRedemptions(ByVal lastUpdateTime As Date, Optional ByVal filter As String = "")
+
+    Dim startTime, endTime, stamp As Date
+    
+    endTime = Me.endDate
+
+    Do While endTime >= lastUpdateTime
+    
+        startTime = DateAdd("d", -MAX_PERIOD.SIMPLE_EARN_OPERATIONS, endTime)
+        
+        If startTime < lastUpdateTime Then
+            startTime = lastUpdateTime
+        End If
+        
+        Do
+            Dim data As Dictionary
+            Set data = BinanceAPI.SimpleEarn_GetLockedRedemptions(filter, startTime, endTime, MAX_LIMIT.SIMPLE_EARN_OPERATIONS)
+
+            If data Is Nothing Then
+                Exit Sub
+            End If
+            If Not data.Exists("rows") Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            End If
+            
+            Dim list As Collection
+            Set list = data("rows")
+        
+            Dim item As Dictionary
+            For Each item In list
+                stamp = xUnixTimestampToDate(item("time"))
+                
+                If endTime > stamp Then
+                    endTime = stamp
+                End If
+                
+                If item("status") = "PAID" Then
+                    Dim amount As Variant
+                    Dim ticker, tranId As String
+                    
+                    ticker = item("asset")
+                    amount = item("amount")
+                    tranId = item("redeemId")
+                    
+                    Select Case item("type")
+                        Case "MATURE", "AHEAD"
+                            xAddWalletTransferOp ticker, stamp, WALLET_LOCKED_EARN, OPERATION_WALLET_OUT, 0, amount, "to:" & WALLET_SPOT, ID_PREFIX_WALLET_ETS & tranId
+                            xAddWalletTransferOp ticker, stamp, WALLET_SPOT, OPERATION_WALLET_IN, amount, 0, "from:" & WALLET_LOCKED_EARN, ID_PREFIX_WALLET_STE & tranId
+
+                        Case "NEW_TRANSFERRED"
+                    
+                    End Select
+                End If
+            Next item
+        
+            If list.count < MAX_LIMIT.SIMPLE_EARN_OPERATIONS Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            Else
+                endTime = DateAdd("s", -1, endTime)
+            End If
+        Loop
+    Loop
+End Sub
 Private Sub xAddTicker(ByVal ticker As String)
     If Not m_ops.Exists(ticker) Then
         m_ops.Add ticker, New Collection
@@ -762,5 +987,40 @@ End Sub
 
 Private Sub xAddOp(ByVal ticker As String, ByVal op As BinanceOp)
     m_ops(ticker).Add op
+End Sub
+
+Public Function xUnixTimestampToDate(ByVal unixTime As LongLong) As Date
+    xUnixTimestampToDate = DateAdd("s", unixTime / 1000, "1/1/1970")
+End Function
+
+Private Sub xAddWalletTransferOp( _
+    ByVal ticker As String, _
+    ByVal stamp As Date, _
+    ByVal wallet As String, _
+    ByVal operation As String, _
+    ByVal acquired As Variant, _
+    ByVal spent As Variant, _
+    ByVal note As String, _
+    ByVal id As String _
+    )
+    xAddTicker ticker
+    
+    Dim op As BinanceOp
+    Set op = New BinanceOp
+    
+    op.stamp = stamp
+    op.wallet = wallet
+    op.operation = operation
+    op.acquired = acquired
+    op.spent = spent
+    op.ticker = ""
+    op.price = 0
+    op.amount = 0
+    op.charge = 0
+    op.bnb_fee = 0
+    op.note = note
+    op.id = id
+    
+    xAddOp ticker, op
 End Sub
 

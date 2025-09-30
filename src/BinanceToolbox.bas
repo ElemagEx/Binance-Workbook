@@ -357,8 +357,8 @@ Public Sub BinanceTool_Ledger_UpdateTrades()
         MsgBox "Not found symbols for " & ticker
         Exit Sub
     End If
-    
-    Dim lastUpdateTime, endTime, opTime As Date
+
+    Dim lastUpdateTime, endTime, stamp As Date
     lastUpdateTime = getTradeLastUpdate(ws, ticker)
     
     Dim operation As Dictionary
@@ -397,10 +397,10 @@ Public Sub BinanceTool_Ledger_UpdateTrades()
     
                 Dim item As Dictionary
                 For Each item In list
-                    opTime = UnixTimestamp2Date(item("time"))
-                    
-                    If endTime > opTime Then
-                        endTime = opTime
+                    stamp = UnixTimestampToDate(item("time"))
+
+                    If endTime > stamp Then
+                        endTime = stamp
                     End If
                     If endTime < lastUpdateTime Then
                         Exit For
@@ -421,7 +421,7 @@ Public Sub BinanceTool_Ledger_UpdateTrades()
                     
                     Set operation = New Dictionary
                     
-                    operation(COL_DETAILS_STAMP) = opTime
+                    operation(COL_DETAILS_STAMP) = stamp
                     operation(COL_DETAILS_WALLET) = WALLET_SPOT
                     operation(COL_DETAILS_OPERATION) = IIf(isBuyer, OPERATION_BUY, OPERATION_SELL)
                     operation(COL_DETAILS_ACQUIRED) = IIf(isBuyer, item("qty"), 0)
@@ -438,7 +438,7 @@ Public Sub BinanceTool_Ledger_UpdateTrades()
                     
                     Set operation = New Dictionary
                     
-                    operation(COL_DETAILS_STAMP) = opTime
+                    operation(COL_DETAILS_STAMP) = stamp
                     operation(COL_DETAILS_WALLET) = WALLET_SPOT
                     operation(COL_DETAILS_OPERATION) = IIf(isBuyer, OPERATION_EXPENCE, OPERATION_INCOME)
                     operation(COL_DETAILS_ACQUIRED) = IIf(isBuyer, 0, item("quoteQty"))
@@ -456,7 +456,7 @@ Public Sub BinanceTool_Ledger_UpdateTrades()
                     If isFeeBNB Then
                         Set operation = New Dictionary
                         
-                        operation(COL_DETAILS_STAMP) = opTime
+                        operation(COL_DETAILS_STAMP) = stamp
                         operation(COL_DETAILS_WALLET) = WALLET_SPOT
                         operation(COL_DETAILS_OPERATION) = OPERATION_COMMISSION
                         operation(COL_DETAILS_ACQUIRED) = 0
@@ -503,9 +503,9 @@ Public Sub BinanceTool_Assets_UpdateDribblets()
     
     Dim filter, ticker As String
     filter = IIf(isThisLedgerWorksheet(ws, ticker), ticker, "")
-    
-    Dim lastUpdateTime, startTime, endTime, opTime As Date
-    
+
+    Dim lastUpdateTime, startTime, endTime, stamp As Date
+
     lastUpdateTime = IIf(filter = "", getLastUpdate(COL_LAST_UPDATE_DRIBBLETS), CDate("2025-06-01"))
 
     endTime = now()
@@ -538,13 +538,13 @@ Public Sub BinanceTool_Assets_UpdateDribblets()
 
             Dim item As Dictionary
             For Each item In list
-                opTime = UnixTimestamp2Date(item("operateTime"))
-                
-                If endTime > opTime Then
-                    endTime = opTime
+                stamp = UnixTimestampToDate(item("operateTime"))
+
+                If endTime > stamp Then
+                    endTime = stamp
                 End If
-                
-                If Not tryCollectDribblet(Operations, item, opTime) Then
+
+                If Not tryCollectDribblet(Operations, item, stamp) Then
                     hasSkippedOperations = True
                 End If
             Next item
@@ -616,9 +616,9 @@ Public Sub BinanceTool_Assets_UpdateConverts()
     
     Dim filter, ticker As String
     filter = IIf(isThisLedgerWorksheet(ws, ticker), ticker, "")
-    
-    Dim lastUpdateTime, startTime, endTime, opTime As Date
-    
+
+    Dim lastUpdateTime, startTime, endTime, stamp As Date
+
     lastUpdateTime = IIf(filter = "", getLastUpdate(COL_LAST_UPDATE_CONVERT), CDate("2025-06-01"))
 
     endTime = now()
@@ -651,19 +651,19 @@ Public Sub BinanceTool_Assets_UpdateConverts()
 
             Dim item As Dictionary
             For Each item In list
-                opTime = UnixTimestamp2Date(item("createTime"))
-                
-                If endTime > opTime Then
-                    endTime = opTime
+                stamp = UnixTimestampToDate(item("createTime"))
+
+                If endTime > stamp Then
+                    endTime = stamp
                 End If
-                
+
                 If item("orderStatus") = "SUCCESS" Then
                     
                     Dim isSingleWallet As Boolean
                     Dim opsCollected As Boolean
                     Dim Wallet As String
-                    Wallet = handleMultiWalletsConvert(Operations, item, opTime, isSingleWallet, opsCollected)
-                    
+                    Wallet = handleMultiWalletsConvert(Operations, item, stamp, isSingleWallet, opsCollected)
+
                     If Wallet = "" Then
                         MsgBox "Unknown convert type"
                         Exit Sub
@@ -677,7 +677,7 @@ Public Sub BinanceTool_Assets_UpdateConverts()
                     
                     Set operation = New Dictionary
                     
-                    operation(COL_DETAILS_STAMP) = opTime
+                    operation(COL_DETAILS_STAMP) = stamp
                     operation(COL_DETAILS_WALLET) = Wallet
                     operation(COL_DETAILS_OPERATION) = OPERATION_CONVERT_IN
                     operation(COL_DETAILS_ACQUIRED) = item("toAmount")
@@ -705,7 +705,7 @@ Public Sub BinanceTool_Assets_UpdateConverts()
                         
                         Set operation = New Dictionary
                         
-                        operation(COL_DETAILS_STAMP) = opTime
+                        operation(COL_DETAILS_STAMP) = stamp
                         operation(COL_DETAILS_WALLET) = Wallet
                         operation(COL_DETAILS_OPERATION) = OPERATION_CONVERT_OUT
                         operation(COL_DETAILS_ACQUIRED) = 0
@@ -1172,11 +1172,11 @@ Private Function collectConvertOperations(ByVal Operations As Dictionary, Option
     Next id
 End Function
 
-Private Function handleMultiWalletsConvert(ByVal Operations As Dictionary, ByVal item As Dictionary, ByVal opTime As Date, ByRef isSingleWallet As Boolean, ByRef opsCollected As Boolean) As String
-    
+Private Function handleMultiWalletsConvert(ByVal Operations As Dictionary, ByVal item As Dictionary, ByVal stamp As Date, ByRef isSingleWallet As Boolean, ByRef opsCollected As Boolean) As String
+
     isSingleWallet = True
     opsCollected = False
-    
+
     Select Case item("walletType")
         Case "SPOT"
             handleMultiWalletsConvert = WALLET_SPOT
@@ -1195,14 +1195,14 @@ Private Function handleMultiWalletsConvert(ByVal Operations As Dictionary, ByVal
             handleMultiWalletsConvert = ""
             Exit Function
     End Select
-    
+
     isSingleWallet = False
     opsCollected = collectConvertOperations(Operations, item("orderId"))
-    
+
     If opsCollected Then
         Exit Function
     End If
-        
+
     Dim entry As Dictionary
     Set entry = New Dictionary
     
@@ -1227,8 +1227,8 @@ Private Function handleMultiWalletsConvert(ByVal Operations As Dictionary, ByVal
             MsgBox "Unknown wallet: " & item("walletType")
             Exit Function
     End Select
-    
-    entry(COL_CONVERTS_STAMP) = opTime
+
+    entry(COL_CONVERTS_STAMP) = stamp
     entry(COL_CONVERTS_APPLIED) = False
     entry(COL_CONVERTS_ORDER_ID) = ID_PREFIX_CONVERT_OUT & item("orderId")
     entry(COL_CONVERTS_FROM_ASSET) = item("fromAsset")
@@ -1242,10 +1242,10 @@ Private Function handleMultiWalletsConvert(ByVal Operations As Dictionary, ByVal
     Set table = ThisWorkbook.Sheets(SHEET_MISC).ListObjects(TABLE_CONVERTS)
 
     table.ListRows.Add
-    
+
     Dim rowNum As Long
     rowNum = table.ListRows.count
-    
+
     Dim key As Variant
     For Each key In entry.Keys
         table.ListColumns(key).DataBodyRange(rowNum).value = entry(key)
@@ -1371,7 +1371,7 @@ Private Function collectDribbletOperations(ByVal Operations As Dictionary, Optio
     Next id
 End Function
 
-Private Function tryCollectDribblet(ByVal Operations As Dictionary, ByVal item As Dictionary, ByVal opTime As Date) As Boolean
+Private Function tryCollectDribblet(ByVal Operations As Dictionary, ByVal item As Dictionary, ByVal stamp As Date) As Boolean
 
     tryCollectDribblet = collectDribbletOperations(Operations, item("transId"))
 
@@ -1382,10 +1382,10 @@ Private Function tryCollectDribblet(ByVal Operations As Dictionary, ByVal item A
     Dim entry As Dictionary
     Set entry = New Dictionary
 
-    entry(COL_DRIBBLETS_STAMP) = opTime
+    entry(COL_DRIBBLETS_STAMP) = stamp
     entry(COL_DRIBBLETS_APPLIED) = False
     entry(COL_DRIBBLETS_TX_ID) = ID_PREFIX_DRIBBLET & item("transId")
-    
+
     Dim assets As collection
     Set assets = item("userAssetDribbletDetails")
     
@@ -1405,10 +1405,10 @@ Private Function tryCollectDribblet(ByVal Operations As Dictionary, ByVal item A
     
     Dim num_coins As Long
     num_coins = (table.ListColumns.count - table.ListColumns(COL_DRIBBLETS_DIFF).Index) \ 4
-    
+
     Do While num_coins < assets.count
         num_coins = num_coins + 1
-        
+
         table.ListColumns.Add().name = COL_DRIBBLETS_COIN_PREFIX & num_coins
         table.ListColumns.Add().name = COL_DRIBBLETS_AMOUNT_PREFIX & num_coins
         table.ListColumns.Add().name = COL_DRIBBLETS_CHARGE_PREFIX & num_coins
@@ -1416,10 +1416,10 @@ Private Function tryCollectDribblet(ByVal Operations As Dictionary, ByVal item A
     Loop
 
     table.ListRows.Add
-    
+
     Dim rowNum As Long
     rowNum = table.ListRows.count
-    
+
     Dim key As Variant
     For Each key In entry.Keys
         table.ListColumns(key).DataBodyRange(rowNum).value = entry(key)

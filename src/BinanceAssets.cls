@@ -79,7 +79,7 @@ Public Sub CollectSimpleEarnFlexibleAssets(ByVal name As String, Optional ByVal 
     
     Dim page As Long
     For page = 1 To 1000
-        Set positions = BinanceAPI.SimpleEarn_GetFlexiblePositions(filter, MAX_LIMIT.SIMPLE_EARN_FLEXIBLE_POSITIONS, page)
+        Set positions = BinanceAPI.SimpleEarn_GetFlexiblePositions(filter, MAX_LIMIT.SIMPLE_EARN_OPERATIONS, page)
         
         If positions Is Nothing Then
             Exit Sub
@@ -96,7 +96,7 @@ Public Sub CollectSimpleEarnFlexibleAssets(ByVal name As String, Optional ByVal 
             xAddAmount ticker, name, amount
         Next position
         
-        If positions("rows").count < MAX_LIMIT.SIMPLE_EARN_FLEXIBLE_POSITIONS Then
+        If positions("rows").count < MAX_LIMIT.SIMPLE_EARN_OPERATIONS Then
             Exit For
         End If
     Next page
@@ -113,7 +113,7 @@ Public Sub CollectSimpleEarnLockedAssets(ByVal name As String, Optional ByVal fi
     
     Dim page As Long
     For page = 1 To 1000
-        Set positions = BinanceAPI.SimpleEarn_GetLockedPositions(filter, MAX_LIMIT.SIMPLE_EARN_LOCKED_POSITIONS, page)
+        Set positions = BinanceAPI.SimpleEarn_GetLockedPositions(filter, MAX_LIMIT.SIMPLE_EARN_OPERATIONS, page)
         
         If positions Is Nothing Then
             Exit Sub
@@ -130,7 +130,7 @@ Public Sub CollectSimpleEarnLockedAssets(ByVal name As String, Optional ByVal fi
             xAddAmount ticker, name, amount
         Next position
         
-        If positions("rows").count < MAX_LIMIT.SIMPLE_EARN_LOCKED_POSITIONS Then
+        If positions("rows").count < MAX_LIMIT.SIMPLE_EARN_OPERATIONS Then
             Exit For
         End If
     Next page

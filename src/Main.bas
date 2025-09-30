@@ -22,6 +22,8 @@ Public Const TABLE_DETAILS As String = "Details"
 
 Public Const WALLET_SPOT As String = "Spot"
 Public Const WALLET_FUNDING As String = "Funding"
+Public Const WALLET_LOCKED_EARN As String = "Locked Earn"
+Public Const WALLET_FLEXIBLE_EARN As String = "Flexible Earn"
 
 Public Const OPERATION_BUY As String = "buy"
 Public Const OPERATION_SELL As String = "sell"
@@ -50,6 +52,7 @@ Public Const ERR_UNKNOWN_WALLET = 2001
 
 Public Enum MAX_PERIOD
     FIAT_OPERATIONS = 180
+    SIMPLE_EARN_OPERATIONS = 90
     
     SPOT_TRADING_GET_MY_TRADES = 1
     
@@ -60,6 +63,7 @@ Public Enum MAX_PERIOD
 End Enum
 Public Enum MAX_LIMIT
     FIAT_OPERATIONS = 500
+    SIMPLE_EARN_OPERATIONS = 100
     
     SPOT_TRADING_GET_MY_TRADES = 1000
 
@@ -67,9 +71,6 @@ Public Enum MAX_LIMIT
     WALLET_WITHDRAW_HISTORY = 1000
     WALLET_DIVIDEND_HISTORY = 500
     WALLET_TRANSFER_HISTORY = 100
-    
-    SIMPLE_EARN_FLEXIBLE_POSITIONS = 100
-    SIMPLE_EARN_LOCKED_POSITIONS = 100
 End Enum
 
 Public Const aMAX_PERIOD_WALLET_TRANSFERS As Long = 180
@@ -111,21 +112,6 @@ Public Sub ResetExchangeTimezone(Optional ByVal tz As String = "")
     
     table.ListColumns("Exchange Timezone").DataBodyRange(1).Value = tz
 End Sub
-
-Public Function UnixTimestamp2Date(ByVal unixTime As LongLong) As Date
-    UnixTimestamp2Date = DateAdd("s", unixTime / 1000, "1/1/1970")
-End Function
-
-Public Function UnixTimestampToDate(ByVal unixTime As Double) As Date
-    UnixTimestampToDate = DateAdd("s", unixTime / 1000, "1/1/1970")
-End Function
-
-Public Function DateToUnixTimestamp(ByVal dateTime As Date) As String
-    Dim val As LongLong
-    val = DateDiff("s", #1/1/1970#, dateTime)
-    val = val * 1000
-    DateToUnixTimestamp = CStr(val)
-End Function
 
 Public Function Str2Dec(ByVal str As String) As Variant
     Dim val As String

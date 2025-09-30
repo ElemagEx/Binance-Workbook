@@ -117,9 +117,23 @@ Public Sub Action_UpdateCryptoDistributions()
 End Sub
 
 Public Sub Action_UpdateFlexibleEarn()
+    Dim ops As New BinanceOps
     
+    ops.Collect_FlexibleEarnSubscriptions TableLastUpdate.FlexibleEarns
+    ops.Collect_FlexibleEarnRedemptions TableLastUpdate.FlexibleEarns
+    
+    BinanceLedgers.PopulateOperations ops
+    
+    TableLastUpdate.FlexibleEarns = ops.endDate
 End Sub
 
 Public Sub Action_UpdateLockedEarn()
-
+    Dim ops As New BinanceOps
+    
+    ops.Collect_LockedEarnSubscriptions TableLastUpdate.LockedEarns
+    ops.Collect_LockedEarnRedemptions TableLastUpdate.LockedEarns
+    
+    BinanceLedgers.PopulateOperations ops
+    
+    TableLastUpdate.LockedEarns = ops.endDate
 End Sub
