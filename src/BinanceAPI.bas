@@ -541,10 +541,10 @@ Private Function xExecuteWebQuery(ByVal query As BinanceWebQuery)
         Debug.Print "Success! Received response from server."
         Set xExecuteWebQuery = response.data
     Else
-        Debug.Print "Binance API Error Occurred!"
-        Debug.Print "Status: " & response.StatusCode & " " & response.StatusDescription
-        Debug.Print "Response: " & response.Content
-        MsgBox "An API error occurred. Status: " & response.StatusCode & vbCrLf & "Response: " & response.StatusDescription, vbExclamation
+        Err.Raise _
+            10000 + response.StatusCode, _
+            "BinanceAPI.xExecuteWebQuery(" & query.api & ")", _
+            "Binance API Error Status: " & response.StatusDescription
     End If
 End Function
     

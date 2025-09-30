@@ -87,7 +87,7 @@ Public Sub UpdateData()
         
     Next ticker
     
-    TableLastUpdate.wallet = now()
+    TableLastUpdate.wallet = Now()
 End Sub
 
 Private Function xFindTickerRowIndex(ByVal ticker As String, ByVal addIfNotFound As Boolean) As Long

@@ -24,10 +24,6 @@ Public Sub CollectSpotWalletAssets(ByVal name As String, Optional ByVal filter A
     Dim assets As Collection
     Set assets = BinanceAPI.Wallet_GetUserAssets(filter, False)
     
-    If assets Is Nothing Then
-        Exit Sub
-    End If
-    
     Dim ticker As String
     Dim amount As Variant
 
@@ -48,10 +44,6 @@ Public Sub CollectFundingWalletAssets(ByVal name As String, Optional ByVal filte
 
     Dim assets As Collection
     Set assets = BinanceAPI.Wallet_GetFundingAssets(filter, False)
-
-    If assets Is Nothing Then
-        Exit Sub
-    End If
 
     Dim ticker As String
     Dim amount As Variant
@@ -81,9 +73,6 @@ Public Sub CollectSimpleEarnFlexibleAssets(ByVal name As String, Optional ByVal 
     For page = 1 To 1000
         Set positions = BinanceAPI.SimpleEarn_GetFlexiblePositions(filter, MAX_LIMIT.SIMPLE_EARN_OPERATIONS, page)
         
-        If positions Is Nothing Then
-            Exit Sub
-        End If
         If Not positions.Exists("rows") Then
             Exit For
         End If
@@ -115,9 +104,6 @@ Public Sub CollectSimpleEarnLockedAssets(ByVal name As String, Optional ByVal fi
     For page = 1 To 1000
         Set positions = BinanceAPI.SimpleEarn_GetLockedPositions(filter, MAX_LIMIT.SIMPLE_EARN_OPERATIONS, page)
         
-        If positions Is Nothing Then
-            Exit Sub
-        End If
         If Not positions.Exists("rows") Then
             Exit For
         End If

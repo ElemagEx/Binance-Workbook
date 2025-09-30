@@ -55,10 +55,6 @@ Public Sub collectBasicInfo(ByVal updateOnlyExisting As Boolean)
     Dim list As Collection
     Set list = BinanceAPI.Wallet_GetAllCoinsInfo()
 
-    If list Is Nothing Then
-        Exit Sub
-    End If
-
     Dim item As Dictionary
     For Each item In list
         Dim ticker As String
@@ -93,10 +89,6 @@ End Sub
 Public Sub collectExchangeInfo()
     Dim info As Dictionary
     Set info = BinanceAPI.SpotTrading_GetExchangeInfo(False)
-    
-    If info Is Nothing Then
-        Exit Sub
-    End If
     
     m_tz = info("timezone")
     

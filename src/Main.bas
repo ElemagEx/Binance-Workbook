@@ -25,22 +25,22 @@ Public Const WALLET_FUNDING As String = "Funding"
 Public Const WALLET_LOCKED_EARN As String = "Locked Earn"
 Public Const WALLET_FLEXIBLE_EARN As String = "Flexible Earn"
 
-Public Const OPERATION_BUY As String = "buy"
-Public Const OPERATION_SELL As String = "sell"
-Public Const OPERATION_INCOME As String = "income"
-Public Const OPERATION_EXPENCE As String = "expence"
-Public Const OPERATION_DUST_IN As String = "dust-in"
-Public Const OPERATION_DUST_OUT As String = "dust-out"
-Public Const OPERATION_FIAT_BUY As String = "fiat-buy"
-Public Const OPERATION_FIAT_SELL As String = "fiat-sell"
-Public Const OPERATION_DEPOSIT As String = "deposit"
-Public Const OPERATION_WITHDRAW As String = "withdraw"
-Public Const OPERATION_WALLET_IN As String = "wallet-in"
-Public Const OPERATION_WALLET_OUT As String = "wallet-out"
-Public Const OPERATION_CONVERT_IN As String = "convert-in"
-Public Const OPERATION_CONVERT_OUT As String = "convert-out"
-Public Const OPERATION_COMMISSION As String = "commission"
-Public Const OPERATION_DISTRIBUTION As String = "distribution"
+Public Const OP_BUY As String = "buy"
+Public Const OP_SELL As String = "sell"
+Public Const OP_INCOME As String = "income"
+Public Const OP_EXPENCE As String = "expence"
+Public Const OP_DUST_IN As String = "dust-in"
+Public Const OP_DUST_OUT As String = "dust-out"
+Public Const OP_FIAT_BUY As String = "fiat-buy"
+Public Const OP_FIAT_SELL As String = "fiat-sell"
+Public Const OP_DEPOSIT As String = "deposit"
+Public Const OP_WITHDRAW As String = "withdraw"
+Public Const OP_WALLET_IN As String = "wallet-in"
+Public Const OP_WALLET_OUT As String = "wallet-out"
+Public Const OP_CONVERT_IN As String = "convert-in"
+Public Const OP_CONVERT_OUT As String = "convert-out"
+Public Const OP_COMMISSION As String = "commission"
+Public Const OP_DISTRIBUTION As String = "distribution"
 
 Public Const STR_NA As String = "n/a"
 Public Const STR_BNB As String = "BNB"
@@ -98,6 +98,18 @@ Public Sub Assert_Fail(Optional ByVal source As String = "", Optional ByVal desc
     Err.Raise ERR_ASSERTION_FAIL, source, desc
 #End If
 End Sub
+
+Public Sub HandleError(ByVal num As Long, ByVal src As String, ByVal desc As String, Optional ByVal showMsg As Boolean = True)
+    Dim msg As String
+    msg = "Error Source: " & src & vbCrLf & _
+          "Error Number: " & num & vbCrLf & _
+          "Description: " & desc
+          
+    Debug.Print msg
+          
+    If showMsg Then MsgBox msg, vbCritical
+End Sub
+
 
 Public Function GetExchangeTimezone() As String
     Dim table As ListObject

@@ -41,10 +41,6 @@ End Sub
 Public Sub UpdateData()
     Dim account As Dictionary
     Set account = BinanceAPI.SpotTrading_GetAccountInfo()
-    
-    If account Is Nothing Then
-        Exit Sub
-    End If
 
     Dim rates As Dictionary
     Set rates = account("commissionRates")
