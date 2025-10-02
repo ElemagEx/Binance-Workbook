@@ -30,6 +30,7 @@ Public Function GetProjectFiles(ByVal thirdParty As Boolean) As Collection
         files.Add "src/TableUserInfo.bas"
         files.Add "src/TableCurrencies.bas"
         files.Add "src/TableLastUpdate.bas"
+        files.Add "src/TableConversions.bas"
     End If
 
     Set GetProjectFiles = files

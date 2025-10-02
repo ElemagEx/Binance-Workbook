@@ -2,9 +2,6 @@ Attribute VB_Name = "TableUserInfo"
 Option Explicit
 Option Private Module
 
-Private Const SHEET_NAME As String = SHEET_ASSETS
-Private Const TABLE_NAME As String = "UserInfo"
-
 Private Const COL_UID As String = "UID"
 Private Const COL_MAKER_FEE As String = "Maker Fee"
 Private Const COL_TAKER_FEE As String = "Taker Fee"
@@ -14,7 +11,7 @@ Private Const COL_ACTIVITY_START_DATE As String = "Activity Start Date"
 
 Public Function IsDataCleanedUp()
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
+    Set table = xGetTable()
 
     IsDataCleanedUp = IsEmpty(table.ListColumns(COL_UID).DataBodyRange(1).Value) _
         And IsEmpty(table.ListColumns(COL_MAKER_FEE).DataBodyRange(1).Value) _
@@ -25,7 +22,7 @@ End Function
 
 Public Sub CleanUpData()
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
+    Set table = xGetTable()
     
     table.ListColumns(COL_UID).DataBodyRange.ClearContents
     table.ListColumns(COL_MAKER_FEE).DataBodyRange.ClearContents
@@ -46,7 +43,7 @@ Public Sub UpdateData()
     Set rates = account("commissionRates")
     
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
+    Set table = xGetTable()
     
     table.ListColumns(COL_UID).DataBodyRange(1).Value = account("uid")
     table.ListColumns(COL_MAKER_FEE).DataBodyRange(1).Value = Str2Dec(rates("maker"))
@@ -56,8 +53,10 @@ Public Sub UpdateData()
 End Sub
 
 Public Property Get ActivityStartDate() As Date
-    Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
-    
-    ActivityStartDate = CDate(table.ListColumns(COL_ACTIVITY_START_DATE).DataBodyRange(1).Value)
+    ActivityStartDate = CDate(xGetTable().ListColumns(COL_ACTIVITY_START_DATE).DataBodyRange(1).Value)
 End Property
+
+Public Function xGetTable() As ListObject
+    Set xGetTable = ThisWorkbook.Sheets(SHEET_ASSETS).ListObjects(TABLE_USER_INFO)
+End Function
+

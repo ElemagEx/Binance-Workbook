@@ -4,17 +4,21 @@ Option Private Module
 
 Public Const SHEET_ASSETS As String = "Assets"
 Public Const SHEET_CURRENCIES As String = "Currencies"
+Public Const SHEET_MISC As String = "Misc"
 Public Const SHEET_LEDGER_TEMPLATE As String = "Ledger Template"
 
 Public Const LEDGER_SHEET_SUFFIX As String = "Ledger"
 
+' Assets Sheet Tables
 Public Const TABLE_WALLET As String = "Wallet"
 Public Const TABLE_USER_INFO As String = "UserInfo"
 Public Const TABLE_LAST_UPDATE As String = "LastUpdate"
-
+' Currencies Sheet Tables
 Public Const TABLE_TIMEZONE As String = "Timezone"
 Public Const TABLE_CURRENCIES As String = "Currencies"
-
+' Misc Sheet Tables
+Public Const TABLE_CONVERSIONS As String = "Conversions"
+' Ledger Template Sheet Tables
 Public Const TABLE_TRIVIA As String = "Trivia"
 Public Const TABLE_SUMMARY As String = "Summary"
 Public Const TABLE_MARKETS As String = "Markets"
@@ -24,6 +28,35 @@ Public Const WALLET_SPOT As String = "Spot"
 Public Const WALLET_FUNDING As String = "Funding"
 Public Const WALLET_LOCKED_EARN As String = "Locked Earn"
 Public Const WALLET_FLEXIBLE_EARN As String = "Flexible Earn"
+
+'Public Const ID_PREFIX_DRIBBLET As String = "FF-"
+
+Public Const ID_PREFIX_WALLET_IN As String = "WI-"  ' Universal Transfer In
+Public Const ID_PREFIX_WALLET_OUT As String = "WO-" ' Universal Transfer Out
+
+Public Const ID_PREFIX_WALLET_CVT As String = "WC-" ' Locked Earn to Flexible Earn (transfer)
+Public Const ID_PREFIX_WALLET_SEI As String = "WS-" ' Spot to Flexible/Locked Earn (input)
+Public Const ID_PREFIX_WALLET_SEO As String = "WT-" ' Spot to Flexible/Locked Earn (output)
+Public Const ID_PREFIX_WALLET_FEI As String = "WF-" ' Funding to Flexible/Locked Earn (input)
+Public Const ID_PREFIX_WALLET_FEO As String = "WG-" ' Funding to Flexible/Locked Earn (output)
+
+Public Const ID_PREFIX_CONVERT_IN As String = "VI-"
+Public Const ID_PREFIX_CONVERT_OUT As String = "VO-"
+Public Const ID_PREFIX_CONVERT_FSO As String = "VF-" ' output transfer from funding to spot before spot asset conversion
+Public Const ID_PREFIX_CONVERT_ESO As String = "VE-" ' output transfer from earn to spot before spot asset conversion
+Public Const ID_PREFIX_CONVERT_EFO As String = "VN-" ' output transfer from earn to funding before funding asset conversion
+Public Const ID_PREFIX_CONVERT_FSI As String = "VS-" ' input transfer to spot from funding before spot asset conversion
+Public Const ID_PREFIX_CONVERT_ESI As String = "VT-" ' input transfer to spot from earn before spot asset conversion
+Public Const ID_PREFIX_CONVERT_EFI As String = "VG-" ' input transfer to funding from earn before funding asset conversion
+
+Public Const ID_PREFIX_DISTRIBUTION As String = "RI-"
+Public Const ID_PREFIX_TRADE As String = "XC-"
+Public Const ID_PREFIX_FIAT_BUY As String = "TB-"
+Public Const ID_PREFIX_FIAT_SELL As String = "TS-"
+Public Const ID_PREFIX_FIAT_DEPOSIT As String = "TD-"
+Public Const ID_PREFIX_FIAT_WITHDRAW As String = "TW-"
+Public Const ID_PREFIX_CRYPTO_DEPOSIT As String = "ND-"
+Public Const ID_PREFIX_CRYPTO_WITHDRAW As String = "NW-"
 
 Public Const OP_BUY As String = "buy"
 Public Const OP_SELL As String = "sell"
@@ -56,6 +89,8 @@ Public Enum MAX_PERIOD
     
     SPOT_TRADING_GET_MY_TRADES = 1
     
+    CONVERT_TRADE_HISTORY = 30
+    
     WALLET_DEPOSIT_HISTORY = 90
     WALLET_WITHDRAW_HISTORY = 90
     WALLET_DIVIDEND_HISTORY = 180
@@ -67,25 +102,13 @@ Public Enum MAX_LIMIT
     
     SPOT_TRADING_GET_MY_TRADES = 1000
 
+    CONVERT_TRADE_HISTORY = 1000
+    
     WALLET_DEPOSIT_HISTORY = 1000
     WALLET_WITHDRAW_HISTORY = 1000
     WALLET_DIVIDEND_HISTORY = 500
     WALLET_TRANSFER_HISTORY = 100
 End Enum
-
-Public Const aMAX_PERIOD_WALLET_TRANSFERS As Long = 180
-
-Public Const aMAX_PERIOD_SIMPLEEARN_FLEXIBLE_SUBSCRIPTIONS = 90
-Public Const aMAX_PERIOD_SIMPLEEARN_FLEXIBLE_REDEMPTIONS = 90
-Public Const aMAX_PERIOD_LOCKED_FLEXIBLE_SUBSCRIPTIONS = 90
-Public Const aMAX_PERIOD_LOCKED_FLEXIBLE_REDEMPTIONS = 90
-
-Public Const aMAX_LIMIT_WALLET_TRANSFERS As Long = 100
-
-Public Const aMAX_LIMIT_SIMPLEEARN_FLEXIBLE_SUBSCRIPTIONS = 100
-Public Const aMAX_LIMIT_SIMPLEEARN_FLEXIBLE_REDEMPTIONS = 100
-Public Const aMAX_LIMIT_SIMPLEEARN_LOCKED_SUBSCRIPTIONS = 100
-Public Const aMAX_LIMIT_SIMPLEEARN_LOCKED_REDEMPTIONS = 100
 
 #Const IN_DEVELOPMENT = True
 

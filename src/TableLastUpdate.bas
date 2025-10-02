@@ -6,7 +6,7 @@ Private Const FIRST_DATA_ROW = 2
 
 Private Const COL_WALLET As String = "Wallet"
 Private Const COL_TRANSFERS As String = "Transfers"
-Private Const COL_CONVERTS As String = "Converts"
+Private Const COL_CONVERTIONS As String = "Conversions"
 Private Const COL_DUST_LOG As String = "Dust Log"
 Private Const COL_FIAT_BUYS As String = "Fiat Buys"
 Private Const COL_FIAT_SELLS As String = "Fiat Sells"
@@ -22,7 +22,7 @@ Public Function IsDataCleanedUp()
     IsDataCleanedUp = False
     
     Dim table As ListObject
-    Set table = xTable
+    Set table = xGetTable()
 
     Dim i As Long
     For i = FIRST_DATA_ROW To table.ListColumns.count
@@ -40,7 +40,7 @@ End Sub
 
 Public Sub ClearData(ByVal clearWalletData As Boolean)
     Dim table As ListObject
-    Set table = xTable
+    Set table = xGetTable()
 
     Dim i As Long
     For i = FIRST_DATA_ROW To table.ListColumns.count
@@ -66,12 +66,12 @@ Public Property Let Transfers(ByVal val As Date)
     xSetLastUpdate COL_TRANSFERS, val
 End Property
 
-Public Property Get Converts() As Date
-    Converts = xGetLastUpdate(COL_CONVERTS)
+Public Property Get Convertions() As Date
+    Convertions = xGetLastUpdate(COL_CONVERTIONS)
 End Property
 
-Public Property Let Converts(ByVal val As Date)
-    xSetLastUpdate COL_CONVERTS, val
+Public Property Let Convertions(ByVal val As Date)
+    xSetLastUpdate COL_CONVERTIONS, val
 End Property
 
 Public Property Get DustLog() As Date
@@ -154,19 +154,19 @@ Public Property Let LockedEarns(ByVal val As Date)
     xSetLastUpdate COL_LOCKED_EARNS, val
 End Property
 
-Public Property Get xTable() As ListObject
-    Set xTable = ThisWorkbook.Sheets(SHEET_ASSETS).ListObjects(TABLE_LAST_UPDATE)
-End Property
+Public Function xGetTable() As ListObject
+    Set xGetTable = ThisWorkbook.Sheets(SHEET_ASSETS).ListObjects(TABLE_LAST_UPDATE)
+End Function
 
 Private Function xGetLastUpdate(ByVal name As String) As Date
     Dim cell As Range
-    Set cell = xTable.ListColumns(name).DataBodyRange(1)
+    Set cell = xGetTable().ListColumns(name).DataBodyRange(1)
     xGetLastUpdate = IIf(IsEmpty(cell.Value), TableUserInfo.ActivityStartDate, CDate(cell.Value))
 End Function
 
 Private Sub xSetLastUpdate(ByVal name As String, ByVal val As Date)
     Dim cell As Range
-    Set cell = xTable.ListColumns(name).DataBodyRange(1)
+    Set cell = xGetTable().ListColumns(name).DataBodyRange(1)
     If val = 0 Then
         cell.ClearContents
     Else

@@ -24,7 +24,7 @@ Public Sub RemoveAll()
     Next ws
 End Sub
 
-Public Sub PopulateOperations(ByVal ops As BinanceOps)
+Public Sub PopulateOperations(ByVal ops As BinanceOps, Optional ByVal override As Boolean)
     Dim ticker As Variant
     For Each ticker In ops.Tickers
         TableWallet.CheckTicker ticker
@@ -33,7 +33,7 @@ Public Sub PopulateOperations(ByVal ops As BinanceOps)
         Set ledger = xFindLedger(ticker, True)
         
         ledger.Activate
-        ledger.PopulateOperations ops.item(ticker)
+        ledger.PopulateOperations ops.item(ticker), override
     Next ticker
 End Sub
 

@@ -2,9 +2,6 @@ Attribute VB_Name = "TableCurrencies"
 Option Explicit
 Option Private Module
 
-Private Const SHEET_NAME As String = SHEET_CURRENCIES
-Private Const TABLE_NAME As String = TABLE_CURRENCIES
-
 Private Const COL_TICKER As String = "Ticker"
 Private Const COL_NAME As String = "Name"
 Private Const COL_TYPE As String = "Type"
@@ -21,7 +18,7 @@ Public Property Get Tickers() As Collection
     Set Tickers = New Collection
 
     Dim col As ListColumn
-    Set col = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME).ListColumns(COL_TICKER)
+    Set col = xGetTable().ListColumns(COL_TICKER)
     
     If Not col.DataBodyRange Is Nothing Then
         Dim i As Long
@@ -42,7 +39,7 @@ Public Function GetTickerInfo(ByVal ticker As String) As BinanceCoin
     End If
 
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
+    Set table = xGetTable()
     
     Dim coin As New BinanceCoin
     coin.ticker = table.ListColumns(COL_TICKER).DataBodyRange(rowIndex).Value
@@ -73,7 +70,7 @@ Public Sub CleanUpData()
     ResetExchangeTimezone
     
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
+    Set table = xGetTable()
     
     Dim i As Long
     For i = table.ListColumns.count To FIRST_TRADE_COL_INDEX Step -1
@@ -99,7 +96,7 @@ Public Sub UpdateData()
     xCollectData True, True
     
     Dim col As ListColumn
-    Set col = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME).ListColumns(COL_KEEP_ON_COMPACT)
+    Set col = xGetTable().ListColumns(COL_KEEP_ON_COMPACT)
     If Not col.DataBodyRange Is Nothing Then
         col.DataBodyRange.Value = True
     End If
@@ -111,7 +108,7 @@ End Sub
 
 Public Sub CompactData()
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
+    Set table = xGetTable()
     
     Dim col As ListColumn
     Set col = table.ListColumns(COL_KEEP_ON_COMPACT)
@@ -150,6 +147,10 @@ Public Sub CompactData()
     table.ListColumns(COL_MARKETS).DataBodyRange.formula = formula
 End Sub
 
+Public Function xGetTable() As ListObject
+    Set xGetTable = ThisWorkbook.Sheets(SHEET_CURRENCIES).ListObjects(TABLE_CURRENCIES)
+End Function
+
 Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers)
     Dim coins As New BinanceCoins
 
@@ -170,7 +171,7 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
     coins.RemoveUncollected
     
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
+    Set table = xGetTable()
     
     ResetExchangeTimezone coins.ExchangeTimezone
     
@@ -242,7 +243,7 @@ End Sub
 
 Private Function xFindTickerRowIndex(ByVal ticker As String, ByVal addIfNotFound As Boolean) As Long
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
+    Set table = xGetTable()
     
     Dim cell As Range
     If table.ListRows.count > 0 Then

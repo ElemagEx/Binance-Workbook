@@ -2,9 +2,6 @@ Attribute VB_Name = "TableWallet"
 Option Explicit
 Option Private Module
 
-Private Const SHEET_NAME As String = SHEET_ASSETS
-Private Const TABLE_NAME As String = "Wallet"
-
 Private Const COL_TICKER As String = "Ticker"
 Private Const COL_SPOT_AMOUNT As String = "Spot Amount"
 Private Const COL_FUNDING_AMOUNT As String = "Funding Amount"
@@ -15,7 +12,7 @@ Public Property Get Tickers() As Collection
     Set Tickers = New Collection
 
     Dim col As ListColumn
-    Set col = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME).ListColumns(COL_TICKER)
+    Set col = xGetTable().ListColumns(COL_TICKER)
     
     If Not col.DataBodyRange Is Nothing Then
         Dim i As Long
@@ -30,15 +27,12 @@ Public Sub CheckTicker(ByVal ticker As String)
 End Sub
 
 Public Function IsDataCleanedUp() As Boolean
-    Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
-
-    IsDataCleanedUp = (table.ListRows.count = 0)
+    IsDataCleanedUp = (xGetTable().ListRows.count = 0)
 End Function
 
 Public Sub CleanUpData()
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
+    Set table = xGetTable()
     
     If Not table.DataBodyRange Is Nothing Then
         table.DataBodyRange.Delete
@@ -49,7 +43,7 @@ End Sub
 
 Public Sub ClearData()
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
+    Set table = xGetTable()
     
     If table.ListRows.count > 0 Then
         table.ListColumns(COL_SPOT_AMOUNT).DataBodyRange.ClearContents
@@ -72,7 +66,7 @@ Public Sub UpdateData()
     assets.CollectSimpleEarnFlexibleAssets COL_DYNAMIC_AMOUNT
     
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
+    Set table = xGetTable()
     
     Dim ticker As Variant
     For Each ticker In assets.wallet.Keys
@@ -90,9 +84,13 @@ Public Sub UpdateData()
     TableLastUpdate.wallet = Now()
 End Sub
 
+Public Function xGetTable() As ListObject
+    Set xGetTable = ThisWorkbook.Sheets(SHEET_ASSETS).ListObjects(TABLE_WALLET)
+End Function
+
 Private Function xFindTickerRowIndex(ByVal ticker As String, ByVal addIfNotFound As Boolean) As Long
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_NAME).ListObjects(TABLE_NAME)
+    Set table = xGetTable()
     
     Dim cell As Range
     If table.ListRows.count > 0 Then

@@ -49,6 +49,14 @@ Public Sub Project_CleanUpData()
     xCleanUpDate
 End Sub
 
+Public Sub Project_CloseAllLedgers()
+    If xIsProjectInactive() Then
+        Exit Sub
+    End If
+    
+    xCloseAllLedgers
+End Sub
+
 Public Function Project_TryCleanUpData() As Boolean
     Project_TryCleanUpData = False
     
@@ -71,7 +79,13 @@ Public Function Project_IsDataCleanedUp()
     Project_IsDataCleanedUp = xIsDateCleanup()
 End Function
 
+Private Sub xCloseAllLedgers()
+    BinanceLedgers.RemoveAll
+End Sub
+
 Private Sub xCleanUpDate()
+    TableConversions.CleanUpData
+
     TableCurrencies.CleanUpData
     
     TableLastUpdate.CleanUpData
@@ -83,6 +97,7 @@ End Sub
 
 Private Function xIsDateCleanup() As Boolean
     xIsDateCleanup = _
+        TableConversions.IsDataCleanedUp And _
         TableCurrencies.IsDataCleanedUp And _
         TableLastUpdate.IsDataCleanedUp And _
         TableUserInfo.IsDataCleanedUp And _

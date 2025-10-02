@@ -94,13 +94,17 @@ Public Sub PopulateOperations(ByVal ops As Collection, Optional ByVal override A
     
     Dim op As BinanceOp
     For Each op In ops
+        Dim forDelete As Boolean
+        forDelete = op.acquired = 0 And op.spent = 0
+        
         Dim rowIndex As Long
         rowIndex = xFindOpRowIndex(table, op.id)
         
         If rowIndex = 0 Then
-            rowIndex = table.ListRows.Add().index
-        ElseIf Not override Then
-            rowIndex = 0
+            If Not forDelete Then rowIndex = table.ListRows.Add().index
+        Else
+            If forDelete Then table.ListRows(rowIndex).Delete
+            If Not override Then rowIndex = 0
         End If
         
         If rowIndex > 0 Then
@@ -185,10 +189,10 @@ Private Sub xReset(ByVal clearDetails)
 
     Set table = m_ws.ListObjects(xTableName(TABLE_SUMMARY))
 
-    table.ListColumns(COL_SUMMARY_ACQUIRED).DataBodyRange.NumberFormat = numFormat
-    table.ListColumns(COL_SUMMARY_SPENT).DataBodyRange.NumberFormat = numFormat
-    table.ListColumns(COL_SUMMARY_CHARGE).DataBodyRange.NumberFormat = numFormat
-    table.ListColumns(COL_SUMMARY_BALANCE).DataBodyRange.NumberFormat = numFormat
+    table.ListColumns(COL_SUMMARY_ACQUIRED).Range.NumberFormat = numFormat
+    table.ListColumns(COL_SUMMARY_SPENT).Range.NumberFormat = numFormat
+    table.ListColumns(COL_SUMMARY_CHARGE).Range.NumberFormat = numFormat
+    table.ListColumns(COL_SUMMARY_BALANCE).Range.NumberFormat = numFormat
 
     Set table = m_ws.ListObjects(xTableName(TABLE_DETAILS))
     

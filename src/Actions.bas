@@ -33,6 +33,21 @@ ErrHandler:
     Resume Finalize
 End Sub
 
+Public Sub Action_SortAssets()
+    xActionHeader
+    On Error GoTo ErrHandler
+    
+    ThisWorkbook.Sheets(SHEET_ASSETS).Activate
+    'TableWallet.UpdateData
+
+Finalize:
+    xActionFooter
+    Exit Sub
+ErrHandler:
+    HandleError Err.Number, Err.source, Err.Description
+    Resume Finalize
+End Sub
+
 Public Sub Action_CollectUsedCurrencies()
     xActionHeader
     On Error GoTo ErrHandler
@@ -101,6 +116,14 @@ Public Sub Action_UpdateConversions()
     xActionHeader
     On Error GoTo ErrHandler
 
+    Dim ops As New BinanceOps
+    ops.Collect_Conversions TableLastUpdate.Convertions
+    
+    BinanceLedgers.PopulateOperations ops
+    
+    TableLastUpdate.Convertions = ops.endDate
+
+    xCheckForUnappliedOps ops
 
 Finalize:
     xActionFooter
@@ -114,6 +137,12 @@ Public Sub Action_UpdateDustLog()
     xActionHeader
     On Error GoTo ErrHandler
 
+    Dim ops As New BinanceOps
+    ops.Collect_Transfers TableLastUpdate.DustLog
+    
+    BinanceLedgers.PopulateOperations ops
+    
+    TableLastUpdate.DustLog = ops.endDate
 
 Finalize:
     xActionFooter
@@ -296,6 +325,26 @@ ErrHandler:
     Resume Finalize
 End Sub
 
+Public Sub Action_CheckUnappliedOperations()
+    xActionHeader
+    On Error GoTo ErrHandler
+    
+    Dim ops As New BinanceOps
+    
+    TableConversions.CollectUnappliedOps ops
+    
+    BinanceLedgers.PopulateOperations ops, True
+    
+    TableLastUpdate.LockedEarns = ops.endDate
+
+Finalize:
+    xActionFooter
+    Exit Sub
+ErrHandler:
+    HandleError Err.Number, Err.source, Err.Description
+    Resume Finalize
+End Sub
+
 Private Sub xActionHeader()
 
 End Sub
@@ -303,3 +352,14 @@ End Sub
 Private Sub xActionFooter()
 
 End Sub
+
+Private Sub xCheckForUnappliedOps(ByVal ops As BinanceOps)
+    If ops.unappliedOps Then
+        ThisWorkbook.Sheets(SHEET_MISC).Activate
+        
+        TableConversions.Sort
+        
+        MsgBox "There is unapplied operations. Take care of them."
+    End If
+End Sub
+

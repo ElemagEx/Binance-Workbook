@@ -9,34 +9,9 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
-'Public Const ID_PREFIX_DRIBBLET As String = "FF-"
-Private Const ID_PREFIX_WALLET_IN As String = "WI-"  ' Universal Transfer In
-Private Const ID_PREFIX_WALLET_OUT As String = "WO-" ' Universal Transfer Out
-Private Const ID_PREFIX_WALLET_CVT As String = "WC-" ' Locked Earn to Flexible Earn Transfer
-Private Const ID_PREFIX_WALLET_STE As String = "WS-" ' Spot to Flexible/Locked Earn
-Private Const ID_PREFIX_WALLET_ETS As String = "WE-" ' Flexible/Locked Earn to Spot
-Private Const ID_PREFIX_WALLET_FTE As String = "WF-" ' Funding to Flexible/Locked Earn
-Private Const ID_PREFIX_WALLET_ETF As String = "WA-" ' Flexible/Locked Earn to Funding
-
-Private Const ID_PREFIX_CONVERT_IN As String = "VI-"
-Private Const ID_PREFIX_CONVERT_OUT As String = "VO-"
-Private Const ID_PREFIX_CONVERT_FSI As String = "VF-" ' transfer from funding to spot before convert to spot asset
-Private Const ID_PREFIX_CONVERT_FSO As String = "VG-" ' transfer from funding to spot before convert to spot asset
-Private Const ID_PREFIX_CONVERT_ESI As String = "VE-" ' transfer from earn to spot before convert to spot asset
-Private Const ID_PREFIX_CONVERT_ESO As String = "VD-" ' transfer from earn to spot before convert to spot asset
-Private Const ID_PREFIX_CONVERT_EFI As String = "VX-" ' input transfer from earn to funding before convert funding asset
-Private Const ID_PREFIX_CONVERT_EFO As String = "VY-" ' output transfer from earn to funding before convert funding asset
-Private Const ID_PREFIX_DISTRIBUTION As String = "RI-"
-Private Const ID_PREFIX_TRADE As String = "XC-"
-Private Const ID_PREFIX_FIAT_BUY As String = "TB-"
-Private Const ID_PREFIX_FIAT_SELL As String = "TS-"
-Private Const ID_PREFIX_FIAT_DEPOSIT As String = "TD-"
-Private Const ID_PREFIX_FIAT_WITHDRAW As String = "TW-"
-Private Const ID_PREFIX_CRYPTO_DEPOSIT As String = "ND-"
-Private Const ID_PREFIX_CRYPTO_WITHDRAW As String = "NW-"
-
 Private m_ops As New Dictionary
 Private m_endDate As Date
+Public unappliedOps
 
 Public Property Get endDate() As Date
     endDate = IIf(m_endDate = 0, Now(), m_endDate)
@@ -56,6 +31,12 @@ End Property
 Public Function Contains(ByVal ticker As String) As Boolean
     Contains = m_coins.Exists(ticker)
 End Function
+
+Public Sub AddOp(ByVal ticker As String, ByVal op As BinanceOp)
+    If Not m_ops.Exists(ticker) Then m_ops.Add ticker, New Collection
+
+    m_ops(ticker).Add op
+End Sub
 
 Public Sub Collect_Transfers(ByVal lastUpdateTime As Date)
     Dim transferTypes As New Collection
@@ -134,6 +115,73 @@ Public Sub Collect_Transfers(ByVal lastUpdateTime As Date)
     Next transferType
 End Sub
 
+Public Sub Collect_Conversions(ByVal lastUpdateTime As Date)
+    Dim startTime, endTime, stamp As Date
+    
+    endTime = Me.endDate
+    
+    Do While endTime >= lastUpdateTime
+        
+        startTime = DateAdd("d", -MAX_PERIOD.CONVERT_TRADE_HISTORY, endTime)
+        
+        If startTime < lastUpdateTime Then startTime = lastUpdateTime
+        
+        Do
+            Dim data As Dictionary
+            Set data = BinanceAPI.Convert_GetConvertHistory(startTime, endTime, MAX_LIMIT.CONVERT_TRADE_HISTORY)
+            
+            If Not data.Exists("list") Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            End If
+            
+            Dim list As Collection
+            Set list = data("list")
+    
+            Dim item As Dictionary
+            For Each item In list
+                stamp = xUnixTimestampToDate(item("createTime"))
+                
+                If endTime > stamp Then endTime = stamp
+                
+                If item("orderStatus") = "SUCCESS" Then
+                    Select Case item("walletType")
+                        Case "SPOT"
+                            xHandleSimpleConversion item, stamp, WALLET_SPOT
+                        Case "FUNDING"
+                            xHandleSimpleConversion item, stamp, WALLET_FUNDING
+                        Case "EARN"
+                            xHandleSimpleConversion item, stamp, WALLET_FLEXIBLE_EARN
+                        Case "SPOT_FUNDING"
+                            xHandleCombosConversion item, stamp, True, True, False
+                            xHandleSimpleConversion item, stamp, WALLET_SPOT
+                        Case "SPOT_EARN"
+                            xHandleCombosConversion item, stamp, True, False, True
+                            xHandleSimpleConversion item, stamp, WALLET_SPOT
+                        Case "FUNDING_EARN"
+                            xHandleCombosConversion item, stamp, False, True, True
+                            xHandleSimpleConversion item, stamp, WALLET_FUNDING
+                        Case "SPOT_FUNDING_EARN"
+                            xHandleCombosConversion item, stamp, True, True, True
+                            xHandleSimpleConversion item, stamp, WALLET_SPOT
+                    End Select
+                End If
+            Next item
+            
+            If list.count < MAX_LIMIT.CONVERT_TRADE_HISTORY Then
+                endTime = DateAdd("s", -1, startTime)
+                Exit Do
+            Else
+                endTime = DateAdd("s", -1, endTime)
+            End If
+        Loop
+    Loop
+End Sub
+
+Public Sub Collect_DustLog(ByVal lastUpdateTime As Date)
+
+End Sub
+
 Public Sub Collect_FiatBuys(ByVal lastUpdateTime As Date)
     Dim startTime, endTime, stamp As Date
     
@@ -164,29 +212,16 @@ Public Sub Collect_FiatBuys(ByVal lastUpdateTime As Date)
                 If endTime > stamp Then endTime = stamp
                 
                 If item("status") = "Completed" Then
-                    Dim ticker As String
+                    Dim amount, charge As Variant
+                    Dim ticker, tranId As String
                     ticker = item("fiatCurrency")
+                    tranId = item("orderNo")
+                    amount = Str2Dec(item("sourceAmount"))
+                    charge = Str2Dec(item("totalFee"))
                     
-                    xAddTicker ticker
-                    
+                    xAddSimpleOp ticker, stamp, WALLET_SPOT, OP_FIAT_BUY, amount, 0, charge, STR_NA, ID_PREFIX_FIAT_BUY & tranId
+
                     Dim op As BinanceOp
-                    Set op = New BinanceOp
-                    
-                    op.stamp = DateAdd("s", -1, stamp)
-                    op.wallet = WALLET_SPOT
-                    op.operation = OP_FIAT_BUY
-                    op.acquired = item("sourceAmount")
-                    op.spent = 0
-                    op.ticker = ticker
-                    op.price = 0
-                    op.amount = 0
-                    op.charge = item("totalFee")
-                    op.bnb_fee = 0
-                    op.note = STR_NA
-                    op.id = ID_PREFIX_FIAT_BUY & item("orderNo")
-                    
-                    xAddOp ticker, op
-                    
                     Set op = New BinanceOp
                     
                     op.stamp = stamp
@@ -200,13 +235,11 @@ Public Sub Collect_FiatBuys(ByVal lastUpdateTime As Date)
                     op.charge = 0
                     op.bnb_fee = 0
                     op.note = "FIAT:BUY"
-                    op.id = ID_PREFIX_CONVERT_OUT & item("orderNo")
+                    op.id = ID_PREFIX_CONVERT_OUT & tranId
                     
-                    xAddOp ticker, op
+                    AddOp ticker, op
                 
                     ticker = item("cryptoCurrency")
-                    
-                    xAddTicker ticker
                     
                     Set op = New BinanceOp
 
@@ -221,9 +254,9 @@ Public Sub Collect_FiatBuys(ByVal lastUpdateTime As Date)
                     op.charge = 0
                     op.bnb_fee = 0
                     op.note = "FIAT:BUY"
-                    op.id = ID_PREFIX_CONVERT_IN & item("orderNo")
+                    op.id = ID_PREFIX_CONVERT_IN & tranId
                 
-                    xAddOp ticker, op
+                    AddOp ticker, op
                 End If
             Next item
             
@@ -267,10 +300,10 @@ Public Sub Collect_FiatSells(ByVal lastUpdateTime As Date)
                 If endTime > stamp Then endTime = stamp
                 
                 If item("status") = "Completed" Then
-                    Dim ticker As String
-                    ticker = item("cryptoCurrency")
+                    Dim amount, charge As Variant
+                    Dim ticker, tranId As String
                     
-                    xAddTicker ticker
+                    ticker = item("cryptoCurrency")
                     
                     Dim op As BinanceOp
                     Set op = New BinanceOp
@@ -288,11 +321,9 @@ Public Sub Collect_FiatSells(ByVal lastUpdateTime As Date)
                     op.note = "FIAT:SELL"
                     op.id = ID_PREFIX_CONVERT_OUT & item("orderNo")
                 
-                    xAddOp ticker, op
+                    AddOp ticker, op
                     
                     ticker = item("fiatCurrency")
-                    
-                    xAddTicker ticker
                     
                     Set op = New BinanceOp
                     
@@ -309,24 +340,14 @@ Public Sub Collect_FiatSells(ByVal lastUpdateTime As Date)
                     op.note = "FIAT:SELL"
                     op.id = ID_PREFIX_CONVERT_IN & item("orderNo")
                     
-                    xAddOp ticker, op
+                    AddOp ticker, op
                     
-                    Set op = New BinanceOp
+                    ticker = item("fiatCurrency")
+                    tranId = item("orderNo")
+                    amount = Str2Dec(item("sourceAmount"))
+                    charge = Str2Dec(item("totalFee"))
                     
-                    op.stamp = stamp
-                    op.wallet = WALLET_SPOT
-                    op.operation = OP_FIAT_SELL
-                    op.acquired = 0
-                    op.spent = item("sourceAmount")
-                    op.ticker = ticker
-                    op.price = 0
-                    op.amount = 0
-                    op.charge = item("totalFee")
-                    op.bnb_fee = 0
-                    op.note = STR_NA
-                    op.id = ID_PREFIX_FIAT_SELL & item("orderNo")
-                    
-                    xAddOp ticker, op
+                    xAddSimpleOp ticker, stamp, WALLET_SPOT, OP_FIAT_SELL, 0, amount, charge, STR_NA, ID_PREFIX_FIAT_SELL & tranId
                 End If
             Next item
             
@@ -370,28 +391,14 @@ Public Sub Collect_FiatDeposits(ByVal lastUpdateTime As Date)
                 If endTime > stamp Then endTime = stamp
                 
                 If item("status") = "Successful" Then
-                    Dim ticker As String
+                    Dim amount, charge As Variant
+                    Dim ticker, tranId As String
                     ticker = item("fiatCurrency")
+                    tranId = item("orderNo")
+                    amount = Str2Dec(item("indicatedAmount"))
+                    charge = Str2Dec(item("totalFee"))
                     
-                    xAddTicker ticker
-                    
-                    Dim op As BinanceOp
-                    Set op = New BinanceOp
-                    
-                    op.stamp = stamp
-                    op.wallet = WALLET_SPOT
-                    op.operation = OP_DEPOSIT
-                    op.acquired = item("indicatedAmount")
-                    op.spent = 0
-                    op.ticker = ticker
-                    op.price = 0
-                    op.amount = 0
-                    op.charge = item("totalFee")
-                    op.bnb_fee = 0
-                    op.note = item("method")
-                    op.id = ID_PREFIX_FIAT_DEPOSIT & item("orderNo")
-                    
-                    xAddOp ticker, op
+                    xAddSimpleOp ticker, stamp, WALLET_SPOT, OP_DEPOSIT, amount, 0, charge, item("method"), ID_PREFIX_FIAT_DEPOSIT & tranId
                 End If
             Next item
             
@@ -435,28 +442,14 @@ Public Sub Collect_FiatWithdraws(ByVal lastUpdateTime As Date)
                 If endTime > stamp Then endTime = stamp
                 
                 If item("status") = "Successful" Then
-                    Dim ticker As String
+                    Dim amount, charge As Variant
+                    Dim ticker, tranId As String
                     ticker = item("fiatCurrency")
+                    tranId = item("orderNo")
+                    amount = Str2Dec(item("amount"))
+                    charge = Str2Dec(item("totalFee"))
                     
-                    xAddTicker ticker
-                    
-                    Dim op As BinanceOp
-                    Set op = New BinanceOp
-                    
-                    op.stamp = stamp
-                    op.wallet = WALLET_SPOT
-                    op.operation = OP_WITHDRAW
-                    op.acquired = 0
-                    op.spent = item("amount")
-                    op.ticker = ticker
-                    op.price = 0
-                    op.amount = 0
-                    op.charge = item("totalFee")
-                    op.bnb_fee = 0
-                    op.note = item("method")
-                    op.id = ID_PREFIX_FIAT_WITHDRAW & item("orderNo")
-                    
-                    xAddOp ticker, op
+                    xAddSimpleOp ticker, stamp, WALLET_SPOT, OP_WITHDRAW, 0, amount, charge, item("method"), ID_PREFIX_FIAT_WITHDRAW & tranId
                 End If
             Next item
             
@@ -492,28 +485,15 @@ Public Sub Collect_CryptoDeposits(ByVal lastUpdateTime As Date, Optional ByVal f
                 If endTime > stamp Then endTime = stamp
                 
                 If item("status") = 1 Then
-                    Dim ticker As String
+                    Dim amount, charge As Variant
+                    Dim ticker, tranId, wallet As String
                     ticker = item("coin")
+                    tranId = item("id")
+                    wallet = IIf(item("walletType") = 0, WALLET_SPOT, WALLET_FUNDING)
+                    amount = Str2Dec(item("amount"))
+                    charge = 0
                     
-                    xAddTicker ticker
-                    
-                    Dim op As BinanceOp
-                    Set op = New BinanceOp
-                    
-                    op.stamp = stamp
-                    op.wallet = IIf(item("walletType") = 0, WALLET_SPOT, WALLET_FUNDING)
-                    op.operation = OP_DEPOSIT
-                    op.acquired = item("amount")
-                    op.spent = 0
-                    op.ticker = ""
-                    op.price = 0
-                    op.amount = 0
-                    op.charge = 0
-                    op.bnb_fee = 0
-                    op.note = item("network") & ":" & item("sourceAddress")
-                    op.id = ID_PREFIX_CRYPTO_DEPOSIT & item("id")
-                    
-                    xAddOp ticker, op
+                    xAddSimpleOp ticker, stamp, wallet, OP_DEPOSIT, amount, 0, charge, item("network") & ":" & item("sourceAddress"), ID_PREFIX_CRYPTO_DEPOSIT & tranId
                 End If
             Next item
             
@@ -549,28 +529,15 @@ Public Sub Collect_CryptoWithdraws(ByVal lastUpdateTime As Date, Optional ByVal 
                 If endTime > stamp Then endTime = stamp
                 
                 If item("status") = 6 Then
-                    Dim ticker As String
+                    Dim amount, charge As Variant
+                    Dim ticker, tranId, wallet As String
                     ticker = item("coin")
+                    tranId = item("id")
+                    wallet = IIf(item("walletType") = 0, WALLET_SPOT, WALLET_FUNDING)
+                    amount = Str2Dec(item("amount"))
+                    charge = Str2Dec(item("transactionFee"))
                     
-                    xAddTicker ticker
-                    
-                    Dim op As BinanceOp
-                    Set op = New BinanceOp
-                    
-                    op.stamp = stamp
-                    op.wallet = IIf(item("walletType") = 0, WALLET_SPOT, WALLET_FUNDING)
-                    op.operation = OP_WITHDRAW
-                    op.acquired = 0
-                    op.spent = item("amount")
-                    op.ticker = ticker
-                    op.price = 0
-                    op.amount = 0
-                    op.charge = item("transactionFee")
-                    op.bnb_fee = 0
-                    op.note = item("network") & ":" & item("address")
-                    op.id = ID_PREFIX_CRYPTO_WITHDRAW & item("id")
-                    
-                    xAddOp ticker, op
+                    xAddSimpleOp ticker, stamp, wallet, OP_WITHDRAW, 0, amount, charge, item("network") & ":" & item("address"), ID_PREFIX_CRYPTO_WITHDRAW & tranId
                 End If
             Next item
             
@@ -674,12 +641,12 @@ Public Sub Collect_FlexibleEarnSubscriptions(ByVal lastUpdateTime As Date, Optio
                             If item("sourceAccount") = "SPOT" Or (item("sourceAccount") = "SPOTANDFUNDING" And item("amtFromSpot") > 0) Then
                                 amount = IIf(item("sourceAccount") = "SPOT", amount, item("amtFromSpot"))
 
-                                xAddSimpleOp ticker, stamp, WALLET_SPOT, OP_WALLET_OUT, 0, amount, 0, "to:" & WALLET_FLEXIBLE_EARN, ID_PREFIX_WALLET_STE & tranId
+                                xAddSimpleOp ticker, stamp, WALLET_SPOT, OP_WALLET_OUT, 0, amount, 0, "to:" & WALLET_FLEXIBLE_EARN, ID_PREFIX_WALLET_SEO & tranId
                             End If
                             If item("sourceAccount") = "FUNDING" Or (item("sourceAccount") = "SPOTANDFUNDING" And item("amtFromFunding") > 0) Then
                                 amount = IIf(item("sourceAccount") = "FUNDING", amount, item("amtFromFunding"))
 
-                                xAddSimpleOp ticker, stamp, WALLET_FUNDING, OP_WALLET_OUT, 0, amount, 0, "to:" & WALLET_FLEXIBLE_EARN, ID_PREFIX_WALLET_FTE & tranId
+                                xAddSimpleOp ticker, stamp, WALLET_FUNDING, OP_WALLET_OUT, 0, amount, 0, "to:" & WALLET_FLEXIBLE_EARN, ID_PREFIX_WALLET_FEO & tranId
                             End If
                     End Select
                 End If
@@ -734,9 +701,9 @@ Public Sub Collect_FlexibleEarnRedemptions(ByVal lastUpdateTime As Date, Optiona
                     
                     Select Case item("destAccount")
                         Case "SPOT"
-                            xAddSimpleOp ticker, stamp, WALLET_SPOT, OP_WALLET_IN, amount, 0, 0, "from:" & WALLET_FLEXIBLE_EARN, ID_PREFIX_WALLET_ETS & tranId
+                            xAddSimpleOp ticker, stamp, WALLET_SPOT, OP_WALLET_IN, amount, 0, 0, "from:" & WALLET_FLEXIBLE_EARN, ID_PREFIX_WALLET_SEI & tranId
                         Case "FUNDING"
-                            xAddSimpleOp ticker, stamp, WALLET_FUNDING, OP_WALLET_IN, amount, 0, 0, "from:" & WALLET_FLEXIBLE_EARN, ID_PREFIX_WALLET_ETF & tranId
+                            xAddSimpleOp ticker, stamp, WALLET_FUNDING, OP_WALLET_IN, amount, 0, 0, "from:" & WALLET_FLEXIBLE_EARN, ID_PREFIX_WALLET_FEI & tranId
                     End Select
                 End If
             Next item
@@ -794,14 +761,14 @@ Public Sub Collect_LockedEarnSubscriptions(ByVal lastUpdateTime As Date, Optiona
                             If item("sourceAccount") = "SPOT" Or (item("sourceAccount") = "SPOTANDFUNDING" And item("amtFromSpot") > 0) Then
                                 amount = IIf(item("sourceAccount") = "SPOT", amount, item("amtFromSpot"))
 
-                                xAddSimpleOp ticker, stamp, WALLET_SPOT, OP_WALLET_OUT, 0, amount, 0, "to:" & WALLET_LOCKED_EARN, ID_PREFIX_WALLET_STE & tranId
-                                xAddSimpleOp ticker, stamp, WALLET_LOCKED_EARN, OP_WALLET_IN, amount, 0, 0, "from:" & WALLET_SPOT, ID_PREFIX_WALLET_ETS & tranId
+                                xAddSimpleOp ticker, stamp, WALLET_SPOT, OP_WALLET_OUT, 0, amount, 0, "to:" & WALLET_LOCKED_EARN, ID_PREFIX_WALLET_SEO & tranId
+                                xAddSimpleOp ticker, stamp, WALLET_LOCKED_EARN, OP_WALLET_IN, amount, 0, 0, "from:" & WALLET_SPOT, ID_PREFIX_WALLET_SEI & tranId
                             End If
                             If item("sourceAccount") = "FUNDING" Or (item("sourceAccount") = "SPOTANDFUNDING" And item("amtFromFunding") > 0) Then
                                 amount = IIf(item("sourceAccount") = "FUNDING", amount, item("amtFromFunding"))
 
-                                xAddSimpleOp ticker, stamp, WALLET_FUNDING, OP_WALLET_OUT, 0, amount, 0, "to:" & WALLET_LOCKED_EARN, ID_PREFIX_WALLET_FTE & tranId
-                                xAddSimpleOp ticker, stamp, WALLET_LOCKED_EARN, OP_WALLET_IN, amount, 0, 0, "from:" & WALLET_FUNDING, ID_PREFIX_WALLET_ETF & tranId
+                                xAddSimpleOp ticker, stamp, WALLET_FUNDING, OP_WALLET_OUT, 0, amount, 0, "to:" & WALLET_LOCKED_EARN, ID_PREFIX_WALLET_FEO & tranId
+                                xAddSimpleOp ticker, stamp, WALLET_LOCKED_EARN, OP_WALLET_IN, amount, 0, 0, "from:" & WALLET_FUNDING, ID_PREFIX_WALLET_FEI & tranId
                             End If
                     End Select
                 End If
@@ -857,8 +824,8 @@ Public Sub Collect_LockedEarnRedemptions(ByVal lastUpdateTime As Date, Optional 
                     
                     Select Case item("type")
                         Case "MATURE", "AHEAD"
-                            xAddSimpleOp ticker, stamp, WALLET_LOCKED_EARN, OP_WALLET_OUT, 0, amount, 0, "to:" & WALLET_SPOT, ID_PREFIX_WALLET_ETS & tranId
-                            xAddSimpleOp ticker, stamp, WALLET_SPOT, OP_WALLET_IN, amount, 0, 0, "from:" & WALLET_LOCKED_EARN, ID_PREFIX_WALLET_STE & tranId
+                            xAddSimpleOp ticker, stamp, WALLET_LOCKED_EARN, OP_WALLET_OUT, 0, amount, 0, "to:" & WALLET_SPOT, ID_PREFIX_WALLET_SEO & tranId
+                            xAddSimpleOp ticker, stamp, WALLET_SPOT, OP_WALLET_IN, amount, 0, 0, "from:" & WALLET_LOCKED_EARN, ID_PREFIX_WALLET_SEI & tranId
 
                         Case "NEW_TRANSFERRED"
                     
@@ -874,15 +841,6 @@ Public Sub Collect_LockedEarnRedemptions(ByVal lastUpdateTime As Date, Optional 
             End If
         Loop
     Loop
-End Sub
-Private Sub xAddTicker(ByVal ticker As String)
-    If Not m_ops.Exists(ticker) Then
-        m_ops.Add ticker, New Collection
-    End If
-End Sub
-
-Private Sub xAddOp(ByVal ticker As String, ByVal op As BinanceOp)
-    m_ops(ticker).Add op
 End Sub
 
 Public Function xUnixTimestampToDate(ByVal unixTime As LongLong) As Date
@@ -900,8 +858,6 @@ Private Sub xAddSimpleOp( _
     ByVal note As String, _
     ByVal id As String _
     )
-    xAddTicker ticker
-    
     Dim op As BinanceOp
     Set op = New BinanceOp
     
@@ -918,6 +874,93 @@ Private Sub xAddSimpleOp( _
     op.note = note
     op.id = id
     
-    xAddOp ticker, op
+    AddOp ticker, op
+End Sub
+
+Private Sub xAddExchangeOp( _
+    ByVal stamp As Date, _
+    ByVal tickerOut As String, _
+    ByVal tickerIn As String, _
+    ByVal walletOut As String, _
+    ByVal walletIn As String, _
+    ByVal operationOut As String, _
+    ByVal operationIn As String, _
+    ByVal amountOut As Variant, _
+    ByVal amountIn As Variant, _
+    ByVal priceOut As Variant, _
+    ByVal priceIn As Variant, _
+    ByVal charge As Variant, _
+    ByVal bnbFee As Variant, _
+    ByVal id As String, _
+    ByVal prefixOut As String, _
+    ByVal prefixIn As String, _
+    ByVal noteOut As String, _
+    Optional ByVal noteIn As String = "" _
+    )
+    If noteIn = "" Then noteIn = noteOut
+
+    Dim op As BinanceOp
+    Set op = New BinanceOp
+    
+    op.stamp = stamp
+    op.wallet = walletOut
+    op.operation = operationOut
+    op.acquired = 0
+    op.spent = amountOut
+    op.ticker = tickerIn
+    op.price = priceOut
+    op.amount = amountIn
+    op.charge = charge
+    op.bnb_fee = bnbFee
+    op.note = noteOut
+    op.id = prefixOut & id
+    
+    AddOp tickerOut, op
+
+    Set op = New BinanceOp
+    
+    op.stamp = stamp
+    op.wallet = walletIn
+    op.operation = operationIn
+    op.acquired = amountIn
+    op.spent = 0
+    op.ticker = tickerOut
+    op.price = priceIn
+    op.amount = amountOut
+    op.charge = charge
+    op.bnb_fee = bnbFee
+    op.note = noteIn
+    op.id = prefixIn & id
+    
+    AddOp tickerIn, op
+    
+    If bnbFee <> 0 Then
+        Assert_Fail 'must be implemented
+    End If
+    
+End Sub
+
+Private Sub xHandleSimpleConversion(ByVal item As Dictionary, ByVal stamp As Date, ByVal wallet As String)
+    xAddExchangeOp _
+        stamp, _
+        item("fromAsset"), _
+        item("toAsset"), _
+        wallet, _
+        WALLET_SPOT, _
+        OP_CONVERT_OUT, _
+        OP_CONVERT_IN, _
+        item("fromAmount"), _
+        item("toAmount"), _
+        item("ratio"), _
+        item("inverseRatio"), _
+        0, 0, _
+        item("orderId"), _
+        ID_PREFIX_CONVERT_OUT, _
+        ID_PREFIX_CONVERT_IN, _
+        item("orderType") & ":" & item("side")
+End Sub
+
+Private Sub xHandleCombosConversion(ByVal item As Dictionary, ByVal stamp As Date, ByVal spotWallet As Boolean, ByVal fundingWallet As Boolean, ByVal earnWallet As Boolean)
+    TableConversions.HandleComboConversion Me, item, stamp, spotWallet, fundingWallet, earnWallet
 End Sub
 
