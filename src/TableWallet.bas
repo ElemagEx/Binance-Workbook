@@ -8,8 +8,8 @@ Private Const COL_FUNDING_AMOUNT As String = "Funding Amount"
 Private Const COL_EARN_AMOUNT As String = "Earn Amount"
 Private Const COL_DYNAMIC_AMOUNT As String = "Dynamic Amount"
 
-Public Property Get Tickers() As Collection
-    Set Tickers = New Collection
+Public Property Get tickers() As Collection
+    Set tickers = New Collection
 
     Dim col As ListColumn
     Set col = xGetTable().ListColumns(COL_TICKER)
@@ -17,10 +17,28 @@ Public Property Get Tickers() As Collection
     If Not col.DataBodyRange Is Nothing Then
         Dim i As Long
         For i = 1 To col.DataBodyRange.count
-            Tickers.Add col.DataBodyRange(i).Value
+            tickers.Add col.DataBodyRange(i).Value
         Next i
     End If
 End Property
+
+Public Function GetSelectedTicker() As String
+    GetSelectedTicker = ""
+    
+    If ActiveSheet.name = SHEET_ASSETS Then
+        Dim table As ListObject
+        Set table = xGetTable()
+
+        If TypeName(Selection) = "Range" Then
+            Dim rowIndex As Long
+            rowIndex = Selection.Row - table.HeaderRowRange.Row
+            
+            If rowIndex >= 1 And rowIndex <= table.ListRows.count Then
+                GetSelectedTicker = table.ListColumns(COL_TICKER).DataBodyRange(rowIndex)
+            End If
+        End If
+    End If
+End Function
 
 Public Sub CheckTicker(ByVal ticker As String)
     xFindTickerRowIndex ticker, True
@@ -82,6 +100,23 @@ Public Sub UpdateData()
     Next ticker
     
     TableLastUpdate.wallet = Now()
+End Sub
+
+Public Sub Sort(ByVal tickers As String)
+    Dim table As ListObject
+    Set table = xGetTable()
+    
+    If table.ListRows.count > 0 Then
+        Dim cells As Range
+        Set cells = table.ListColumns(COL_TICKER).DataBodyRange
+        
+        With table.Sort
+            .SortFields.Clear
+            .SortFields.Add cells, xlSortOnValues, xlAscending, tickers, xlSortNormal
+            .header = xlYes
+            .Apply
+        End With
+    End If
 End Sub
 
 Public Function xGetTable() As ListObject

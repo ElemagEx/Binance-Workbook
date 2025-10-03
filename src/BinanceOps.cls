@@ -20,8 +20,8 @@ Public Property Let endDate(ByVal newEndDate As Date)
     m_endDate = newEndDate
 End Property
 
-Public Property Get Tickers() As Variant
-    Tickers = m_ops.Keys
+Public Property Get tickers() As Variant
+    tickers = m_ops.Keys
 End Property
 
 Public Property Get item(ByVal ticker As String) As Collection
@@ -258,51 +258,33 @@ Public Sub Collect_FiatBuys(ByVal lastUpdateTime As Date)
                 If endTime > stamp Then endTime = stamp
                 
                 If item("status") = "Completed" Then
-                    Dim amount, charge As Variant
+                    Dim amount, charge, volume As Variant
                     Dim ticker, tranId As String
                     ticker = item("fiatCurrency")
                     tranId = item("orderNo")
                     amount = Str2Dec(item("sourceAmount"))
                     charge = Str2Dec(item("totalFee"))
+                    volume = Str2Dec(item("obtainAmount"))
                     
-                    AddSimpleOp ticker, stamp, WALLET_SPOT, OP_FIAT_BUY, amount, 0, charge, STR_NA, ID_PREFIX_FIAT_BUY & tranId
-
-                    Dim op As BinanceOp
-                    Set op = New BinanceOp
+                    AddSimpleOp ticker, stamp, WALLET_SPOT, OP_DEPOSIT, amount, 0, charge, "FIAT:BUY", ID_PREFIX_FIAT_BUY & tranId
                     
-                    op.stamp = stamp
-                    op.wallet = WALLET_SPOT
-                    op.operation = OP_CONVERT_OUT
-                    op.acquired = 0
-                    op.spent = Str2Dec(item("sourceAmount")) - Str2Dec(item("totalFee"))
-                    op.ticker = item("cryptoCurrency")
-                    op.price = Round(Str2Dec(item("obtainAmount")) / (Str2Dec(item("sourceAmount")) - Str2Dec(item("totalFee"))), 8)
-                    op.amount = item("obtainAmount")
-                    op.charge = 0
-                    op.bnb_fee = 0
-                    op.note = "FIAT:BUY"
-                    op.id = ID_PREFIX_CONVERT_OUT & tranId
-                    
-                    xAddOp ticker, op
-                
-                    ticker = item("cryptoCurrency")
-                    
-                    Set op = New BinanceOp
-
-                    op.stamp = stamp
-                    op.wallet = WALLET_SPOT
-                    op.operation = OP_CONVERT_IN
-                    op.acquired = item("obtainAmount")
-                    op.spent = 0
-                    op.ticker = item("fiatCurrency")
-                    op.price = item("price")
-                    op.amount = Str2Dec(item("sourceAmount")) - Str2Dec(item("totalFee"))
-                    op.charge = 0
-                    op.bnb_fee = 0
-                    op.note = "FIAT:BUY"
-                    op.id = ID_PREFIX_CONVERT_IN & tranId
-                
-                    xAddOp ticker, op
+                    AddExchangeOps _
+                        stamp, _
+                        ticker, _
+                        item("cryptoCurrency"), _
+                        WALLET_SPOT, _
+                        WALLET_SPOT, _
+                        OP_CONVERT_OUT, _
+                        OP_CONVERT_IN, _
+                        Str2Dec(amount - charge), _
+                        volume, _
+                        Round(volume / (amount - charge), 8), _
+                        item("price"), _
+                        0, 0, _
+                        tranId, _
+                        ID_PREFIX_CONVERT_OUT, _
+                        ID_PREFIX_CONVERT_IN, _
+                        "FIAT:BUY"
                 End If
             Next item
             
@@ -346,54 +328,33 @@ Public Sub Collect_FiatSells(ByVal lastUpdateTime As Date)
                 If endTime > stamp Then endTime = stamp
                 
                 If item("status") = "Completed" Then
-                    Dim amount, charge As Variant
+                    Dim amount, charge, volume As Variant
                     Dim ticker, tranId As String
-                    
-                    ticker = item("cryptoCurrency")
-                    
-                    Dim op As BinanceOp
-                    Set op = New BinanceOp
-
-                    op.stamp = DateAdd("s", -1, stamp)
-                    op.wallet = WALLET_SPOT
-                    op.operation = OP_CONVERT_OUT
-                    op.acquired = 0
-                    op.spent = item("obtainAmount")
-                    op.ticker = item("fiatCurrency")
-                    op.price = item("price")
-                    op.amount = Str2Dec(item("sourceAmount")) + Str2Dec(item("totalFee"))
-                    op.charge = 0
-                    op.bnb_fee = 0
-                    op.note = "FIAT:SELL"
-                    op.id = ID_PREFIX_CONVERT_OUT & item("orderNo")
-                
-                    xAddOp ticker, op
-                    
-                    ticker = item("fiatCurrency")
-                    
-                    Set op = New BinanceOp
-                    
-                    op.stamp = DateAdd("s", -1, stamp)
-                    op.wallet = WALLET_SPOT
-                    op.operation = OP_CONVERT_IN
-                    op.acquired = Str2Dec(item("sourceAmount")) + Str2Dec(item("totalFee"))
-                    op.spent = 0
-                    op.ticker = item("cryptoCurrency")
-                    op.price = Round(Str2Dec(item("obtainAmount")) / (Str2Dec(item("sourceAmount")) + Str2Dec(item("totalFee"))), 8)
-                    op.amount = item("obtainAmount")
-                    op.charge = 0
-                    op.bnb_fee = 0
-                    op.note = "FIAT:SELL"
-                    op.id = ID_PREFIX_CONVERT_IN & item("orderNo")
-                    
-                    xAddOp ticker, op
-                    
                     ticker = item("fiatCurrency")
                     tranId = item("orderNo")
                     amount = Str2Dec(item("sourceAmount"))
                     charge = Str2Dec(item("totalFee"))
+                    volume = Str2Dec(item("obtainAmount"))
                     
-                    AddSimpleOp ticker, stamp, WALLET_SPOT, OP_FIAT_SELL, 0, amount, charge, STR_NA, ID_PREFIX_FIAT_SELL & tranId
+                    AddExchangeOps _
+                        stamp, _
+                        item("cryptoCurrency"), _
+                        ticker, _
+                        WALLET_SPOT, _
+                        WALLET_SPOT, _
+                        OP_CONVERT_OUT, _
+                        OP_CONVERT_IN, _
+                        volume, _
+                        Str2Dec(amount + charge), _
+                        item("price"), _
+                        Round(volume / (amount + charge), 8), _
+                        0, 0, _
+                        tranId, _
+                        ID_PREFIX_CONVERT_OUT, _
+                        ID_PREFIX_CONVERT_IN, _
+                        "FIAT:SELL"
+
+                    AddSimpleOp ticker, stamp, WALLET_SPOT, OP_WITHDRAW, 0, amount, charge, "FIAT:SELL", ID_PREFIX_FIAT_SELL & tranId
                 End If
             Next item
             
@@ -919,7 +880,7 @@ Public Sub AddSimpleOp( _
     xAddOp ticker, op
 End Sub
 
-Public Sub AddExchangeOp( _
+Public Sub AddExchangeOps( _
     ByVal stamp As Date, _
     ByVal tickerOut As String, _
     ByVal tickerIn As String, _
@@ -993,7 +954,7 @@ Private Function xUnixTimestampToDate(ByVal unixTime As LongLong) As Date
 End Function
 
 Private Sub xHandleSimpleConversion(ByVal item As Dictionary, ByVal stamp As Date, ByVal wallet As String)
-    AddExchangeOp _
+    AddExchangeOps _
         stamp, _
         item("fromAsset"), _
         item("toAsset"), _

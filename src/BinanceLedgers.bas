@@ -24,9 +24,36 @@ Public Sub RemoveAll()
     Next ws
 End Sub
 
+Public Sub RefreshCoinsInfo()
+    Dim ws As Worksheet
+    For Each ws In ThisWorkbook.Sheets
+        If xIsLedgerWorksheet(ws) Then
+            xOpenLedger(ws).RefreshCoinInfo
+        End If
+    Next ws
+End Sub
+
+Public Sub OpenCurrentTickerLedger()
+    Dim ws As Worksheet
+    Set ws = ActiveSheet
+    
+    Dim ticker As String
+    If ticker = "" Then ticker = TableWallet.GetSelectedTicker()
+    If ticker = "" Then ticker = TableCurrencies.GetSelectedTicker()
+    
+    If ticker = "" Then
+        MsgBox "Please select cell(s) in single row in Assets or Currencies Sheets"
+        Exit Sub
+    End If
+    
+    Dim ledger As BinanceLedger
+    Set ledger = xFindLedger(ticker, True)
+    ledger.Activate
+End Sub
+
 Public Sub PopulateOperations(ByVal ops As BinanceOps, Optional ByVal override As Boolean)
     Dim ticker As Variant
-    For Each ticker In ops.Tickers
+    For Each ticker In ops.tickers
         Dim onlyDelOps As Boolean
         onlyDelOps = ops.HasOnlyDelOps(ticker)
     
@@ -42,8 +69,36 @@ Public Sub PopulateOperations(ByVal ops As BinanceOps, Optional ByVal override A
     Next ticker
 End Sub
 
+Public Function GetOrderString() As String
+    Dim order As String
+    Dim ws As Worksheet
+    For Each ws In ThisWorkbook.Sheets
+        If xIsLedgerWorksheet(ws) Then
+            order = order & "," & xOpenLedger(ws).ticker
+        End If
+    Next ws
+    GetOrderString = IIf(Len(order) = 0, "", Mid(order, 2))
+End Function
+
 Public Function xLedgerName(ByVal ticker) As String
     xLedgerName = ticker & " " & LEDGER_SHEET_SUFFIX
+End Function
+
+Private Function xOpenLedger(ByVal ws As Worksheet) As BinanceLedger
+    Set xOpenLedger = Nothing
+    
+    If Not xIsLedgerWorksheet(ws) Then Exit Function
+    
+    Dim parts() As String
+    parts = Split(ws.name, " ")
+    
+    Dim ticker As String
+    ticker = parts(LBound(parts))
+    
+    Dim ledger As New BinanceLedger
+    ledger.Init ticker, ws
+    
+    Set xOpenLedger = ledger
 End Function
 
 Private Function xFindLedger(ByVal ticker As String, ByVal createIfDoesNotExists As Boolean) As BinanceLedger

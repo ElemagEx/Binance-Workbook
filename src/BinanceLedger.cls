@@ -45,6 +45,10 @@ Private Const COL_DETAILS_ID As String = "ID"
 Private m_ws As Worksheet
 Private m_ticker As String
 
+Public Property Get ticker() As String
+    ticker = m_ticker
+End Property
+
 Public Function IsValid() As Boolean
     IsValid = True
 End Function
@@ -86,6 +90,10 @@ Public Sub Create(ByVal ticker As String, ByVal name As String)
     Next table
 
     xReset True
+End Sub
+
+Public Sub RefreshCoinInfo()
+    xReset False
 End Sub
 
 Public Sub PopulateOperations(ByVal ops As Collection, Optional ByVal override As Boolean = False)
@@ -155,7 +163,7 @@ Private Sub xSort()
     If Not col.DataBodyRange Is Nothing Then
         With table.Sort
             .SortFields.Clear
-            .SortFields.Add key:=col.DataBodyRange, SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+            .SortFields.Add key:=col.DataBodyRange, SortOn:=xlSortOnValues, order:=xlAscending, DataOption:=xlSortNormal
             .header = xlYes
             .Apply
         End With
@@ -205,16 +213,21 @@ Private Sub xReset(ByVal clearDetails)
     table.ListColumns(COL_DETAILS_ACQUIRED).Range.NumberFormat = numFormat
     table.ListColumns(COL_DETAILS_SPENT).Range.NumberFormat = numFormat
 
+    Dim col As ListColumn
+    
     Set table = m_ws.ListObjects(xTableName(TABLE_MARKETS))
     
     Do While table.ListColumns.count > 2
-        table.ListColumns(2).Delete
+        Set col = table.ListColumns(2)
+        If Not coin Is Nothing Then
+            If coin.markets.Exists(col.name) Then coin.markets.item(col.name) = col.DataBodyRange(1).Value
+        End If
+        col.Delete
     Loop
 
     If Not coin Is Nothing Then
         Dim market As Variant
         For Each market In coin.markets.Keys
-            Dim col As ListColumn
             Set col = table.ListColumns.Add(table.ListColumns.count)
             col.name = market
             col.DataBodyRange(1).Value = coin.markets(market)

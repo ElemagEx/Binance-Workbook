@@ -42,7 +42,23 @@ Public Sub Action_SortAssets()
     On Error GoTo ErrHandler
     
     ThisWorkbook.Sheets(SHEET_ASSETS).Activate
-    'TableWallet.UpdateData
+    TableWallet.Sort BinanceLedgers.GetOrderString()
+
+    On Error GoTo 0
+
+Finalize:
+    xActionFooter
+    Exit Sub
+ErrHandler:
+    HandleError Err.Number, Err.source, Err.Description
+    Resume Finalize
+End Sub
+
+Public Sub Action_ShowAssets()
+    xActionHeader
+    On Error GoTo ErrHandler
+    
+    ThisWorkbook.Sheets(SHEET_ASSETS).Activate
 
     On Error GoTo 0
 
@@ -60,6 +76,8 @@ Public Sub Action_CollectUsedCurrencies()
     
     ThisWorkbook.Sheets(SHEET_CURRENCIES).Activate
     TableCurrencies.UpdateData
+    
+    BinanceLedgers.RefreshCoinsInfo
 
     On Error GoTo 0
 
@@ -78,6 +96,8 @@ Public Sub Action_CollectAllCurrencies()
     ThisWorkbook.Sheets(SHEET_CURRENCIES).Activate
     TableCurrencies.CollectAllData
 
+    BinanceLedgers.RefreshCoinsInfo
+    
     On Error GoTo 0
 
 Finalize:
@@ -94,6 +114,22 @@ Public Sub Action_CompactCurrencies()
     
     ThisWorkbook.Sheets(SHEET_CURRENCIES).Activate
     TableCurrencies.CompactData
+
+    On Error GoTo 0
+
+Finalize:
+    xActionFooter
+    Exit Sub
+ErrHandler:
+    HandleError Err.Number, Err.source, Err.Description
+    Resume Finalize
+End Sub
+
+Public Sub Action_OpenCurrentTickerLedger()
+    xActionHeader
+    On Error GoTo ErrHandler
+    
+    BinanceLedgers.OpenCurrentTickerLedger
 
     On Error GoTo 0
 

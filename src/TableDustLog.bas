@@ -77,7 +77,7 @@ Public Sub Sort()
     If Not col.DataBodyRange Is Nothing Then
         With table.Sort
             .SortFields.Clear
-            .SortFields.Add key:=col.DataBodyRange, SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+            .SortFields.Add key:=col.DataBodyRange, SortOn:=xlSortOnValues, order:=xlAscending, DataOption:=xlSortNormal
             .header = xlYes
             .Apply
         End With
@@ -219,7 +219,25 @@ Private Sub xAddConversions( _
         volume = volume + charge
         priceOut = Round(Str2Dec(volume) / Str2Dec(amount), 8)
         priceIn = Round(Str2Dec(amount) / Str2Dec(volume), 8)
-        ops.AddExchangeOp stamp, coin, ticker, WALLET_SPOT, WALLET_SPOT, OP_CONVERT_OUT, OP_CONVERT_IN, amount, volume, priceOut, priceIn, charge, 0, tid, "", "", "to:dust", "from:dust"
+        ops.AddExchangeOps _
+            stamp, _
+            coin, _
+            ticker, _
+            WALLET_SPOT, _
+            WALLET_SPOT, _
+            OP_CONVERT_OUT, _
+            OP_CONVERT_IN, _
+            amount, _
+            volume, _
+            priceOut, _
+            priceIn, _
+            charge, _
+            0, _
+            tid, _
+            "", _
+            "", _
+            "to:dust", _
+            "from:dust"
     End If
 End Sub
 

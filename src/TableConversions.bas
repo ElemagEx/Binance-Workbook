@@ -67,7 +67,7 @@ Public Sub Sort()
     If Not col.DataBodyRange Is Nothing Then
         With table.Sort
             .SortFields.Clear
-            .SortFields.Add key:=col.DataBodyRange, SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+            .SortFields.Add key:=col.DataBodyRange, SortOn:=xlSortOnValues, order:=xlAscending, DataOption:=xlSortNormal
             .header = xlYes
             .Apply
         End With

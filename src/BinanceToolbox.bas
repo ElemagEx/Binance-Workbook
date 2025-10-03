@@ -1,82 +1,4 @@
-Attribute VB_Name = "BinanceToolbox"
 Private Const TEXT_BNB As String = "BNB"
-'
-' Get current selection and try to find it in Assets/Ticker and Currencies/Ticker. If it found opens or creates sheet "<Ticker> Ledger"
-'
-Public Sub BinanceTool_Ledger_Open()
-    Dim ticker As String
-    ticker = ""
-    
-    If TypeName(Selection) = "Range" And Selection.Cells.count = 1 Then
-        Dim selectedCell As range
-        Set selectedCell = Selection
-        
-        If ActiveSheet.name = SHEET_ASSETS Then
-            Dim assetsTable As ListObject
-            Set assetsTable = ThisWorkbook.Sheets(SHEET_ASSETS).ListObjects(TABLE_ASSETS)
-            
-            Dim assetsTickerCol As ListColumn
-            Set assetsTickerCol = assetsTable.ListColumns(COL_ASSETS_TICKER)
-            
-            If Not Intersect(selectedCell, assetsTickerCol.DataBodyRange) Is Nothing Then
-                ticker = selectedCell.value
-            End If
-        End If
-        If ActiveSheet.name = SHEET_CURRENCIES Then
-            Dim currenciesTable As ListObject
-            Set currenciesTable = ThisWorkbook.Sheets(SHEET_CURRENCIES).ListObjects(TABLE_CURRENCIES)
-            
-            Dim currenciesTickerCol As ListColumn
-            Set currenciesTickerCol = currenciesTable.ListColumns(COL_CURRENCIES_TICKER)
-            
-            If Not Intersect(selectedCell, currenciesTickerCol.DataBodyRange) Is Nothing Then
-                ticker = selectedCell.value
-            End If
-        End If
-    End If
-    
-    If ticker = "" Then
-        MsgBox "Please select single cell in Ticker column of Assets or Currencies Sheet"
-        Exit Sub
-    End If
-    
-    Dim ws As Worksheet
-    Set ws = findWorksheet(ticker, True)
-    
-    ws.Activate
-End Sub
-'
-' Reinitialize Ledger
-'
-Public Sub BinanceTool_Ledger_Reinitialize()
-    Dim ticker As String
-    Dim ws As Worksheet
-    Set ws = getLedgerWorksheet(ticker)
-    
-    If ws Is Nothing Then
-        MsgBox "Open Ledger worksheet first"
-        Exit Sub
-    End If
-    
-    Call resetAllUpdateTimes
-    
-    Call resetLedgerWorksheet(ws, ticker, True)
-End Sub
-'
-' Refresh Ledger
-'
-Public Sub BinanceTool_Ledger_Refresh()
-    Dim ticker As String
-    Dim ws As Worksheet
-    Set ws = getLedgerWorksheet(ticker)
-    
-    If ws Is Nothing Then
-        MsgBox "Open Ledger worksheet first"
-        Exit Sub
-    End If
-    
-    Call resetLedgerWorksheet(ws, ticker, False)
-End Sub
 '
 '
 '
@@ -228,45 +150,6 @@ Public Sub BinanceTool_Ledger_UpdateTrades()
     Call setLastUpdate(COL_LAST_UPDATE_DISTRIBUTION)
 End Sub
 
-' Returns wallet name by type
-Private Function getWalletByType(ByVal walletType As Long)
-
-    Select Case walletType
-        Case Is = 0
-            getWalletByType = WALLET_SPOT
-        Case Is = 1
-            getWalletByType = WALLET_FUNDING
-        Case Else
-            getWalletByType = "<UNKNOWN>"
-    End Select
-
-End Function
-' Returns worksheet by ticker if exists or Nothing otherwise
-Private Function findWorksheet(ByVal ticker As String, Optional createIfDoesNotExists As Boolean = False) As Worksheet
-    Set findWorksheet = Nothing
-    
-    Dim name As String
-    name = ticker & " " & SHEET_LEDGER_SUFFIX
-    
-    Dim ws As Worksheet
-    For Each ws In ThisWorkbook.Worksheets
-        If name = ws.name Then
-            Set findWorksheet = ws
-            Exit Function
-        End If
-    Next ws
-
-    If createIfDoesNotExists Then
-        Set findWorksheet = createNewLedgerWorksheet(ticker, name)
-    End If
-End Function
-
-Private Function isThisLedgerWorksheet(ByVal ws As Worksheet, ByRef ticker As String) As Boolean
-    Set ws = getLedgerWorksheet(ticker, ws)
-
-    isThisLedgerWorksheet = Not ws Is Nothing
-End Function
-
 Private Function collectTradeSymbols(ByVal ws As Worksheet, ByVal ticker As String) As Dictionary
     Set collectTradeSymbols = New Dictionary
     
@@ -333,24 +216,4 @@ Private Function setLastUpdate(ByVal colName As String, Optional ByVal newTime A
     setLastUpdate = IIf(newTime <> 0, newTime, now())
     
     cell.value = setLastUpdate
-End Function
-
-Private Function BinanceFunc_Currencies_GetTickerQuotes(ByVal ticker As String) As collection
-    Dim quotes As collection
-    Set quotes = New collection
-    
-    Set BinanceFunc_Currencies_GetTickerQuotes = quotes
-    
-    Dim exchangeInfo As Dictionary
-    Set exchangeInfo = BinanceApi_SpotTrading_exchangeInfo(False)
-
-    Dim symbols As collection
-    Set symbols = exchangeInfo("symbols")
-
-    Dim symbol As Dictionary
-    For Each symbol In symbols
-        If ticker = symbol("baseAsset") Then
-            quotes.Add symbol("quoteAsset")
-        End If
-    Next symbol
 End Function

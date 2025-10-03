@@ -14,8 +14,8 @@ Private Const COL_MARKETS As String = "Markets"
 
 Private Const FIRST_TRADE_COL_INDEX As Long = 11
 
-Public Property Get Tickers() As Collection
-    Set Tickers = New Collection
+Public Property Get tickers() As Collection
+    Set tickers = New Collection
 
     Dim col As ListColumn
     Set col = xGetTable().ListColumns(COL_TICKER)
@@ -23,10 +23,28 @@ Public Property Get Tickers() As Collection
     If Not col.DataBodyRange Is Nothing Then
         Dim i As Long
         For i = 1 To col.DataBodyRange.count
-            Tickers.Add col.DataBodyRange(i).Value
+            tickers.Add col.DataBodyRange(i).Value
         Next i
     End If
 End Property
+
+Public Function GetSelectedTicker() As String
+    GetSelectedTicker = ""
+    
+    If ActiveSheet.name = SHEET_CURRENCIES Then
+        Dim table As ListObject
+        Set table = xGetTable()
+
+        If TypeName(Selection) = "Range" Then
+            Dim rowIndex As Long
+            rowIndex = Selection.Row - table.HeaderRowRange.Row
+            
+            If rowIndex >= 1 And rowIndex <= table.ListRows.count Then
+                GetSelectedTicker = table.ListColumns(COL_TICKER).DataBodyRange(rowIndex)
+            End If
+        End If
+    End If
+End Function
 
 Public Function GetTickerInfo(ByVal ticker As String) As BinanceCoin
     Set GetTickerInfo = Nothing
@@ -156,12 +174,12 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
 
     Dim ticker As Variant
     If addSelfTickers Then
-        For Each ticker In TableCurrencies.Tickers
+        For Each ticker In TableCurrencies.tickers
             coins.AddTicker ticker
         Next ticker
     End If
     If addWalletTickers Then
-        For Each ticker In TableWallet.Tickers
+        For Each ticker In TableWallet.tickers
             coins.AddTicker ticker
         Next ticker
     End If
@@ -179,7 +197,7 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
     Dim rowIndex As Long
     Dim coin As BinanceCoin
     
-    For Each ticker In coins.Tickers
+    For Each ticker In coins.tickers
         Set coin = coins.item(ticker)
         
         rowIndex = xFindTickerRowIndex(ticker, True)
@@ -189,7 +207,7 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
         table.ListColumns(COL_PRECISION).DataBodyRange(rowIndex).Value = coin.precision
     Next ticker
 
-    For Each ticker In coins.Tickers
+    For Each ticker In coins.tickers
         Set coin = coins.item(ticker)
         
         If coin.quotes > 0 Then
