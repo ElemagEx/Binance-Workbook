@@ -8,6 +8,8 @@ Public Sub Action_ClearAssets()
     ThisWorkbook.Sheets(SHEET_ASSETS).Activate
     TableUserInfo.ClearData
     TableWallet.ClearData
+    
+    On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -25,6 +27,8 @@ Public Sub Action_UpdateAssets()
     TableUserInfo.UpdateData
     TableWallet.UpdateData
 
+    On Error GoTo 0
+
 Finalize:
     xActionFooter
     Exit Sub
@@ -39,6 +43,8 @@ Public Sub Action_SortAssets()
     
     ThisWorkbook.Sheets(SHEET_ASSETS).Activate
     'TableWallet.UpdateData
+
+    On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -55,6 +61,8 @@ Public Sub Action_CollectUsedCurrencies()
     ThisWorkbook.Sheets(SHEET_CURRENCIES).Activate
     TableCurrencies.UpdateData
 
+    On Error GoTo 0
+
 Finalize:
     xActionFooter
     Exit Sub
@@ -70,6 +78,8 @@ Public Sub Action_CollectAllCurrencies()
     ThisWorkbook.Sheets(SHEET_CURRENCIES).Activate
     TableCurrencies.CollectAllData
 
+    On Error GoTo 0
+
 Finalize:
     xActionFooter
     Exit Sub
@@ -84,6 +94,8 @@ Public Sub Action_CompactCurrencies()
     
     ThisWorkbook.Sheets(SHEET_CURRENCIES).Activate
     TableCurrencies.CompactData
+
+    On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -103,6 +115,8 @@ Public Sub Action_UpdateTransfers()
     BinanceLedgers.PopulateOperations ops
     
     TableLastUpdate.Transfers = ops.endDate
+
+    On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -125,6 +139,8 @@ Public Sub Action_UpdateConversions()
 
     xCheckForUnappliedOps ops
 
+    On Error GoTo 0
+
 Finalize:
     xActionFooter
     Exit Sub
@@ -138,11 +154,15 @@ Public Sub Action_UpdateDustLog()
     On Error GoTo ErrHandler
 
     Dim ops As New BinanceOps
-    ops.Collect_Transfers TableLastUpdate.DustLog
+    ops.Collect_DustLog TableLastUpdate.DustLog
     
     BinanceLedgers.PopulateOperations ops
     
+    xCheckForUnappliedOps ops
+    
     TableLastUpdate.DustLog = ops.endDate
+
+    On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -163,6 +183,8 @@ Public Sub Action_UpdateFiatBuys()
     
     TableLastUpdate.FiatBuys = ops.endDate
 
+    On Error GoTo 0
+
 Finalize:
     xActionFooter
     Exit Sub
@@ -181,6 +203,8 @@ Public Sub Action_UpdateFiatSells()
     BinanceLedgers.PopulateOperations ops
     
     TableLastUpdate.FiatSells = ops.endDate
+
+    On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -201,6 +225,8 @@ Public Sub Action_UpdateFiatDeposits()
     
     TableLastUpdate.FiatDeposits = ops.endDate
 
+    On Error GoTo 0
+
 Finalize:
     xActionFooter
     Exit Sub
@@ -219,6 +245,8 @@ Public Sub Action_UpdateFiatWithdraws()
     BinanceLedgers.PopulateOperations ops
     
     TableLastUpdate.FiatWithdraws = ops.endDate
+
+    On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -239,6 +267,8 @@ Public Sub Action_UpdateCryptoDeposits()
     
     TableLastUpdate.CryptoDeposits = ops.endDate
 
+    On Error GoTo 0
+
 Finalize:
     xActionFooter
     Exit Sub
@@ -258,6 +288,8 @@ Public Sub Action_UpdateCryptoWithdraws()
     
     TableLastUpdate.CryptoWithdraws = ops.endDate
 
+    On Error GoTo 0
+
 Finalize:
     xActionFooter
     Exit Sub
@@ -276,6 +308,8 @@ Public Sub Action_UpdateCryptoDistributions()
     BinanceLedgers.PopulateOperations ops
     
     TableLastUpdate.Distributions = ops.endDate
+
+    On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -297,6 +331,8 @@ Public Sub Action_UpdateFlexibleEarn()
     
     TableLastUpdate.FlexibleEarns = ops.endDate
 
+    On Error GoTo 0
+
 Finalize:
     xActionFooter
     Exit Sub
@@ -317,6 +353,8 @@ Public Sub Action_UpdateLockedEarn()
     
     TableLastUpdate.LockedEarns = ops.endDate
 
+    On Error GoTo 0
+
 Finalize:
     xActionFooter
     Exit Sub
@@ -332,10 +370,13 @@ Public Sub Action_CheckUnappliedOperations()
     Dim ops As New BinanceOps
     
     TableConversions.CollectUnappliedOps ops
+    TableDustLog.CollectUnappliedOps ops
     
     BinanceLedgers.PopulateOperations ops, True
     
     TableLastUpdate.LockedEarns = ops.endDate
+
+    On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -358,6 +399,7 @@ Private Sub xCheckForUnappliedOps(ByVal ops As BinanceOps)
         ThisWorkbook.Sheets(SHEET_MISC).Activate
         
         TableConversions.Sort
+        TableDustLog.Sort
         
         MsgBox "There is unapplied operations. Take care of them."
     End If

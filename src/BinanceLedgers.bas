@@ -27,13 +27,18 @@ End Sub
 Public Sub PopulateOperations(ByVal ops As BinanceOps, Optional ByVal override As Boolean)
     Dim ticker As Variant
     For Each ticker In ops.Tickers
-        TableWallet.CheckTicker ticker
+        Dim onlyDelOps As Boolean
+        onlyDelOps = ops.HasOnlyDelOps(ticker)
+    
+        If Not onlyDelOps Then TableWallet.CheckTicker ticker
         
         Dim ledger As BinanceLedger
-        Set ledger = xFindLedger(ticker, True)
+        Set ledger = xFindLedger(ticker, Not onlyDelOps)
         
-        ledger.Activate
-        ledger.PopulateOperations ops.item(ticker), override
+        If Not ledger Is Nothing Then
+            ledger.Activate
+            ledger.PopulateOperations ops.item(ticker), override
+        End If
     Next ticker
 End Sub
 

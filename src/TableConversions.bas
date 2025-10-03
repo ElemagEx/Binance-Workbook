@@ -56,6 +56,7 @@ Public Sub CollectUnappliedOps(ByVal ops As BinanceOps)
         xCollectWalletsTransfers ops, rowIndex, False
     Next rowIndex
 End Sub
+
 Public Sub Sort()
     Dim table As ListObject
     Set table = xGetTable()
@@ -119,10 +120,11 @@ Private Sub xCollectWalletsTransfers(ByVal ops As BinanceOps, ByVal rowIndex As 
     Set table = xGetTable()
     
     If checkApplience <> table.ListColumns(COL_APPLIED).DataBodyRange(rowIndex).Value Then
-        ops.unappliedOps = True
+        ops.unappliedOps = checkApplience And True
         Exit Sub
     End If
     If Not table.ListColumns(COL_IS_VALID).DataBodyRange(rowIndex).Value Then
+        ops.unappliedOps = checkApplience And True
         Exit Sub
     End If
     
@@ -166,37 +168,6 @@ Private Sub xAddWalletTransfer( _
     Dim stamp As Date
     stamp = table.ListColumns(COL_STAMP).DataBodyRange(rowIndex).Value
 
-    Dim op As New BinanceOp
-    
-    op.stamp = stamp
-    op.wallet = walletOut
-    op.operation = OP_WALLET_OUT
-    op.acquired = 0
-    op.spent = amount
-    op.ticker = 0
-    op.price = 0
-    op.amount = 0
-    op.charge = 0
-    op.bnb_fee = 0
-    op.note = "to:" & walletIn
-    op.id = prefixOut & id
-
-    ops.AddOp ticker, op
-
-    Set op = New BinanceOp
-    
-    op.stamp = stamp
-    op.wallet = walletIn
-    op.operation = OP_WALLET_IN
-    op.acquired = amount
-    op.spent = 0
-    op.ticker = 0
-    op.price = 0
-    op.amount = 0
-    op.charge = 0
-    op.bnb_fee = 0
-    op.note = "from:" & walletOut
-    op.id = prefixIn & id
-
-    ops.AddOp ticker, op
+    ops.AddSimpleOp ticker, stamp, walletOut, OP_WALLET_OUT, 0, amount, 0, "to:" & walletIn, prefixOut & id
+    ops.AddSimpleOp ticker, stamp, walletIn, OP_WALLET_IN, amount, 0, 0, "from:" & walletOut, prefixIn & id
 End Sub

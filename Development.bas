@@ -81,10 +81,12 @@ End Function
 
 Private Sub xCloseAllLedgers()
     BinanceLedgers.RemoveAll
+    TableLastUpdate.ClearData False
 End Sub
 
 Private Sub xCleanUpDate()
     TableConversions.CleanUpData
+    TableDustLog.CleanUpData
 
     TableCurrencies.CleanUpData
     
@@ -98,6 +100,7 @@ End Sub
 Private Function xIsDateCleanup() As Boolean
     xIsDateCleanup = _
         TableConversions.IsDataCleanedUp And _
+        TableDustLog.IsDataCleanedUp And _
         TableCurrencies.IsDataCleanedUp And _
         TableLastUpdate.IsDataCleanedUp And _
         TableUserInfo.IsDataCleanedUp And _

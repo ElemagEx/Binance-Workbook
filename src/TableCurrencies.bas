@@ -141,7 +141,7 @@ Public Sub CompactData()
     If table.ListColumns.count < FIRST_TRADE_COL_INDEX Then
         formula = "=0"
     Else
-        formula = "=COUNTIF(" & TABLE_NAME & "[@[" & table.ListColumns(FIRST_TRADE_COL_INDEX).name & "]:[" & table.ListColumns(table.ListColumns.count).name & "]],TRUE)"
+        formula = "=COUNTIF(" & TABLE_CURRENCIES & "[@[" & table.ListColumns(FIRST_TRADE_COL_INDEX).name & "]:[" & table.ListColumns(table.ListColumns.count).name & "]],TRUE)"
     End If
 
     table.ListColumns(COL_MARKETS).DataBodyRange.formula = formula
@@ -208,7 +208,7 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
     If table.ListColumns.count < FIRST_TRADE_COL_INDEX Then
         formula = "=0"
     Else
-        formula = "=COUNTIF(" & TABLE_NAME & "[@[" & table.ListColumns(FIRST_TRADE_COL_INDEX).name & "]:[" & table.ListColumns(table.ListColumns.count).name & "]],TRUE)"
+        formula = "=COUNTIF(" & TABLE_CURRENCIES & "[@[" & table.ListColumns(FIRST_TRADE_COL_INDEX).name & "]:[" & table.ListColumns(table.ListColumns.count).name & "]],TRUE)"
     End If
 
     For rowIndex = 1 To table.ListRows.count

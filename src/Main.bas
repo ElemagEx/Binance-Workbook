@@ -18,6 +18,7 @@ Public Const TABLE_TIMEZONE As String = "Timezone"
 Public Const TABLE_CURRENCIES As String = "Currencies"
 ' Misc Sheet Tables
 Public Const TABLE_CONVERSIONS As String = "Conversions"
+Public Const TABLE_DUST_LOG As String = "DustLog"
 ' Ledger Template Sheet Tables
 Public Const TABLE_TRIVIA As String = "Trivia"
 Public Const TABLE_SUMMARY As String = "Summary"
@@ -95,6 +96,7 @@ Public Enum MAX_PERIOD
     WALLET_WITHDRAW_HISTORY = 90
     WALLET_DIVIDEND_HISTORY = 180
     WALLET_TRANSFER_HISTORY = 180
+    WALLET_DRIBLETS_HISTORY = 180
 End Enum
 Public Enum MAX_LIMIT
     FIAT_OPERATIONS = 500
@@ -108,6 +110,7 @@ Public Enum MAX_LIMIT
     WALLET_WITHDRAW_HISTORY = 1000
     WALLET_DIVIDEND_HISTORY = 500
     WALLET_TRANSFER_HISTORY = 100
+    WALLET_DRIBLETS_HISTORY = 100
 End Enum
 
 #Const IN_DEVELOPMENT = True

@@ -102,9 +102,11 @@ Public Sub PopulateOperations(ByVal ops As Collection, Optional ByVal override A
         
         If rowIndex = 0 Then
             If Not forDelete Then rowIndex = table.ListRows.Add().index
-        Else
-            If forDelete Then table.ListRows(rowIndex).Delete
-            If Not override Then rowIndex = 0
+        ElseIf forDelete Then
+            table.ListRows(rowIndex).Delete
+            rowIndex = 0
+        ElseIf Not override Then
+            rowIndex = 0
         End If
         
         If rowIndex > 0 Then
@@ -166,7 +168,7 @@ Private Sub xReset(ByVal clearDetails)
     
     Dim numFormat As String
     If coin Is Nothing Then
-        numFormat = "#,##0.00??????"
+        numFormat = "#,##0.0???????"
     Else
         numFormat = IIf(coin.isFiat, "#,##0.00", "#,##0.0" + String(coin.precision - 1, "?"))
     End If
