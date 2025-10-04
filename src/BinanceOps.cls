@@ -850,6 +850,66 @@ Public Sub Collect_LockedEarnRedemptions(ByVal lastUpdateTime As Date, Optional 
     Loop
 End Sub
 
+Public Sub Collect_MySpotTrades(ByVal lastUpdateTime As Date, ByVal ticker As String, ByVal quote As String)
+    Dim symbol As String
+    symbol = ticker & quote
+
+    Dim endTime, stamp As Date
+    
+    endTime = Me.endDate
+
+    Do While endTime >= lastUpdateTime
+        Do
+            Dim list As Collection
+            Set list = BinanceAPI.SpotTrading_GetMyTrades(symbol, 0, endTime, MAX_LIMIT.SPOT_TRADING_MY_TRADES)
+            
+            Dim item As Dictionary
+            For Each item In list
+                stamp = xUnixTimestampToDate(item("time"))
+                
+                If endTime > stamp Then endTime = stamp
+                
+                If endTime < lastUpdateTime Then Exit For
+                
+                Dim isBuyer, isMaker, isMatch, isFeeBNB As Boolean
+                isBuyer = item("isBuyer")
+                isMaker = item("isMaker")
+                isMatch = item("isBestMatch")
+                isFeeBNB = item("commissionAsset") = "BNB"
+                Dim charge, bnbFee, baseQty, quoteQty, invPrice As Variant
+                charge = IIf(isFeeBNB, 0, Str2Dec(item("commission")))
+                bnbFee = IIf(isFeeBNB, Str2Dec(item("commission")), 0)
+                baseQty = Str2Dec(item("qty"))
+                quoteQty = Str2Dec(item("quoteQty"))
+                invPrice = Round(baseQty / quoteQty, 8)
+                Dim note As String
+                note = IIf(isMaker, "MAKER", "TAKER") & IIf(isMatch, "+", "-")
+                
+                If isBuyer Then
+                    AddExchangeOps _
+                        stamp, quote, ticker, _
+                        WALLET_SPOT, WALLET_SPOT, OP_EXPENCE, OP_BUY, _
+                        quoteQty, baseQty, invPrice, item("price"), charge, bnbFee, _
+                        item("id"), ID_PREFIX_TRADE, ID_PREFIX_TRADE, note, note, ticker & "/" & quote
+                Else
+                    AddExchangeOps _
+                        stamp, ticker, quote, _
+                        WALLET_SPOT, WALLET_SPOT, OP_SELL, OP_INCOME, _
+                        baseQty, quoteQty, item("price"), invPrice, charge, bnbFee, _
+                        item("id"), ID_PREFIX_TRADE, ID_PREFIX_TRADE, note, note, ticker & "\" & quote
+                End If
+            Next item
+        
+            If list.count < MAX_LIMIT.SIMPLE_EARN_OPERATIONS Then
+                endTime = DateAdd("s", -1, lastUpdateTime)
+                Exit Do
+            Else
+                endTime = DateAdd("s", -1, endTime)
+            End If
+        Loop
+    Loop
+End Sub
+
 Public Sub AddSimpleOp( _
     ByVal ticker As String, _
     ByVal stamp As Date, _
@@ -898,8 +958,13 @@ Public Sub AddExchangeOps( _
     ByVal prefixOut As String, _
     ByVal prefixIn As String, _
     ByVal noteOut As String, _
-    Optional ByVal noteIn As String = "" _
+    Optional ByVal noteIn As String = "", _
+    Optional ByVal noteBNB As String = "" _
     )
+    If bnbFee <> 0 Then
+        AddSimpleOp STR_BNB, stamp, WALLET_SPOT, OP_COMMISSION, 0, bnbFee, 0, noteBNB, ID_PREFIX_COMMISION & id
+    End If
+    
     If noteIn = "" Then noteIn = noteOut
 
     Dim op As BinanceOp
@@ -936,11 +1001,6 @@ Public Sub AddExchangeOps( _
     op.id = prefixIn & id
     
     xAddOp tickerIn, op
-    
-    If bnbFee <> 0 Then
-        Assert_Fail 'must be implemented
-    End If
-    
 End Sub
 
 Private Sub xAddOp(ByVal ticker As String, ByVal op As BinanceOp)

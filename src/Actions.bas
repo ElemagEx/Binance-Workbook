@@ -399,6 +399,22 @@ ErrHandler:
     Resume Finalize
 End Sub
 
+Public Sub Action_UpdateTrades()
+    xActionHeader
+    On Error GoTo ErrHandler
+    
+    BinanceLedgers.UpdateCurrentLedgerTrades
+    
+    On Error GoTo 0
+
+Finalize:
+    xActionFooter
+    Exit Sub
+ErrHandler:
+    HandleError Err.Number, Err.source, Err.Description
+    Resume Finalize
+End Sub
+
 Public Sub Action_CheckUnappliedOperations()
     xActionHeader
     On Error GoTo ErrHandler

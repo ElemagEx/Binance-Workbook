@@ -75,7 +75,6 @@ Public Function SpotTrading_GetMyTrades( _
     query.api = "/api/v3/myTrades"
     query.weight = IIf(orderId >= 0, 5, 20)
     
-    query.AddBooleanParam "omitZeroBalances", omitZeroBalances
     query.AddStringParam "symbol", symbol
     query.AddDateParam "startTime", startTime
     query.AddDateParam "endTime", endTime

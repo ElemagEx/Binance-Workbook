@@ -20,6 +20,7 @@ Private Const ROW_TRIVIA_BALANCE As Long = 7
 Private Const ROW_TRIVIA_DYNAMIC As Long = 8
 Private Const ROW_TRIVIA_DIVIATION As Long = 9
 Private Const ROW_TRIVIA_ACTIVITY_START_DATE As Long = 10
+Private Const ROW_TRIVIA_TRADE_LAST_UPDATE_DATE As Long = 11
 
 Private Const COL_SUMMARY_ACQUIRED As String = "Acquired"
 Private Const COL_SUMMARY_SPENT As String = "Spent"
@@ -96,6 +97,29 @@ Public Sub RefreshCoinInfo()
     xReset False
 End Sub
 
+Public Sub UpdateTrades()
+    Dim markets As Dictionary
+    Set markets = xCollectTradeMarkets()
+    
+    If markets.count = 0 Then
+        MsgBox "Cannot find selected markets for this ticker: " & m_ticker
+    End If
+    
+    Dim lastUpdateTime As Date
+    lastUpdateTime = xGetTradeLastUpdateTime()
+    
+    Dim ops As New BinanceOps
+    
+    Dim quote As Variant
+    For Each quote In markets.Keys
+        ops.Collect_MySpotTrades lastUpdateTime, m_ticker, quote
+    Next quote
+    
+    BinanceLedgers.PopulateOperations ops
+
+    xSetTradeLastUpdateTime lastUpdateTime
+End Sub
+
 Public Sub PopulateOperations(ByVal ops As Collection, Optional ByVal override As Boolean = False)
     Dim table As ListObject
     Set table = m_ws.ListObjects(xTableName(TABLE_DETAILS))
@@ -153,6 +177,46 @@ Private Function xFindOpRowIndex(ByVal table As ListObject, ByVal id As String) 
     End If
 End Function
 
+Private Function xCollectTradeMarkets() As Dictionary
+    Dim table As ListObject
+    Set table = m_ws.ListObjects(xTableName(TABLE_MARKETS))
+
+    Dim markets As New Dictionary
+
+    Dim i As Long
+    For i = 2 To table.ListColumns.count - 1
+        If table.ListColumns(i).DataBodyRange(1).Value = True Then
+            Dim quote, symbol As String
+            
+            quote = table.ListColumns(i).name
+            symbol = m_ticker & quote
+            
+            markets.Add quote, symbol
+        End If
+    Next i
+    
+    Set xCollectTradeMarkets = markets
+End Function
+
+Private Function xGetTradeLastUpdateTime() As Date
+    Dim table As ListObject
+    Set table = m_ws.ListObjects(xTableName(TABLE_TRIVIA))
+    
+    Dim val As Variant
+    val = table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TRADE_LAST_UPDATE_DATE).Value
+    
+    If IsEmpty(val) Then val = table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_ACTIVITY_START_DATE).Value
+    
+    xGetTradeLastUpdateTime = val
+End Function
+
+Private Sub xSetTradeLastUpdateTime(ByVal val As Date)
+    Dim table As ListObject
+    Set table = m_ws.ListObjects(xTableName(TABLE_TRIVIA))
+    
+    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TRADE_LAST_UPDATE_DATE).Value = val
+End Sub
+
 Private Sub xSort()
     Dim table As ListObject
     Set table = m_ws.ListObjects(xTableName(TABLE_DETAILS))
@@ -196,6 +260,10 @@ Private Sub xReset(ByVal clearDetails)
     table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_BALANCE).NumberFormat = numFormat
     table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_DYNAMIC).NumberFormat = numFormat
     table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_DIVIATION).NumberFormat = numFormat
+    
+    If clearDetails Then
+        table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TRADE_LAST_UPDATE_DATE).ClearContents
+    End If
 
     Set table = m_ws.ListObjects(xTableName(TABLE_SUMMARY))
 
@@ -212,6 +280,10 @@ Private Sub xReset(ByVal clearDetails)
     
     table.ListColumns(COL_DETAILS_ACQUIRED).Range.NumberFormat = numFormat
     table.ListColumns(COL_DETAILS_SPENT).Range.NumberFormat = numFormat
+    table.ListColumns(COL_DETAILS_PRICE).Range.NumberFormat = MAIN_NUMBER_FORMAT
+    table.ListColumns(COL_DETAILS_AMOUNT).Range.NumberFormat = MAIN_NUMBER_FORMAT
+    table.ListColumns(COL_DETAILS_CHARGE).Range.NumberFormat = MAIN_NUMBER_FORMAT
+    table.ListColumns(COL_DETAILS_BNB_FEE).Range.NumberFormat = MAIN_NUMBER_FORMAT
 
     Dim col As ListColumn
     

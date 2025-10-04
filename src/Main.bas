@@ -51,7 +51,8 @@ Public Const ID_PREFIX_CONVERT_ESI As String = "VT-" ' input transfer to spot fr
 Public Const ID_PREFIX_CONVERT_EFI As String = "VG-" ' input transfer to funding from earn before funding asset conversion
 
 Public Const ID_PREFIX_DISTRIBUTION As String = "RI-"
-Public Const ID_PREFIX_TRADE As String = "XC-"
+Public Const ID_PREFIX_COMMISION As String = "XC-"
+Public Const ID_PREFIX_TRADE As String = "XT-"
 Public Const ID_PREFIX_FIAT_BUY As String = "TB-"
 Public Const ID_PREFIX_FIAT_SELL As String = "TS-"
 Public Const ID_PREFIX_FIAT_DEPOSIT As String = "TD-"
@@ -79,14 +80,16 @@ Public Const STR_BNB As String = "BNB"
 Public Const STR_FIAT As String = "Fiat"
 Public Const STR_CRYPTO As String = "Crypto"
 
-Public Const ERR_ASSERTION_FAIL = 2000
-Public Const ERR_UNKNOWN_WALLET = 2001
+Public Const ERR_ASSERTION_FAIL As Long = 2000
+Public Const ERR_UNKNOWN_WALLET As Long = 2001
+
+Public Const MAIN_NUMBER_FORMAT As String = "#,##0.0???????"
 
 Public Enum MAX_PERIOD
     FIAT_OPERATIONS = 180
     SIMPLE_EARN_OPERATIONS = 90
     
-    SPOT_TRADING_GET_MY_TRADES = 1
+    SPOT_TRADING_MY_TRADES = 1
     
     CONVERT_TRADE_HISTORY = 30
     
@@ -100,7 +103,7 @@ Public Enum MAX_LIMIT
     FIAT_OPERATIONS = 500
     SIMPLE_EARN_OPERATIONS = 100
     
-    SPOT_TRADING_GET_MY_TRADES = 1000
+    SPOT_TRADING_MY_TRADES = 1000
 
     CONVERT_TRADE_HISTORY = 1000
     
