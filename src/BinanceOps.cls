@@ -20,8 +20,8 @@ Public Property Let endDate(ByVal newEndDate As Date)
     m_endDate = newEndDate
 End Property
 
-Public Property Get tickers() As Variant
-    tickers = m_ops.Keys
+Public Property Get Tickers() As Variant
+    Tickers = m_ops.Keys
 End Property
 
 Public Property Get item(ByVal ticker As String) As Collection

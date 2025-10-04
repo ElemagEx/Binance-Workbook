@@ -438,6 +438,20 @@ ErrHandler:
     Resume Finalize
 End Sub
 
+Public Sub Action_RebuildEvalTickers()
+    xActionHeader
+    On Error GoTo ErrHandler
+
+    On Error GoTo 0
+
+Finalize:
+    xActionFooter
+    Exit Sub
+ErrHandler:
+    HandleError Err.Number, Err.source, Err.Description
+    Resume Finalize
+End Sub
+
 Private Sub xActionHeader()
 
 End Sub

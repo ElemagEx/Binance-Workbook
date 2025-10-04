@@ -16,8 +16,8 @@ Public Property Get ExchangeTimezone() As String
     ExchangeTimezone = m_tz
 End Property
 
-Public Property Get tickers() As Variant
-    tickers = m_coins.Keys
+Public Property Get Tickers() As Variant
+    Tickers = m_coins.Keys
 End Property
 
 Public Property Get item(ByVal ticker As String) As BinanceCoin

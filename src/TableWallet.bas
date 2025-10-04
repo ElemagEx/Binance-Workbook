@@ -8,8 +8,8 @@ Private Const COL_FUNDING_AMOUNT As String = "Funding Amount"
 Private Const COL_EARN_AMOUNT As String = "Earn Amount"
 Private Const COL_DYNAMIC_AMOUNT As String = "Dynamic Amount"
 
-Public Property Get tickers() As Collection
-    Set tickers = New Collection
+Public Property Get Tickers() As Collection
+    Set Tickers = New Collection
 
     Dim col As ListColumn
     Set col = xGetTable().ListColumns(COL_TICKER)
@@ -17,7 +17,7 @@ Public Property Get tickers() As Collection
     If Not col.DataBodyRange Is Nothing Then
         Dim i As Long
         For i = 1 To col.DataBodyRange.count
-            tickers.Add col.DataBodyRange(i).Value
+            Tickers.Add col.DataBodyRange(i).Value
         Next i
     End If
 End Property
@@ -102,7 +102,7 @@ Public Sub UpdateData()
     TableLastUpdate.wallet = Now()
 End Sub
 
-Public Sub Sort(ByVal tickers As String)
+Public Sub Sort(ByVal Tickers As String)
     Dim table As ListObject
     Set table = xGetTable()
     
@@ -112,7 +112,7 @@ Public Sub Sort(ByVal tickers As String)
         
         With table.Sort
             .SortFields.Clear
-            .SortFields.Add cells, xlSortOnValues, xlAscending, tickers, xlSortNormal
+            .SortFields.Add cells, xlSortOnValues, xlAscending, Tickers, xlSortNormal
             .header = xlYes
             .Apply
         End With

@@ -15,6 +15,5 @@ Public isFiat As Boolean
 Public bases As Long
 Public quotes As Long
 Public precision As Long
-Public format As String
 Public markets As New Dictionary
 

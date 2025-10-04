@@ -17,6 +17,7 @@ Public Const TABLE_LAST_UPDATE As String = "LastUpdate"
 Public Const TABLE_TIMEZONE As String = "Timezone"
 Public Const TABLE_CURRENCIES As String = "Currencies"
 ' Misc Sheet Tables
+Public Const TABLE_EVALUATION As String = "Evaluation"
 Public Const TABLE_CONVERSIONS As String = "Conversions"
 Public Const TABLE_DUST_LOG As String = "DustLog"
 ' Ledger Template Sheet Tables
@@ -83,7 +84,14 @@ Public Const STR_CRYPTO As String = "Crypto"
 Public Const ERR_ASSERTION_FAIL As Long = 2000
 Public Const ERR_UNKNOWN_WALLET As Long = 2001
 
+Public Const KEY_EVAL_TICKER As String = "Ticker"
+Public Const KEY_EVAL_METHOD As String = "Method"
+Public Const KEY_EVAL_REFERS As String = "Refers"
+Public Const KEY_EVAL_FORMAT As String = "Format"
+
 Public Const MAIN_NUMBER_FORMAT As String = "#,##0.0???????"
+
+Public Const LIST_EVAL_TICKERS As String = "MyEvalTickers"
 
 Public Enum MAX_PERIOD
     FIAT_OPERATIONS = 180

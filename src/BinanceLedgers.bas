@@ -68,7 +68,7 @@ End Sub
 
 Public Sub PopulateOperations(ByVal ops As BinanceOps, Optional ByVal override As Boolean)
     Dim ticker As Variant
-    For Each ticker In ops.tickers
+    For Each ticker In ops.Tickers
         Dim onlyDelOps As Boolean
         onlyDelOps = ops.HasOnlyDelOps(ticker)
     

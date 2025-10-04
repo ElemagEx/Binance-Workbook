@@ -3,6 +3,7 @@ Option Explicit
 Option Private Module
 
 Private Const COL_UID As String = "UID"
+Private Const COL_QUOTE As String = "Quote"
 Private Const COL_MAKER_FEE As String = "Maker Fee"
 Private Const COL_TAKER_FEE As String = "Taker Fee"
 Private Const COL_BUYER_FEE As String = "Buyer Fee"
@@ -25,6 +26,7 @@ Public Sub CleanUpData()
     Set table = xGetTable()
     
     table.ListColumns(COL_UID).DataBodyRange.ClearContents
+    table.ListColumns(COL_QUOTE).DataBodyRange.ClearContents
     table.ListColumns(COL_MAKER_FEE).DataBodyRange.ClearContents
     table.ListColumns(COL_TAKER_FEE).DataBodyRange.ClearContents
     table.ListColumns(COL_BUYER_FEE).DataBodyRange.ClearContents
