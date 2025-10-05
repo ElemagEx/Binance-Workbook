@@ -225,6 +225,35 @@ Public Sub CompactData()
     table.ListColumns(COL_MARKETS).DataBodyRange.formula = formula
 End Sub
 
+Public Sub CollectEvalPaths(ByVal tickers As Dictionary, ByVal quote As String)
+    Dim table As ListObject
+    Set table = xGetTable()
+    
+    Dim colIndexFirst, colIndexLast As Long
+    
+    colIndexFirst = table.ListColumns(COL_INSERT_EVALUATION_AFTER).index + 1
+    colIndexLast = table.ListColumns.count
+
+    Dim colIndex As Long
+    For colIndex = colIndexFirst To colIndexLast
+        If table.ListColumns(colIndex).name = EVAL_PREFIX & quote Then
+            Exit For
+        End If
+    Next colIndex
+    
+    If colIndex > colIndexLast Then Exit Sub
+    
+    Dim rowIndex As Long
+    Dim ticker As Variant
+    For Each ticker In tickers.Keys
+        rowIndex = xFindTickerRowIndex(ticker, False)
+        
+        If rowIndex > 0 Then
+            tickers.item(ticker) = table.ListColumns(colIndex).DataBodyRange(rowIndex).Value
+        End If
+    Next ticker
+End Sub
+
 Public Function xGetTable() As ListObject
     Set xGetTable = ThisWorkbook.Sheets(SHEET_CURRENCIES).ListObjects(TABLE_CURRENCIES)
 End Function

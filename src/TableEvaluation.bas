@@ -70,6 +70,20 @@ Public Function GetPrices(Optional ByVal symbols As Collection = Nothing) As Dic
     Set GetPrices = prices
 End Function
 
+Public Sub EvaluatePrices(ByVal tickers As Dictionary)
+    Dim prices As Dictionary
+    Set prices = GetPrices()
+    
+    Dim path As String
+    Dim price As Variant
+    Dim ticker As Variant
+    For Each ticker In tickers.Keys
+        path = tickers(ticker)
+        price = xEvalPath(path, prices)
+        tickers.item(ticker) = price
+    Next ticker
+End Sub
+
 Public Sub FillEvalPaths(ByVal cryptoTickers As Dictionary, ByVal fiatTickers As Dictionary)
     Dim prices As Dictionary
     Set prices = GetPrices()
@@ -218,3 +232,38 @@ Private Function xFindMarketPath(ByVal ticker As String, ByVal quote As String, 
     xFindMarketPath = ""
 End Function
 
+Private Function xEvalPath(ByVal path As String, ByVal prices As Dictionary) As Variant
+    xEvalPath = Empty
+    
+    If path = STR_NA Then Exit Function
+    
+    Dim parts() As String
+    parts = Split(path, ",")
+    
+    Dim op, symbol As String
+    Dim price As Variant
+    
+    price = CDec(1)
+    
+    Dim i As Long
+    For i = LBound(parts) To UBound(parts)
+        If parts(i) <> "=" Then
+            op = Left(parts(i), 1)
+            symbol = Mid(parts(i), 2)
+            Select Case op
+                Case "*"
+                    If Not prices.Exists(symbol) Then Exit Function
+                    price = price * prices(symbol)
+                Case "/"
+                    If Not prices.Exists(symbol) Then Exit Function
+                    price = price / prices(symbol)
+                Case "$"
+                    Exit Function
+                Case Else
+                    Assert_Fail
+            End Select
+        End If
+    Next i
+    
+    xEvalPath = price
+End Function

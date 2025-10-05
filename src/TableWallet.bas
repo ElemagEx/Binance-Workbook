@@ -3,6 +3,7 @@ Option Explicit
 Option Private Module
 
 Private Const COL_TICKER As String = "Ticker"
+Private Const COL_PRICE As String = "Price"
 Private Const COL_SPOT_AMOUNT As String = "Spot Amount"
 Private Const COL_FUNDING_AMOUNT As String = "Funding Amount"
 Private Const COL_EARN_AMOUNT As String = "Earn Amount"
@@ -73,6 +74,15 @@ Public Sub ClearData()
     TableLastUpdate.wallet = 0
 End Sub
 
+Public Sub ClearPrices()
+    Dim col As ListColumn
+    Set col = xGetTable().ListColumns(COL_PRICE)
+    
+    If Not col.DataBodyRange Is Nothing Then
+        col.DataBodyRange.ClearContents
+    End If
+End Sub
+
 Public Sub UpdateData()
     ClearData
     
@@ -100,6 +110,44 @@ Public Sub UpdateData()
     Next ticker
     
     TableLastUpdate.wallet = Now()
+End Sub
+
+Public Sub Evaluate()
+    Dim table As ListObject
+    Set table = xGetTable()
+
+    If table.ListRows.count = 0 Then Exit Sub
+    
+    Dim quote As String
+    quote = TableUserInfo.quote
+    
+    If quote = "" Then Exit Sub
+    
+    Dim col As ListColumn
+    Set col = table.ListColumns(COL_TICKER)
+    
+    Dim ticker As Variant
+    Dim tickers As New Dictionary
+    
+    Dim cell As Range
+    For Each cell In col.DataBodyRange
+        ticker = cell.Value
+        tickers.Add ticker, Empty
+    Next cell
+    
+    TableCurrencies.CollectEvalPaths tickers, quote
+    TableEvaluation.EvaluatePrices tickers
+    
+    Set col = table.ListColumns(COL_PRICE)
+    
+    Dim rowIndex As Long
+    For Each ticker In tickers.Keys
+        rowIndex = xFindTickerRowIndex(ticker, False)
+        
+        If rowIndex > 0 Then
+            col.DataBodyRange(rowIndex).Value = Round(tickers(ticker), 8)
+        End If
+    Next ticker
 End Sub
 
 Public Sub Sort(ByVal tickers As String)

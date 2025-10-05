@@ -37,6 +37,23 @@ ErrHandler:
     Resume Finalize
 End Sub
 
+Public Sub Action_EvalAssets()
+    xActionHeader
+    On Error GoTo ErrHandler
+    
+    ThisWorkbook.Sheets(SHEET_ASSETS).Activate
+    TableWallet.Evaluate
+
+    On Error GoTo 0
+
+Finalize:
+    xActionFooter
+    Exit Sub
+ErrHandler:
+    HandleError Err.Number, Err.source, Err.Description
+    Resume Finalize
+End Sub
+
 Public Sub Action_SortAssets()
     xActionHeader
     On Error GoTo ErrHandler

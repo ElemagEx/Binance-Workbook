@@ -54,11 +54,15 @@ Public Sub UpdateData()
     table.ListColumns(COL_SELLER_FEE).DataBodyRange(1).Value = Str2Dec(rates("seller"))
 End Sub
 
+Public Property Get quote() As String
+    quote = xGetTable().ListColumns(COL_QUOTE).DataBodyRange(1).Value
+End Property
+
 Public Property Get ActivityStartDate() As Date
     ActivityStartDate = CDate(xGetTable().ListColumns(COL_ACTIVITY_START_DATE).DataBodyRange(1).Value)
 End Property
 
-Public Function xGetTable() As ListObject
+Private Function xGetTable() As ListObject
     Set xGetTable = ThisWorkbook.Sheets(SHEET_ASSETS).ListObjects(TABLE_USER_INFO)
 End Function
 
