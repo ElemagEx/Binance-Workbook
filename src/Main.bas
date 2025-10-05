@@ -93,6 +93,7 @@ Public Const KEY_EVAL_FORMAT As String = "Format"
 
 Public Const STR_EVAL_METHOD_MARKET As String = "Market"
 Public Const STR_EVAL_METHOD_FOREX As String = "Forex"
+Public Const STR_EVAL_METHOD_EXCHANGE As String = "Exchange"
 Public Const STR_EVAL_METHOD_STABLECOIN As String = "Stablecoin"
 
 Public Const MAIN_NUMBER_FORMAT As String = "#,##0.0???????"

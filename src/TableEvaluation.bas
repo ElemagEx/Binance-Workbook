@@ -128,22 +128,32 @@ End Function
 
 Private Function xFindFiatPath(ByVal fiat As String, ByVal ticker As String, ByVal quote As String, ByVal quotes As Collection, ByVal prices As Dictionary, ByVal info As Dictionary) As String
     Dim path As String
-    If Not info.Exists(ticker) Then
+    If ticker = quote Then
+        xFindFiatPath = ",="
+    ElseIf Not info.Exists(ticker) Then
         path = xFindFiatPath("", fiat, quote, quotes, prices, info)
-        xFindFiatPath = IIf(Len(path) = 0, "", "," & "$" & ticker & "/" & fiat & path)
+        If path = "" Then
+            xFindFiatPath = ""
+        ElseIf path = ",=" Then
+            xFindFiatPath = ",$" & ticker & "/" & fiat
+        Else
+            xFindFiatPath = ",$" & ticker & "/" & fiat & path
+        End If
     Else
         Select Case info(ticker)(KEY_EVAL_METHOD)
-            Case STR_EVAL_METHOD_MARKET
-                path = xFindCryptoPath(ticker, quote, quotes, prices, info)
-                xFindFiatPath = IIf(Len(path) = 0, "", "," & "!" & path)
+            Case STR_EVAL_METHOD_MARKET, STR_EVAL_METHOD_EXCHANGE
+                xFindFiatPath = xFindCryptoPath(ticker, quote, quotes, prices, info)
             Case STR_EVAL_METHOD_FOREX
                 path = xFindFiatPath(fiat, info(ticker)(KEY_EVAL_REFERS), quote, quotes, prices, info)
-                xFindFiatPath = IIf(Len(path) = 0, "", "," & "$" & info(ticker)(KEY_EVAL_REFERS) & "/" & ticker & path)
-                Exit Function
+                If path = "" Then
+                    xFindFiatPath = ""
+                ElseIf path = ",=" Then
+                    xFindFiatPath = ",$" & info(ticker)(KEY_EVAL_REFERS) & "/" & ticker
+                Else
+                    xFindFiatPath = ",$" & info(ticker)(KEY_EVAL_REFERS) & "/" & ticker & path
+                End If
             Case STR_EVAL_METHOD_STABLECOIN
-                path = xFindCryptoPath(info(ticker)(KEY_EVAL_REFERS), quote, quotes, prices, info)
-                xFindFiatPath = IIf(Len(path) = 0, "", "," & "!" & path)
-                Exit Function
+                xFindFiatPath = xFindCryptoPath(info(ticker)(KEY_EVAL_REFERS), quote, quotes, prices, info)
             Case Else
                 Assert_Fail
         End Select
@@ -157,15 +167,19 @@ Private Function xFindCryptoPath(ByVal ticker As String, ByVal quote As String, 
         xFindCryptoPath = xFindMarketPath(ticker, quote, quotes, prices)
     Else
         Select Case info(quote)(KEY_EVAL_METHOD)
-            Case STR_EVAL_METHOD_MARKET
-                path = xFindMarketPath(ticker, quote, quotes, prices)
-                xFindCryptoPath = xFindCryptoPath = IIf(Len(path) = 0, "", path & "," & "!")
+            Case STR_EVAL_METHOD_MARKET, STR_EVAL_METHOD_EXCHANGE
+                xFindCryptoPath = xFindMarketPath(ticker, quote, quotes, prices)
             Case STR_EVAL_METHOD_FOREX
                 path = xFindCryptoPath(ticker, info(quote)(KEY_EVAL_REFERS), quotes, prices, info)
-                xFindCryptoPath = IIf(Len(path) = 0, "", path & "," & "$" & info(quote)(KEY_EVAL_REFERS) & "/" & quote)
+                If path = "" Then
+                    xFindCryptoPath = ""
+                ElseIf path = ",=" Then
+                    xFindCryptoPath = ",$" & info(quote)(KEY_EVAL_REFERS) & "/" & quote
+                Else
+                    xFindCryptoPath = path & ",$" & info(quote)(KEY_EVAL_REFERS) & "/" & quote
+                End If
             Case STR_EVAL_METHOD_STABLECOIN
-                path = xFindMarketPath(ticker, info(quote)(KEY_EVAL_REFERS), quotes, prices)
-                xFindCryptoPath = IIf(Len(path) = 0, "", path & "," & "!")
+                xFindCryptoPath = xFindMarketPath(ticker, info(quote)(KEY_EVAL_REFERS), quotes, prices)
             Case Else
                 Assert_Fail
         End Select
@@ -174,29 +188,29 @@ End Function
 
 Private Function xFindMarketPath(ByVal ticker As String, ByVal quote As String, ByVal quotes As Collection, ByVal prices As Dictionary) As String
     If ticker = quote Then
-        xFindMarketPath = "," & "!"
+        xFindMarketPath = ",="
         Exit Function
     ElseIf prices.Exists(ticker & quote) Then
-        xFindMarketPath = "," & "*" & ticker & quote
+        xFindMarketPath = ",*" & ticker & quote
         Exit Function
     ElseIf prices.Exists(quote & ticker) Then
-        xFindMarketPath = "," & "/" & quote & ticker
+        xFindMarketPath = ",/" & quote & ticker
         Exit Function
     End If
 
     Dim mediator As Variant
     For Each mediator In quotes
         If prices.Exists(ticker & mediator) And prices.Exists(quote & mediator) Then
-            xFindMarketPath = "," & "*" & ticker & mediator & "," & "/" & quote & mediator
+            xFindMarketPath = ",*" & ticker & mediator & ",/" & quote & mediator
             Exit Function
         ElseIf prices.Exists(ticker & mediator) And prices.Exists(mediator & quote) Then
-            xFindMarketPath = "," & "*" & ticker & mediator & "," & "*" & mediator & quote
+            xFindMarketPath = ",*" & ticker & mediator & ",*" & mediator & quote
             Exit Function
         ElseIf prices.Exists(mediator & ticker) And prices.Exists(quote & mediator) Then
-            xFindMarketPath = "," & "/" & mediator & ticker & "," & "*" & quote & mediator
+            xFindMarketPath = ",/" & mediator & ticker & ",*" & quote & mediator
             Exit Function
         ElseIf prices.Exists(mediator & ticker) And prices.Exists(mediator & quote) Then
-            xFindMarketPath = "," & "/" & mediator & ticker & "," & "/" & mediator & quote
+            xFindMarketPath = ",/" & mediator & ticker & ",/" & mediator & quote
             Exit Function
         End If
     Next mediator

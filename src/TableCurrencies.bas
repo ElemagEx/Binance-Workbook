@@ -11,11 +11,11 @@ Private Const COL_QUOTES As String = "Quotes"
 Private Const COL_KEEP_ON_COMPACT As String = "Keep on Compact"
 Private Const COL_MARKETS As String = "Markets"
 
-Private Const COL_INSERT_MARKET_AFTER = COL_KEEP_ON_COMPACT
-Private Const COL_INSERT_MARKET_BEFORE = COL_MARKETS
-Private Const COL_INSERT_EVALUATION_AFTER = COL_MARKETS
+Private Const COL_INSERT_MARKET_AFTER As String = COL_KEEP_ON_COMPACT
+Private Const COL_INSERT_MARKET_BEFORE As String = COL_MARKETS
+Private Const COL_INSERT_EVALUATION_AFTER As String = COL_MARKETS
 
-Private Const FIRST_TRADE_COL_INDEX As Long = 10
+Private Const EVAL_PREFIX As String = "eval-"
 
 Public Property Get tickers() As Collection
     Set tickers = New Collection
@@ -355,9 +355,10 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
     '
     ' Add missing evaluation tickers columns
     '
-    For Each ticker In info.Keys
+    Dim quote As Variant
+    For Each quote In info.Keys
         Dim name As String
-        name = "_" & ticker
+        name = EVAL_PREFIX & quote
         
         colIndexFirst = table.ListColumns(COL_INSERT_EVALUATION_AFTER).index + 1
         colIndexLast = table.ListColumns.count
@@ -368,9 +369,9 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
             End If
         Next colIndex
         If colIndex > colIndexLast Then
-            table.ListColumns.Add(colIndexLast + 1).name = ticker
+            table.ListColumns.Add(colIndexLast + 1).name = name
         End If
-    Next ticker
+    Next quote
     '
     ' Evaluation paths calculation
     '
@@ -379,14 +380,13 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
     For rowIndex = 1 To table.ListRows.count
         ticker = table.ListColumns(COL_TICKER).DataBodyRange(rowIndex).Value
         
-        Dim quote As Variant
         If cryptoTickers.Exists(ticker) Then
             For Each quote In cryptoTickers(ticker).Keys
-                table.ListColumns("_" & ticker).DataBodyRange(rowIndex).Value = cryptoTickers(ticker)(quote)
+                table.ListColumns(EVAL_PREFIX & quote).DataBodyRange(rowIndex).Value = cryptoTickers(ticker)(quote)
             Next quote
         ElseIf fiatTickers.Exists(ticker) Then
-            For Each quote In cryptoTickers(ticker).Keys
-                table.ListColumns("_" & ticker).DataBodyRange(rowIndex).Value = cryptoTickers(ticker)(quote)
+            For Each quote In fiatTickers(ticker).Keys
+                table.ListColumns(EVAL_PREFIX & quote).DataBodyRange(rowIndex).Value = fiatTickers(ticker)(quote)
             Next quote
         End If
     Next rowIndex
