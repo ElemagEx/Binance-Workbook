@@ -45,7 +45,7 @@ Public Sub AddDateParam(ByVal key As String, ByVal val As Date)
     End If
 End Sub
 
-Private Sub AddListParam(ByVal key As String, ByVal vals As Collection)
+Public Sub AddListParam(ByVal key As String, ByVal vals As Collection)
     If vals Is Nothing Then
         Exit Sub
     End If

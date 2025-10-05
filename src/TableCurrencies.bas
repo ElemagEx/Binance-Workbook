@@ -17,8 +17,8 @@ Private Const COL_INSERT_EVALUATION_AFTER = COL_MARKETS
 
 Private Const FIRST_TRADE_COL_INDEX As Long = 10
 
-Public Property Get Tickers() As Collection
-    Set Tickers = New Collection
+Public Property Get tickers() As Collection
+    Set tickers = New Collection
 
     Dim col As ListColumn
     Set col = xGetTable().ListColumns(COL_TICKER)
@@ -26,7 +26,7 @@ Public Property Get Tickers() As Collection
     If Not col.DataBodyRange Is Nothing Then
         Dim i As Long
         For i = 1 To col.DataBodyRange.count
-            Tickers.Add col.DataBodyRange(i).Value
+            tickers.Add col.DataBodyRange(i).Value
         Next i
     End If
 End Property
@@ -151,6 +151,8 @@ Public Sub CleanUpData()
         For i = table.ListRows.count To 1 Step -1
             If Not evaluationInfo.Exists(table.ListColumns(COL_TICKER).DataBodyRange(i).Value) Then
                 table.ListRows(i).Delete
+            ElseIf Not table.ListColumns(COL_KEEP_ON_COMPACT).DataBodyRange(i) Then
+                table.ListRows(i).Delete
             Else
                 table.ListColumns(COL_BASES).DataBodyRange(i).Value = 0
                 table.ListColumns(COL_QUOTES).DataBodyRange(i).Value = 0
@@ -229,19 +231,23 @@ End Function
 
 Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers)
     Dim coins As New BinanceCoins
-
+    '
+    ' Choosing tickers to collect
+    '
     Dim ticker As Variant
     If addSelfTickers Then
-        For Each ticker In TableCurrencies.Tickers
+        For Each ticker In TableCurrencies.tickers
             coins.AddTicker ticker
         Next ticker
     End If
     If addWalletTickers Then
-        For Each ticker In TableWallet.Tickers
+        For Each ticker In TableWallet.tickers
             coins.AddTicker ticker
         Next ticker
     End If
-    
+    '
+    ' Collect data from Binance
+    '
     coins.collectBasicInfo (addSelfTickers Or addWalletTickers)
     coins.collectExchangeInfo
     coins.RemoveUncollected
@@ -254,8 +260,10 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
     Dim colIndex As Long
     Dim rowIndex As Long
     Dim coin As BinanceCoin
-    
-    For Each ticker In coins.Tickers
+    '
+    ' Add all collect currencies to table
+    '
+    For Each ticker In coins.tickers
         Set coin = coins.item(ticker)
         
         rowIndex = xFindTickerRowIndex(ticker, True)
@@ -266,8 +274,10 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
     Next ticker
 
     Dim colIndexFirst, colIndexLast As Long
-    
-    For Each ticker In coins.Tickers
+    '
+    ' Add all new markets colums
+    '
+    For Each ticker In coins.tickers
         Set coin = coins.item(ticker)
         
         If coin.quotes > 0 Then
@@ -294,7 +304,12 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
     Else
         formula = "=COUNTIF(" & TABLE_CURRENCIES & "[@[" & table.ListColumns(colIndexFirst).name & "]:[" & table.ListColumns(colIndexLast).name & "]],TRUE)"
     End If
-
+    
+    Dim fiatTickers As New Dictionary
+    Dim cryptoTickers As New Dictionary
+    '
+    ' Set all markets availability for all currencies and collect crypto and fiat tickers
+    '
     For rowIndex = 1 To table.ListRows.count
         ticker = table.ListColumns(COL_TICKER).DataBodyRange(rowIndex).Value
         
@@ -306,6 +321,12 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
             For colIndex = colIndexFirst To colIndexLast
                 table.ListColumns(colIndex).DataBodyRange(rowIndex).Value = " "
             Next colIndex
+            
+            If table.ListColumns(COL_TYPE).DataBodyRange(rowIndex).Value = STR_FIAT Then
+                fiatTickers.Add ticker, New Dictionary
+            Else
+                cryptoTickers.Add ticker, New Dictionary
+            End If
         Else
             Set coin = coins.item(ticker)
             
@@ -320,6 +341,53 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
             table.ListColumns(COL_BASES).DataBodyRange(rowIndex).Value = coin.bases
             table.ListColumns(COL_QUOTES).DataBodyRange(rowIndex).Value = coin.quotes
             table.ListColumns(COL_MARKETS).DataBodyRange(rowIndex).formula = formula
+        
+            If coin.isFiat Then
+                fiatTickers.Add ticker, New Dictionary
+            Else
+                cryptoTickers.Add ticker, New Dictionary
+            End If
+        End If
+    Next rowIndex
+    
+    Dim info As Dictionary
+    Set info = TableEvaluation.GetInfo()
+    '
+    ' Add missing evaluation tickers columns
+    '
+    For Each ticker In info.Keys
+        Dim name As String
+        name = "_" & ticker
+        
+        colIndexFirst = table.ListColumns(COL_INSERT_EVALUATION_AFTER).index + 1
+        colIndexLast = table.ListColumns.count
+
+        For colIndex = colIndexFirst To colIndexLast
+            If name = table.ListColumns(colIndex).name Then
+                Exit For
+            End If
+        Next colIndex
+        If colIndex > colIndexLast Then
+            table.ListColumns.Add(colIndexLast + 1).name = ticker
+        End If
+    Next ticker
+    '
+    ' Evaluation paths calculation
+    '
+    TableEvaluation.FillEvalPaths cryptoTickers, fiatTickers
+    
+    For rowIndex = 1 To table.ListRows.count
+        ticker = table.ListColumns(COL_TICKER).DataBodyRange(rowIndex).Value
+        
+        Dim quote As Variant
+        If cryptoTickers.Exists(ticker) Then
+            For Each quote In cryptoTickers(ticker).Keys
+                table.ListColumns("_" & ticker).DataBodyRange(rowIndex).Value = cryptoTickers(ticker)(quote)
+            Next quote
+        ElseIf fiatTickers.Exists(ticker) Then
+            For Each quote In cryptoTickers(ticker).Keys
+                table.ListColumns("_" & ticker).DataBodyRange(rowIndex).Value = cryptoTickers(ticker)(quote)
+            Next quote
         End If
     Next rowIndex
 End Sub

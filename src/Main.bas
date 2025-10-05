@@ -17,6 +17,8 @@ Public Const TABLE_LAST_UPDATE As String = "LastUpdate"
 Public Const TABLE_TIMEZONE As String = "Timezone"
 Public Const TABLE_CURRENCIES As String = "Currencies"
 ' Misc Sheet Tables
+Public Const TABLE_DEAULT_FIAT As String = "DefaultFiat"
+Public Const TABLE_COMMON_QUOTES As String = "CommonQuotes"
 Public Const TABLE_EVALUATION As String = "Evaluation"
 Public Const TABLE_CONVERSIONS As String = "Conversions"
 Public Const TABLE_DUST_LOG As String = "DustLog"
@@ -88,6 +90,10 @@ Public Const KEY_EVAL_TICKER As String = "Ticker"
 Public Const KEY_EVAL_METHOD As String = "Method"
 Public Const KEY_EVAL_REFERS As String = "Refers"
 Public Const KEY_EVAL_FORMAT As String = "Format"
+
+Public Const STR_EVAL_METHOD_MARKET As String = "Market"
+Public Const STR_EVAL_METHOD_FOREX As String = "Forex"
+Public Const STR_EVAL_METHOD_STABLECOIN As String = "Stablecoin"
 
 Public Const MAIN_NUMBER_FORMAT As String = "#,##0.0???????"
 
