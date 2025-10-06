@@ -98,6 +98,9 @@ Public Const STR_EVAL_METHOD_STABLECOIN As String = "Stablecoin"
 
 Public Const MAIN_NUMBER_FORMAT As String = "#,##0.0???????"
 
+Public Const NUMBER_FORMAT_MAIN_FIAT As String = "#,##0.00"
+Public Const number_FORMAT_MAIN_CRYPTO As String = "#,##0.0???????"
+
 Public Const LIST_EVAL_TICKERS As String = "MyEvalTickers"
 
 Public Enum MAX_PERIOD
@@ -129,6 +132,10 @@ Public Enum MAX_LIMIT
     WALLET_DRIBLETS_HISTORY = 100
 End Enum
 
+Public Function CalculateNumberFormat(ByVal isFiat As Boolean, ByVal precision As Long)
+    CalculateNumberFormat = IIf(isFiat, NUMBER_FORMAT_MAIN_FIAT, "#,##0.0" + String(precision - 1, "?"))
+End Function
+
 #Const IN_DEVELOPMENT = True
 
 Public Sub Assert_Fail(Optional ByVal source As String = "", Optional ByVal desc As String = "")
@@ -140,7 +147,16 @@ Public Sub Assert_Fail(Optional ByVal source As String = "", Optional ByVal desc
     Err.Raise ERR_ASSERTION_FAIL, source, desc
 #End If
 End Sub
-
+Public Sub Assert_Check(ByVal check As Boolean, Optional ByVal source As String = "", Optional ByVal desc As String = "")
+    If check Then Exit Sub
+#If IN_DEVELOPMENT Then
+    Debug.Print "Assertion Failed: " & desc
+    Debug.Print "Source: " & source
+    Stop
+#Else
+    Err.Raise ERR_ASSERTION_FAIL, source, desc
+#End If
+End Sub
 Public Sub HandleError(ByVal num As Long, ByVal src As String, ByVal desc As String, Optional ByVal showMsg As Boolean = True)
     Dim msg As String
     msg = "Error Source: " & src & vbCrLf & _
@@ -152,6 +168,12 @@ Public Sub HandleError(ByVal num As Long, ByVal src As String, ByVal desc As Str
     If showMsg Then MsgBox msg, vbCritical
 End Sub
 
+Public Function GetMainFiatCurrency() As String
+    Dim table As ListObject
+    Set table = ThisWorkbook.Sheets(SHEET_MISC).ListObjects(TABLE_DEAULT_FIAT)
+    
+    GetMainFiatCurrency = table.ListColumns("Main Fiat Ticker").DataBodyRange(1).Value
+End Function
 
 Public Function GetExchangeTimezone() As String
     Dim table As ListObject
