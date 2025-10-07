@@ -259,10 +259,10 @@ Private Sub xReset(ByVal clearDetails)
         table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TYPE).Value = IIf(coin.isFiat, STR_FIAT, STR_CRYPTO)
     End If
     
-    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TOTAL).NumberFormat = numFormat
-    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_BALANCE).NumberFormat = numFormat
-    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_DYNAMIC).NumberFormat = numFormat
-    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_DIVIATION).NumberFormat = numFormat
+    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TOTAL).numberFormat = numFormat
+    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_BALANCE).numberFormat = numFormat
+    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_DYNAMIC).numberFormat = numFormat
+    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_DIVIATION).numberFormat = numFormat
     
     If clearDetails Then
         table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TRADE_LAST_UPDATE_DATE).ClearContents
@@ -270,10 +270,10 @@ Private Sub xReset(ByVal clearDetails)
 
     Set table = m_ws.ListObjects(xTableName(TABLE_SUMMARY))
 
-    table.ListColumns(COL_SUMMARY_ACQUIRED).Range.NumberFormat = numFormat
-    table.ListColumns(COL_SUMMARY_SPENT).Range.NumberFormat = numFormat
-    table.ListColumns(COL_SUMMARY_CHARGE).Range.NumberFormat = numFormat
-    table.ListColumns(COL_SUMMARY_BALANCE).Range.NumberFormat = numFormat
+    table.ListColumns(COL_SUMMARY_ACQUIRED).Range.numberFormat = numFormat
+    table.ListColumns(COL_SUMMARY_SPENT).Range.numberFormat = numFormat
+    table.ListColumns(COL_SUMMARY_CHARGE).Range.numberFormat = numFormat
+    table.ListColumns(COL_SUMMARY_BALANCE).Range.numberFormat = numFormat
 
     Set table = m_ws.ListObjects(xTableName(TABLE_DETAILS))
     
@@ -281,12 +281,12 @@ Private Sub xReset(ByVal clearDetails)
         table.DataBodyRange.Delete
     End If
     
-    table.ListColumns(COL_DETAILS_ACQUIRED).Range.NumberFormat = numFormat
-    table.ListColumns(COL_DETAILS_SPENT).Range.NumberFormat = numFormat
-    table.ListColumns(COL_DETAILS_PRICE).Range.NumberFormat = MAIN_NUMBER_FORMAT
-    table.ListColumns(COL_DETAILS_AMOUNT).Range.NumberFormat = MAIN_NUMBER_FORMAT
-    table.ListColumns(COL_DETAILS_CHARGE).Range.NumberFormat = MAIN_NUMBER_FORMAT
-    table.ListColumns(COL_DETAILS_BNB_FEE).Range.NumberFormat = MAIN_NUMBER_FORMAT
+    table.ListColumns(COL_DETAILS_ACQUIRED).Range.numberFormat = numFormat
+    table.ListColumns(COL_DETAILS_SPENT).Range.numberFormat = numFormat
+    table.ListColumns(COL_DETAILS_PRICE).Range.numberFormat = MAIN_NUMBER_FORMAT
+    table.ListColumns(COL_DETAILS_AMOUNT).Range.numberFormat = MAIN_NUMBER_FORMAT
+    table.ListColumns(COL_DETAILS_CHARGE).Range.numberFormat = MAIN_NUMBER_FORMAT
+    table.ListColumns(COL_DETAILS_BNB_FEE).Range.numberFormat = MAIN_NUMBER_FORMAT
 
     Dim col As ListColumn
     

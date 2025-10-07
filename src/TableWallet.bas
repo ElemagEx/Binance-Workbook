@@ -4,10 +4,18 @@ Option Private Module
 
 Private Const COL_TICKER As String = "Ticker"
 Private Const COL_PRICE As String = "Price"
+Private Const COL_TOTAL_AMOUNT As String = "Total Amount"
 Private Const COL_SPOT_AMOUNT As String = "Spot Amount"
 Private Const COL_FUNDING_AMOUNT As String = "Funding Amount"
 Private Const COL_EARN_AMOUNT As String = "Earn Amount"
 Private Const COL_DYNAMIC_AMOUNT As String = "Dynamic Amount"
+Private Const COL_STATIC_AMOUNT As String = "Static Amount"
+Private Const COL_TOTAL_COST As String = "Total Cost"
+Private Const COL_SPOT_COST As String = "Spot Cost"
+Private Const COL_FUNDING_COST As String = "Funding Cost"
+Private Const COL_EARN_COST As String = "Earn Cost"
+Private Const COL_DYNAMIC_COST As String = "Dynamic Cost"
+Private Const COL_STATIC_COST As String = "Static Cost"
 
 Public Property Get tickers() As Collection
     Set tickers = New Collection
@@ -74,13 +82,24 @@ Public Sub ClearData()
     TableLastUpdate.wallet = 0
 End Sub
 
-Public Sub ClearPrices()
-    Dim col As ListColumn
-    Set col = xGetTable().ListColumns(COL_PRICE)
+Public Sub ClearCosts()
+    Dim table As ListObject
+    Set table = xGetTable()
     
-    If Not col.DataBodyRange Is Nothing Then
-        col.DataBodyRange.ClearContents
-    End If
+    If table.ListRows.count = 0 Then Exit Sub
+    
+    table.ListColumns(COL_PRICE).DataBodyRange.ClearContents
+    table.ListColumns(COL_SPOT_COST).DataBodyRange.ClearContents
+    table.ListColumns(COL_FUNDING_COST).DataBodyRange.ClearContents
+    table.ListColumns(COL_EARN_COST).DataBodyRange.ClearContents
+    table.ListColumns(COL_DYNAMIC_COST).DataBodyRange.ClearContents
+
+    table.ListColumns(COL_TOTAL_COST).Range.numberFormat = "General"
+    table.ListColumns(COL_SPOT_COST).Range.numberFormat = "General"
+    table.ListColumns(COL_FUNDING_COST).Range.numberFormat = "General"
+    table.ListColumns(COL_EARN_COST).Range.numberFormat = "General"
+    table.ListColumns(COL_DYNAMIC_COST).Range.numberFormat = "General"
+    table.ListColumns(COL_STATIC_COST).Range.numberFormat = "General"
 End Sub
 
 Public Sub UpdateData()
@@ -113,41 +132,59 @@ Public Sub UpdateData()
 End Sub
 
 Public Sub Evaluate()
-    Dim table As ListObject
-    Set table = xGetTable()
-
-    If table.ListRows.count = 0 Then Exit Sub
-    
     Dim quote As String
     quote = TableUserInfo.quote
     
-    If quote = "" Then Exit Sub
+    Dim paths As Dictionary
+    Set paths = xCollectPaths(quote)
+
+    If paths.count = 0 Then Exit Sub
     
-    Dim col As ListColumn
-    Set col = table.ListColumns(COL_TICKER)
+    Dim table As ListObject
+    Set table = xGetTable()
     
-    Dim ticker As Variant
-    Dim tickers As New Dictionary
+    Dim evaluator As New PriceEvaluator
+    evaluator.GetQuotePrices quote, paths
     
-    Dim cell As Range
-    For Each cell In col.DataBodyRange
-        ticker = cell.Value
-        tickers.Add ticker, Empty
-    Next cell
+    Dim info As PriceQuote
+    Set info = evaluator.GetQuoteInfo()
     
-    TableCurrencies.CollectEvalPaths tickers, quote
-    TableEvaluation.EvaluatePrices tickers
+    Dim numberFormat As String
+    numberFormat = CalculateNumberFormat(info.isFiat)
+    table.ListColumns(COL_TOTAL_COST).DataBodyRange.numberFormat = numberFormat
+    table.ListColumns(COL_SPOT_COST).DataBodyRange.numberFormat = numberFormat
+    table.ListColumns(COL_FUNDING_COST).DataBodyRange.numberFormat = numberFormat
+    table.ListColumns(COL_EARN_COST).DataBodyRange.numberFormat = numberFormat
+    table.ListColumns(COL_DYNAMIC_COST).DataBodyRange.numberFormat = numberFormat
+    table.ListColumns(COL_STATIC_COST).DataBodyRange.numberFormat = numberFormat
     
-    Set col = table.ListColumns(COL_PRICE)
+    table.ListColumns(COL_TOTAL_COST).Total.numberFormat = numberFormat
+    table.ListColumns(COL_SPOT_COST).Total.numberFormat = numberFormat
+    table.ListColumns(COL_FUNDING_COST).Total.numberFormat = numberFormat
+    table.ListColumns(COL_EARN_COST).Total.numberFormat = numberFormat
+    table.ListColumns(COL_DYNAMIC_COST).Total.numberFormat = numberFormat
+    table.ListColumns(COL_STATIC_COST).Total.numberFormat = numberFormat
     
     Dim rowIndex As Long
-    For Each ticker In tickers.Keys
-        rowIndex = xFindTickerRowIndex(ticker, False)
+    For rowIndex = 1 To table.ListRows.count
+        Dim ticker As String
+        ticker = table.ListColumns(COL_TICKER).DataBodyRange(rowIndex).Value
         
-        If rowIndex > 0 Then
-            col.DataBodyRange(rowIndex).Value = Round(tickers(ticker), 8)
-        End If
-    Next ticker
+        table.ListColumns(COL_PRICE).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, CDec(1))
+        
+        Dim amount As Variant
+        amount = table.ListColumns(COL_SPOT_AMOUNT).DataBodyRange(rowIndex).Value
+        If Not IsEmpty(amount) Then table.ListColumns(COL_SPOT_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, CDec(amount))
+        
+        amount = table.ListColumns(COL_FUNDING_AMOUNT).DataBodyRange(rowIndex).Value
+        If Not IsEmpty(amount) Then table.ListColumns(COL_FUNDING_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, CDec(amount))
+        
+        amount = table.ListColumns(COL_EARN_AMOUNT).DataBodyRange(rowIndex).Value
+        If Not IsEmpty(amount) Then table.ListColumns(COL_EARN_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, CDec(amount))
+        
+        amount = table.ListColumns(COL_DYNAMIC_AMOUNT).DataBodyRange(rowIndex).Value
+        If Not IsEmpty(amount) Then table.ListColumns(COL_DYNAMIC_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, CDec(amount))
+    Next rowIndex
 End Sub
 
 Public Sub Sort(ByVal tickers As String)
@@ -194,3 +231,27 @@ Private Function xFindTickerRowIndex(ByVal ticker As String, ByVal addIfNotFound
     xFindTickerRowIndex = index
 End Function
 
+Public Function xCollectPaths(ByVal quote As String) As Dictionary
+    Dim paths As New Dictionary
+    
+    Set xCollectPaths = paths
+    
+    If quote = "" Then Exit Function
+    
+    Dim table As ListObject
+    Set table = xGetTable()
+
+    If table.ListRows.count = 0 Then Exit Function
+    
+    Dim col As ListColumn
+    Set col = table.ListColumns(COL_TICKER)
+    
+    Dim cell As Range
+    For Each cell In col.DataBodyRange
+        Dim ticker As String
+        ticker = cell.Value
+        paths.Add ticker, Empty
+    Next cell
+    
+    TableCurrencies.CollectEvalPaths paths, quote
+End Function

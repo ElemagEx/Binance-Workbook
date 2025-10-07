@@ -225,7 +225,7 @@ Public Sub CompactData()
     table.ListColumns(COL_MARKETS).DataBodyRange.formula = formula
 End Sub
 
-Public Sub CollectEvalPaths(ByVal tickers As Dictionary, ByVal quote As String)
+Public Sub CollectEvalPaths(ByVal paths As Dictionary, ByVal quote As String)
     Dim table As ListObject
     Set table = xGetTable()
     
@@ -245,11 +245,11 @@ Public Sub CollectEvalPaths(ByVal tickers As Dictionary, ByVal quote As String)
     
     Dim rowIndex As Long
     Dim ticker As Variant
-    For Each ticker In tickers.Keys
+    For Each ticker In paths.Keys
         rowIndex = xFindTickerRowIndex(ticker, False)
         
         If rowIndex > 0 Then
-            tickers.item(ticker) = table.ListColumns(colIndex).DataBodyRange(rowIndex).Value
+            paths.item(ticker) = table.ListColumns(colIndex).DataBodyRange(rowIndex).Value
         End If
     Next ticker
 End Sub

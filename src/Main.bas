@@ -132,7 +132,7 @@ Public Enum MAX_LIMIT
     WALLET_DRIBLETS_HISTORY = 100
 End Enum
 
-Public Function CalculateNumberFormat(ByVal isFiat As Boolean, ByVal precision As Long)
+Public Function CalculateNumberFormat(ByVal isFiat As Boolean, Optional ByVal precision As Long = 8)
     CalculateNumberFormat = IIf(isFiat, NUMBER_FORMAT_MAIN_FIAT, "#,##0.0" + String(precision - 1, "?"))
 End Function
 

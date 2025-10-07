@@ -16,7 +16,7 @@ Private Sub Worksheet_Change(ByVal Target As Range)
     If Target.Row <> cell.Row Or Target.Column <> cell.Column Then Exit Sub
     
     Application.EnableEvents = False
-    TableWallet.ClearPrices
+    TableWallet.ClearCosts
     Application.EnableEvents = True
 End Sub
 

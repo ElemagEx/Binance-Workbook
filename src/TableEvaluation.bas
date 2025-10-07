@@ -50,7 +50,7 @@ Public Function FindQuoteInfo(ByVal quote As String) As PriceQuote
             info.ticker = ticker
             info.method = col.DataBodyRange(ROW_METHOD).Value
             info.refers = col.DataBodyRange(ROW_REFERS).Value
-            info.format = col.DataBodyRange(ROW_FORMAT).NumberFormat
+            info.format = col.DataBodyRange(ROW_FORMAT).numberFormat
             Set FindQuoteInfo = info
             Exit Function
         End If
@@ -76,7 +76,7 @@ Public Function GetInfos() As Dictionary
         info.ticker = ticker
         info.method = col.DataBodyRange(ROW_METHOD).Value
         info.refers = col.DataBodyRange(ROW_REFERS).Value
-        info.format = col.DataBodyRange(ROW_FORMAT).NumberFormat
+        info.format = col.DataBodyRange(ROW_FORMAT).numberFormat
         
         infos.Add ticker, info
     Next i
@@ -84,56 +84,7 @@ Public Function GetInfos() As Dictionary
     Set GetInfos = infos
 End Function
 
-Public Sub EvaluatePrices(ByVal tickers As Dictionary)
-    Dim prices As Dictionary
-    Set prices = GetPrices()
-    
-    Dim path As String
-    Dim price As Variant
-    Dim ticker As Variant
-    For Each ticker In tickers.Keys
-        path = tickers(ticker)
-        price = xEvalPath(path, prices)
-        tickers.item(ticker) = price
-    Next ticker
-End Sub
-
 Private Function xGetTable() As ListObject
     Set xGetTable = ThisWorkbook.Sheets(SHEET_MISC).ListObjects(TABLE_EVALUATION)
 End Function
 
-Private Function xEvalPath(ByVal path As String, ByVal prices As Dictionary) As Variant
-    xEvalPath = Empty
-    
-    If path = STR_NA Then Exit Function
-    
-    Dim parts() As String
-    parts = Split(path, ",")
-    
-    Dim op, symbol As String
-    Dim price As Variant
-    
-    price = CDec(1)
-    
-    Dim i As Long
-    For i = LBound(parts) To UBound(parts)
-        If parts(i) <> "=" Then
-            op = Left(parts(i), 1)
-            symbol = Mid(parts(i), 2)
-            Select Case op
-                Case "*"
-                    If Not prices.Exists(symbol) Then Exit Function
-                    price = price * prices(symbol)
-                Case "/"
-                    If Not prices.Exists(symbol) Then Exit Function
-                    price = price / prices(symbol)
-                Case "$"
-                    Exit Function
-                Case Else
-                    Assert_Fail
-            End Select
-        End If
-    Next i
-    
-    xEvalPath = price
-End Function

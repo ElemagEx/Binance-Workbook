@@ -27,7 +27,7 @@ Public Sub GetAllEvalSymbols()
     xCollectCommonQuotes
 End Sub
 
-Public Sub SetQuote(ByVal quote As String, Optional ByVal paths As Dictionary = Nothing)
+Public Sub GetQuotePrices(ByVal quote As String, Optional ByVal paths As Dictionary = Nothing)
     Assert_Check m_prices Is Nothing
     
     xInitQuote quote, paths
@@ -42,6 +42,10 @@ Public Sub SetQuote(ByVal quote As String, Optional ByVal paths As Dictionary = 
     m_mainFiatQuote = GetMainFiatCurrency()
     xCollectCommonQuotes
 End Sub
+
+Public Function GetQuoteInfo() As PriceQuote
+    Set GetQuoteInfo = m_quote
+End Function
 
 Public Function GetInfos() As Dictionary
     Assert_Check Not m_infos Is Nothing
@@ -64,8 +68,18 @@ Public Function EvaluatePath(ByVal isFiat As Boolean, ByVal base As String, ByVa
     EvaluatePath = IIf(path = "", STR_NA, Mid(path, 2))
 End Function
 
+Public Function EvaluateCost(ByVal ticker As String, ByVal amount As Variant) As Variant
+    Assert_Check Not m_prices Is Nothing
+
+    EvaluateCost = Empty
+
+    If Not m_paths.Exists(ticker) Then Exit Function
+
+    EvaluateCost = xEvalCost(amount, m_paths(ticker))
+End Function
+
 Private Sub xInitQuote(ByVal quote As String, ByVal paths As Dictionary)
-    Set m_paths = IIf(paths Is Nothing, New Dictionary, m_paths)
+    Set m_paths = IIf(paths Is Nothing, New Dictionary, paths)
     
     Set m_quote = TableEvaluation.FindQuoteInfo(quote)
     
@@ -114,12 +128,12 @@ Private Function xCalcSymbols() As Collection
     Dim symbol As Variant
     For Each ticker In ops.Keys
         symbols.Add ticker
-    End If
+    Next ticker
 
     Set xCalcSymbols = symbols
 End Function
 
-Public Function xGetPrices(Optional ByVal symbols As Collection = Nothing) As Dictionary
+Private Function xGetPrices(Optional ByVal symbols As Collection = Nothing) As Dictionary
     Dim prices As New Dictionary
     
     Dim list As Collection
@@ -235,5 +249,41 @@ Private Function xFindMarketPath(ByVal base As String, ByVal quote As String) As
     Next mediator
     
     xFindMarketPath = ""
+End Function
+
+Private Function xEvalCost(ByVal amount As Variant, ByVal path As String) As Variant
+    xEvalCost = Empty
+    
+    If path = STR_NA Then Exit Function
+    
+    Dim parts() As String
+    parts = Split(path, ",")
+    
+    Dim op, symbol As String
+    Dim cost As Variant
+    
+    cost = CDec(amount)
+    
+    Dim i As Long
+    For i = LBound(parts) To UBound(parts)
+        If parts(i) <> "=" Then
+            op = Left(parts(i), 1)
+            symbol = Mid(parts(i), 2)
+            Select Case op
+                Case "*"
+                    If Not m_prices.Exists(symbol) Then Exit Function
+                    cost = cost * m_prices(symbol)
+                Case "/"
+                    If Not m_prices.Exists(symbol) Then Exit Function
+                    cost = cost / m_prices(symbol)
+                Case "$"
+                    Exit Function
+                Case Else
+                    Assert_Fail
+            End Select
+        End If
+    Next i
+    
+    xEvalCost = Round(cost, 8)
 End Function
 
