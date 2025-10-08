@@ -120,7 +120,7 @@ Public Sub UpdateTrades()
     
     BinanceLedgers.PopulateOperations ops
 
-    xSetTradeLastUpdateTime lastUpdateTime
+    xSetTradeLastUpdateTime ops.endDate
 End Sub
 
 Public Sub PopulateOperations(ByVal ops As Collection, Optional ByVal override As Boolean = False)

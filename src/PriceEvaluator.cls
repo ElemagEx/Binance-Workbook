@@ -72,8 +72,12 @@ Public Function EvaluateCost(ByVal ticker As String, ByVal amount As Variant) As
     Assert_Check Not m_prices Is Nothing
 
     EvaluateCost = Empty
+    
+    If amount = CDec(0) Then Exit Function
 
     If Not m_paths.Exists(ticker) Then Exit Function
+
+    If IsEmpty(m_paths(ticker)) Then Exit Function
 
     EvaluateCost = xEvalCost(amount, m_paths(ticker))
 End Function
@@ -233,11 +237,11 @@ Private Function xFindMarketPath(ByVal base As String, ByVal quote As String) As
 
     Dim mediator As Variant
     For Each mediator In m_quotes
-        If m_prices.Exists(base & mediator) And m_prices.Exists(quote & mediator) Then
-            xFindMarketPath = ",*" & base & mediator & ",/" & quote & mediator
-            Exit Function
-        ElseIf m_prices.Exists(base & mediator) And m_prices.Exists(mediator & quote) Then
+        If m_prices.Exists(base & mediator) And m_prices.Exists(mediator & quote) Then
             xFindMarketPath = ",*" & base & mediator & ",*" & mediator & quote
+            Exit Function
+        ElseIf m_prices.Exists(base & mediator) And m_prices.Exists(quote & mediator) Then
+            xFindMarketPath = ",*" & base & mediator & ",/" & quote & mediator
             Exit Function
         ElseIf m_prices.Exists(mediator & base) And m_prices.Exists(quote & mediator) Then
             xFindMarketPath = ",/" & mediator & base & ",*" & quote & mediator
@@ -260,7 +264,7 @@ Private Function xEvalCost(ByVal amount As Variant, ByVal path As String) As Var
     parts = Split(path, ",")
     
     Dim op, symbol As String
-    Dim cost As Variant
+    Dim cost, price As Variant
     
     cost = CDec(amount)
     
@@ -272,10 +276,13 @@ Private Function xEvalCost(ByVal amount As Variant, ByVal path As String) As Var
             Select Case op
                 Case "*"
                     If Not m_prices.Exists(symbol) Then Exit Function
-                    cost = cost * m_prices(symbol)
+                    price = m_prices(symbol)
+                    cost = cost * price
                 Case "/"
                     If Not m_prices.Exists(symbol) Then Exit Function
-                    cost = cost / m_prices(symbol)
+                    price = m_prices(symbol)
+                    If price = 0 Then Exit Function
+                    cost = cost / price
                 Case "$"
                     Exit Function
                 Case Else
