@@ -10,10 +10,12 @@ Private Const COL_BASES As String = "Bases"
 Private Const COL_QUOTES As String = "Quotes"
 Private Const COL_KEEP_ON_COMPACT As String = "Keep on Compact"
 Private Const COL_MARKETS As String = "Markets"
+Private Const COL_TRADES As String = "Trades"
 
 Private Const COL_INSERT_MARKET_AFTER As String = COL_KEEP_ON_COMPACT
 Private Const COL_INSERT_MARKET_BEFORE As String = COL_MARKETS
 Private Const COL_INSERT_EVALUATION_AFTER As String = COL_MARKETS
+Private Const COL_INSERT_EVALUATION_BEFORE As String = COL_TRADES
 
 Private Const EVAL_PREFIX As String = "eval-"
 
@@ -30,6 +32,31 @@ Public Property Get tickers() As Collection
         Next i
     End If
 End Property
+
+Public Function GetTradesLastUpdate(ByVal ticker As String, ByVal def As Date) As Date
+    GetTradesLastUpdate = def
+
+    Dim rowIndex As Long
+    rowIndex = xFindTickerRowIndex(ticker, False)
+    
+    If rowIndex = 0 Then Exit Function
+    
+    Dim val As Variant
+    val = xGetTable().ListColumns(COL_TRADES).DataBodyRange(rowIndex)
+    
+    If IsEmpty(val) Then Exit Function
+    
+    GetTradesLastUpdate = val
+End Function
+
+Public Sub SetTradesLastUpdate(ByVal ticker As String, ByVal val As Date)
+    Dim rowIndex As Long
+    rowIndex = xFindTickerRowIndex(ticker, False)
+    
+    If rowIndex = 0 Then Exit Sub
+    
+    xGetTable().ListColumns(COL_TRADES).DataBodyRange(rowIndex).Value = val
+End Sub
 
 Public Function GetSelectedTicker() As String
     GetSelectedTicker = ""
@@ -99,7 +126,7 @@ Public Function IsDataCleanedUp()
     If colIndexFirst <= colIndexLast Then Exit Function
 
     colIndexFirst = table.ListColumns(COL_INSERT_EVALUATION_AFTER).index + 1
-    colIndexLast = table.ListColumns.count
+    colIndexLast = table.ListColumns(COL_INSERT_EVALUATION_BEFORE).index - 1
     
     If colIndexFirst <= colIndexLast Then Exit Function
 
@@ -110,6 +137,9 @@ Public Function IsDataCleanedUp()
     If table.ListRows.count > 0 Then
         For i = 1 To table.ListRows.count
             If Not infos.Exists(table.ListColumns(COL_TICKER).DataBodyRange(i).Value) Then
+                Exit Function
+            End If
+            If Not IsEmpty(table.ListColumns(COL_TRADES).DataBodyRange(i).Value) Then
                 Exit Function
             End If
         Next i
@@ -131,7 +161,7 @@ Public Sub CleanUpData()
     
     Dim colIndexFirst, colIndexLast As Long
     colIndexFirst = table.ListColumns(COL_INSERT_EVALUATION_AFTER).index + 1
-    colIndexLast = table.ListColumns.count
+    colIndexLast = table.ListColumns(COL_INSERT_EVALUATION_BEFORE).index - 1
     
     For i = colIndexLast To colIndexFirst Step -1
         table.ListColumns(i).Delete
@@ -160,6 +190,8 @@ Public Sub CleanUpData()
             End If
         Next i
     End If
+    
+    table.ListColumns(COL_TRADES).DataBodyRange.ClearContents
 End Sub
 
 Public Sub UpdateData()
@@ -232,7 +264,7 @@ Public Sub CollectEvalPaths(ByVal paths As Dictionary, ByVal quote As String)
     Dim colIndexFirst, colIndexLast As Long
     
     colIndexFirst = table.ListColumns(COL_INSERT_EVALUATION_AFTER).index + 1
-    colIndexLast = table.ListColumns.count
+    colIndexLast = table.ListColumns(COL_INSERT_EVALUATION_BEFORE).index - 1
 
     Dim colIndex As Long
     For colIndex = colIndexFirst To colIndexLast
@@ -337,7 +369,7 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
         name = EVAL_PREFIX & quote
         
         colIndexFirst = table.ListColumns(COL_INSERT_EVALUATION_AFTER).index + 1
-        colIndexLast = table.ListColumns.count
+        colIndexLast = table.ListColumns(COL_INSERT_EVALUATION_BEFORE).index - 1
 
         For colIndex = colIndexFirst To colIndexLast
             If name = table.ListColumns(colIndex).name Then

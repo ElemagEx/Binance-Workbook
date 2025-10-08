@@ -83,7 +83,7 @@ End Function
 
 Private Sub xCloseAllLedgers()
     BinanceLedgers.RemoveAll
-    TableLastUpdate.ClearData False
+    TableLastUpdate.CleanUpData
 End Sub
 
 Private Sub xCleanUpDate()

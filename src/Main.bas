@@ -99,7 +99,7 @@ Public Const STR_EVAL_METHOD_STABLECOIN As String = "Stablecoin"
 Public Const MAIN_NUMBER_FORMAT As String = "#,##0.0???????"
 
 Public Const NUMBER_FORMAT_MAIN_FIAT As String = "#,##0.00"
-Public Const number_FORMAT_MAIN_CRYPTO As String = "#,##0.0???????"
+Public Const NUMBER_FORMAT_MAIN_CRYPTO As String = "#,##0.0???????"
 
 Public Const LIST_EVAL_TICKERS As String = "MyEvalTickers"
 

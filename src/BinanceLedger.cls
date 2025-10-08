@@ -16,14 +16,14 @@ Private Const ROW_TRIVIA_TICKER As Long = 1
 Private Const ROW_TRIVIA_NAME As Long = 2
 Private Const ROW_TRIVIA_TYPE As Long = 3
 Private Const ROW_TRIVIA_QUOTE As Long = 4
-Private Const ROW_TRIVIA_TOTAL As Long = 5
+Private Const ROW_TRIVIA_PRICE As Long = 5
 Private Const ROW_TRIVIA_COST As Long = 6
-Private Const ROW_TRIVIA_PRICE As Long = 7
+Private Const ROW_TRIVIA_TOTAL As Long = 7
 Private Const ROW_TRIVIA_BALANCE As Long = 8
 Private Const ROW_TRIVIA_DYNAMIC As Long = 9
 Private Const ROW_TRIVIA_DIVIATION As Long = 10
 Private Const ROW_TRIVIA_ACTIVITY_START_DATE As Long = 11
-Private Const ROW_TRIVIA_TRADE_LAST_UPDATE_DATE As Long = 12
+Private Const ROW_TRIVIA_KLINES_PERIOD As Long = 12
 
 Private Const COL_SUMMARY_ACQUIRED As String = "Acquired"
 Private Const COL_SUMMARY_SPENT As String = "Spent"
@@ -51,6 +51,10 @@ Private m_ticker As String
 
 Public Property Get ticker() As String
     ticker = m_ticker
+End Property
+
+Public Property Get ActivityStartDate() As Date
+    ActivityStartDate = m_ws.ListObjects(xTableName(TABLE_TRIVIA)).ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_ACTIVITY_START_DATE).Value
 End Property
 
 Public Function IsValid() As Boolean
@@ -109,7 +113,7 @@ Public Sub UpdateTrades()
     End If
     
     Dim lastUpdateTime As Date
-    lastUpdateTime = xGetTradeLastUpdateTime()
+    lastUpdateTime = TableCurrencies.GetTradesLastUpdate(m_ticker, Me.ActivityStartDate)
     
     Dim ops As New BinanceOps
     
@@ -120,7 +124,7 @@ Public Sub UpdateTrades()
     
     BinanceLedgers.PopulateOperations ops
 
-    xSetTradeLastUpdateTime ops.endDate
+    TableCurrencies.SetTradesLastUpdate m_ticker, ops.endDate
 End Sub
 
 Public Sub PopulateOperations(ByVal ops As Collection, Optional ByVal override As Boolean = False)
@@ -201,25 +205,6 @@ Private Function xCollectTradeMarkets() As Dictionary
     Set xCollectTradeMarkets = markets
 End Function
 
-Private Function xGetTradeLastUpdateTime() As Date
-    Dim table As ListObject
-    Set table = m_ws.ListObjects(xTableName(TABLE_TRIVIA))
-    
-    Dim val As Variant
-    val = table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TRADE_LAST_UPDATE_DATE).Value
-    
-    If IsEmpty(val) Then val = table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_ACTIVITY_START_DATE).Value
-    
-    xGetTradeLastUpdateTime = val
-End Function
-
-Private Sub xSetTradeLastUpdateTime(ByVal val As Date)
-    Dim table As ListObject
-    Set table = m_ws.ListObjects(xTableName(TABLE_TRIVIA))
-    
-    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TRADE_LAST_UPDATE_DATE).Value = val
-End Sub
-
 Private Sub xSort()
     Dim table As ListObject
     Set table = m_ws.ListObjects(xTableName(TABLE_DETAILS))
@@ -241,11 +226,11 @@ Private Sub xReset(ByVal clearDetails)
     Dim coin As BinanceCoin
     Set coin = TableCurrencies.GetTickerInfo(m_ticker)
     
-    Dim numFormat As String
+    Dim numberFormat As String
     If coin Is Nothing Then
-        numFormat = "#,##0.0???????"
+        numberFormat = NUMBER_FORMAT_MAIN_CRYPTO
     Else
-        numFormat = IIf(coin.isFiat, "#,##0.00", "#,##0.0" + String(coin.precision - 1, "?"))
+        numberFormat = CalculateNumberFormat(coin.isFiat, coin.precision)
     End If
     
     Dim table As ListObject
@@ -259,35 +244,44 @@ Private Sub xReset(ByVal clearDetails)
         table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TYPE).Value = IIf(coin.isFiat, STR_FIAT, STR_CRYPTO)
     End If
     
-    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TOTAL).numberFormat = numFormat
-    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_BALANCE).numberFormat = numFormat
-    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_DYNAMIC).numberFormat = numFormat
-    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_DIVIATION).numberFormat = numFormat
+    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TOTAL).numberFormat = numberFormat
+    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_BALANCE).numberFormat = numberFormat
+    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_DYNAMIC).numberFormat = numberFormat
+    table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_DIVIATION).numberFormat = numberFormat
     
     If clearDetails Then
-        table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_TRADE_LAST_UPDATE_DATE).ClearContents
+        table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_QUOTE).Value = TableUserInfo.quote
+        table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_PRICE).numberFormat = "General"
+        table.ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_COST).numberFormat = "General"
     End If
 
     Set table = m_ws.ListObjects(xTableName(TABLE_SUMMARY))
 
-    table.ListColumns(COL_SUMMARY_ACQUIRED).Range.numberFormat = numFormat
-    table.ListColumns(COL_SUMMARY_SPENT).Range.numberFormat = numFormat
-    table.ListColumns(COL_SUMMARY_CHARGE).Range.numberFormat = numFormat
-    table.ListColumns(COL_SUMMARY_BALANCE).Range.numberFormat = numFormat
+    table.ListColumns(COL_SUMMARY_ACQUIRED).Range.numberFormat = numberFormat
+    table.ListColumns(COL_SUMMARY_SPENT).Range.numberFormat = numberFormat
+    table.ListColumns(COL_SUMMARY_CHARGE).Range.numberFormat = numberFormat
+    table.ListColumns(COL_SUMMARY_BALANCE).Range.numberFormat = numberFormat
 
     Set table = m_ws.ListObjects(xTableName(TABLE_DETAILS))
     
-    If clearDetails And Not table.DataBodyRange Is Nothing Then
-        table.DataBodyRange.Delete
-    End If
-    
-    table.ListColumns(COL_DETAILS_ACQUIRED).Range.numberFormat = numFormat
-    table.ListColumns(COL_DETAILS_SPENT).Range.numberFormat = numFormat
-    table.ListColumns(COL_DETAILS_PRICE).Range.numberFormat = MAIN_NUMBER_FORMAT
-    table.ListColumns(COL_DETAILS_AMOUNT).Range.numberFormat = MAIN_NUMBER_FORMAT
-    table.ListColumns(COL_DETAILS_CHARGE).Range.numberFormat = MAIN_NUMBER_FORMAT
-    table.ListColumns(COL_DETAILS_BNB_FEE).Range.numberFormat = MAIN_NUMBER_FORMAT
+    If Not table.DataBodyRange Is Nothing Then
+        table.ListColumns(COL_DETAILS_ACQUIRED).DataBodyRange.numberFormat = numberFormat
+        table.ListColumns(COL_DETAILS_SPENT).DataBodyRange.numberFormat = numberFormat
+        table.ListColumns(COL_DETAILS_PRICE).DataBodyRange.numberFormat = MAIN_NUMBER_FORMAT
+        table.ListColumns(COL_DETAILS_AMOUNT).DataBodyRange.numberFormat = MAIN_NUMBER_FORMAT
+        table.ListColumns(COL_DETAILS_CHARGE).DataBodyRange.numberFormat = MAIN_NUMBER_FORMAT
+        table.ListColumns(COL_DETAILS_BNB_FEE).DataBodyRange.numberFormat = MAIN_NUMBER_FORMAT
 
+        If clearDetails Then table.DataBodyRange.Delete
+    End If
+
+    table.ListColumns(COL_DETAILS_ACQUIRED).Total.numberFormat = numberFormat
+    table.ListColumns(COL_DETAILS_SPENT).Total.numberFormat = numberFormat
+    table.ListColumns(COL_DETAILS_PRICE).Total.numberFormat = MAIN_NUMBER_FORMAT
+    table.ListColumns(COL_DETAILS_AMOUNT).Total.numberFormat = MAIN_NUMBER_FORMAT
+    table.ListColumns(COL_DETAILS_CHARGE).Total.numberFormat = MAIN_NUMBER_FORMAT
+    table.ListColumns(COL_DETAILS_BNB_FEE).Total.numberFormat = MAIN_NUMBER_FORMAT
+    
     Dim col As ListColumn
     
     Set table = m_ws.ListObjects(xTableName(TABLE_MARKETS))

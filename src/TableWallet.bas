@@ -9,13 +9,13 @@ Private Const COL_SPOT_AMOUNT As String = "Spot Amount"
 Private Const COL_FUNDING_AMOUNT As String = "Funding Amount"
 Private Const COL_EARN_AMOUNT As String = "Earn Amount"
 Private Const COL_DYNAMIC_AMOUNT As String = "Dynamic Amount"
-Private Const COL_STATIC_AMOUNT As String = "Static Amount"
 Private Const COL_TOTAL_COST As String = "Total Cost"
 Private Const COL_SPOT_COST As String = "Spot Cost"
 Private Const COL_FUNDING_COST As String = "Funding Cost"
 Private Const COL_EARN_COST As String = "Earn Cost"
 Private Const COL_DYNAMIC_COST As String = "Dynamic Cost"
-Private Const COL_STATIC_COST As String = "Static Cost"
+Private Const COL_AVG_ACQUIRE_COST As String = "Avg Acquire Cost"
+Private Const COL_AVG_SPEND_COST As String = "Avg Spend Cost"
 
 Public Property Get tickers() As Collection
     Set tickers = New Collection
@@ -65,7 +65,7 @@ Public Sub CleanUpData()
         table.DataBodyRange.Delete
     End If
 
-    TableLastUpdate.wallet = 0
+    TableUserInfo.LastUpdate = 0
 End Sub
 
 Public Sub ClearData()
@@ -79,7 +79,7 @@ Public Sub ClearData()
         table.ListColumns(COL_DYNAMIC_AMOUNT).DataBodyRange.ClearContents
     End If
 
-    TableLastUpdate.wallet = 0
+    TableUserInfo.LastUpdate = 0
 End Sub
 
 Public Sub ClearCosts()
@@ -93,13 +93,16 @@ Public Sub ClearCosts()
     table.ListColumns(COL_FUNDING_COST).DataBodyRange.ClearContents
     table.ListColumns(COL_EARN_COST).DataBodyRange.ClearContents
     table.ListColumns(COL_DYNAMIC_COST).DataBodyRange.ClearContents
+    table.ListColumns(COL_AVG_ACQUIRE_COST).DataBodyRange.ClearContents
+    table.ListColumns(COL_AVG_SPEND_COST).DataBodyRange.ClearContents
 
     table.ListColumns(COL_TOTAL_COST).Range.numberFormat = "General"
     table.ListColumns(COL_SPOT_COST).Range.numberFormat = "General"
     table.ListColumns(COL_FUNDING_COST).Range.numberFormat = "General"
     table.ListColumns(COL_EARN_COST).Range.numberFormat = "General"
     table.ListColumns(COL_DYNAMIC_COST).Range.numberFormat = "General"
-    table.ListColumns(COL_STATIC_COST).Range.numberFormat = "General"
+    table.ListColumns(COL_AVG_ACQUIRE_COST).Range.numberFormat = "General"
+    table.ListColumns(COL_AVG_SPEND_COST).Range.numberFormat = "General"
 End Sub
 
 Public Sub UpdateData()
@@ -128,7 +131,7 @@ Public Sub UpdateData()
         
     Next ticker
     
-    TableLastUpdate.wallet = Now()
+    TableUserInfo.LastUpdate = Now()
 End Sub
 
 Public Sub Evaluate()
@@ -156,14 +159,16 @@ Public Sub Evaluate()
     table.ListColumns(COL_FUNDING_COST).DataBodyRange.numberFormat = numberFormat
     table.ListColumns(COL_EARN_COST).DataBodyRange.numberFormat = numberFormat
     table.ListColumns(COL_DYNAMIC_COST).DataBodyRange.numberFormat = numberFormat
-    table.ListColumns(COL_STATIC_COST).DataBodyRange.numberFormat = numberFormat
+    table.ListColumns(COL_AVG_ACQUIRE_COST).DataBodyRange.numberFormat = numberFormat
+    table.ListColumns(COL_AVG_SPEND_COST).DataBodyRange.numberFormat = numberFormat
     
     table.ListColumns(COL_TOTAL_COST).Total.numberFormat = numberFormat
     table.ListColumns(COL_SPOT_COST).Total.numberFormat = numberFormat
     table.ListColumns(COL_FUNDING_COST).Total.numberFormat = numberFormat
     table.ListColumns(COL_EARN_COST).Total.numberFormat = numberFormat
     table.ListColumns(COL_DYNAMIC_COST).Total.numberFormat = numberFormat
-    table.ListColumns(COL_STATIC_COST).Total.numberFormat = numberFormat
+    table.ListColumns(COL_AVG_ACQUIRE_COST).Total.numberFormat = numberFormat
+    table.ListColumns(COL_AVG_SPEND_COST).Total.numberFormat = numberFormat
     
     Dim rowIndex As Long
     For rowIndex = 1 To table.ListRows.count

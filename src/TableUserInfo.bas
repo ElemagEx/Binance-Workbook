@@ -8,6 +8,7 @@ Private Const COL_MAKER_FEE As String = "Maker Fee"
 Private Const COL_TAKER_FEE As String = "Taker Fee"
 Private Const COL_BUYER_FEE As String = "Buyer Fee"
 Private Const COL_SELLER_FEE As String = "Seller Fee"
+Private Const COL_ASSETS_LAST_UPDATE As String = "Assets Last Update"
 Private Const COL_ACTIVITY_START_DATE As String = "Activity Start Date"
 
 Public Function IsDataCleanedUp()
@@ -15,6 +16,7 @@ Public Function IsDataCleanedUp()
     Set table = xGetTable()
 
     IsDataCleanedUp = IsEmpty(table.ListColumns(COL_UID).DataBodyRange(1).Value) _
+        And IsEmpty(table.ListColumns(COL_QUOTE).DataBodyRange(1).Value) _
         And IsEmpty(table.ListColumns(COL_MAKER_FEE).DataBodyRange(1).Value) _
         And IsEmpty(table.ListColumns(COL_TAKER_FEE).DataBodyRange(1).Value) _
         And IsEmpty(table.ListColumns(COL_BUYER_FEE).DataBodyRange(1).Value) _
@@ -60,6 +62,23 @@ End Property
 
 Public Property Get ActivityStartDate() As Date
     ActivityStartDate = CDate(xGetTable().ListColumns(COL_ACTIVITY_START_DATE).DataBodyRange(1).Value)
+End Property
+
+Public Property Get LastUpdate() As Date
+    Dim val As Variant
+    val = xGetTable().ListColumns(COL_ASSETS_LAST_UPDATE).DataBodyRange(1).Value
+    
+    LastUpdate = IIf(IsEmpty(val), ActivityStartDate(), CDate(val))
+End Property
+
+Public Property Let LastUpdate(ByVal val As Date)
+    Dim cell As Range
+    Set cell = xGetTable().ListColumns(COL_ASSETS_LAST_UPDATE).DataBodyRange(1)
+    If val = 0 Then
+        cell.ClearContents
+    Else
+        cell.Value = val
+    End If
 End Property
 
 Private Function xGetTable() As ListObject

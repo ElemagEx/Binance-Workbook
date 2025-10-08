@@ -21,5 +21,5 @@ End Property
 Public Property Let isFiat(ByVal val As Boolean)
     method = IIf(val, STR_EVAL_METHOD_EXCHANGE, STR_EVAL_METHOD_MARKET)
     refers = ""
-    format = IIf(val, NUMBER_FORMAT_MAIN_FIAT, number_FORMAT_MAIN_CRYPTO)
+    format = IIf(val, NUMBER_FORMAT_MAIN_FIAT, NUMBER_FORMAT_MAIN_CRYPTO)
 End Property
