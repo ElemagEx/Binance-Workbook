@@ -177,14 +177,14 @@ End Function
 
 Public Function GetExchangeTimezone() As String
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_CURRENCIES).ListObjects(TABLE_TIMEZONE)
+    Set table = ThisWorkbook.Sheets(SHEET_MISC).ListObjects(TABLE_TIMEZONE)
     
     GetExchangeTimezone = table.ListColumns("Exchange Timezone").DataBodyRange(1).Value
 End Function
 
 Public Sub ResetExchangeTimezone(Optional ByVal tz As String = "")
     Dim table As ListObject
-    Set table = ThisWorkbook.Sheets(SHEET_CURRENCIES).ListObjects(TABLE_TIMEZONE)
+    Set table = ThisWorkbook.Sheets(SHEET_MISC).ListObjects(TABLE_TIMEZONE)
     
     table.ListColumns("Exchange Timezone").DataBodyRange(1).Value = tz
 End Sub

@@ -179,16 +179,16 @@ Public Sub Evaluate()
         
         Dim amount As Variant
         amount = table.ListColumns(COL_SPOT_AMOUNT).DataBodyRange(rowIndex).Value
-        If Not IsEmpty(amount) Then table.ListColumns(COL_SPOT_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, CDec(amount))
+        table.ListColumns(COL_SPOT_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, amount)
         
         amount = table.ListColumns(COL_FUNDING_AMOUNT).DataBodyRange(rowIndex).Value
-        If Not IsEmpty(amount) Then table.ListColumns(COL_FUNDING_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, CDec(amount))
+        table.ListColumns(COL_FUNDING_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, amount)
         
         amount = table.ListColumns(COL_EARN_AMOUNT).DataBodyRange(rowIndex).Value
-        If Not IsEmpty(amount) Then table.ListColumns(COL_EARN_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, CDec(amount))
+        table.ListColumns(COL_EARN_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, amount)
         
         amount = table.ListColumns(COL_DYNAMIC_AMOUNT).DataBodyRange(rowIndex).Value
-        If Not IsEmpty(amount) Then table.ListColumns(COL_DYNAMIC_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, CDec(amount))
+        table.ListColumns(COL_DYNAMIC_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, amount)
     Next rowIndex
 End Sub
 
@@ -208,6 +208,11 @@ Public Sub Sort(ByVal tickers As String)
         End With
     End If
 End Sub
+
+Public Function OnQuoteChange()
+    ClearCosts
+    BinanceLedgers.HandleQuoteChange
+End Function
 
 Public Function xGetTable() As ListObject
     Set xGetTable = ThisWorkbook.Sheets(SHEET_ASSETS).ListObjects(TABLE_WALLET)

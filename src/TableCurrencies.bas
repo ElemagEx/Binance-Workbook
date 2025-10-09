@@ -55,7 +55,7 @@ Public Sub SetTradesLastUpdate(ByVal ticker As String, ByVal val As Date)
     
     If rowIndex = 0 Then Exit Sub
     
-    xGetTable().ListColumns(COL_TRADES).DataBodyRange(rowIndex).Value = val
+    xGetTable().ListColumns(COL_TRADES).DataBodyRange(rowIndex).Value = IIf(val = 0, Empty, val)
 End Sub
 
 Public Function GetSelectedTicker() As String

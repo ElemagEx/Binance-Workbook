@@ -33,6 +33,21 @@ Public Sub RefreshCoinsInfo()
     Next ws
 End Sub
 
+Public Sub OnChange(ByVal ws As Worksheet, ByVal Target As Range)
+    If xIsLedgerWorksheet(ws) Then
+        xOpenLedger(ws).OnChange Target
+    End If
+End Sub
+
+Public Sub HandleQuoteChange()
+    Dim ws As Worksheet
+    For Each ws In ThisWorkbook.Sheets
+        If xIsLedgerWorksheet(ws) Then
+            xOpenLedger(ws).ApplyMainQuote
+        End If
+    Next ws
+End Sub
+
 Public Sub OpenCurrentTickerLedger()
     Dim ws As Worksheet
     Set ws = ActiveSheet
@@ -95,7 +110,7 @@ Public Function GetOrderString() As String
     GetOrderString = IIf(Len(order) = 0, "", Mid(order, 2))
 End Function
 
-Public Function xLedgerName(ByVal ticker) As String
+Private Function xLedgerName(ByVal ticker) As String
     xLedgerName = ticker & " " & LEDGER_SHEET_SUFFIX
 End Function
 

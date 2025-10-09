@@ -4,6 +4,7 @@ Option Explicit
 Private Const PROJECT_FILE As String = "project.bas"
 Private Const THIS_FILE As String = "development.bas"
 Private Const SHEET_ASSETS_FILE As String = "src/SheetAssets.cls"
+Private Const SHEET_LEDGER_TEMPLATE_FILE As String = "src/LedgerTemplate.cls"
 
 Public Sub Project_ImportFiles()
     Dim dir As String
@@ -28,6 +29,7 @@ Public Sub Project_ExportFiles()
     
     xHandleFile dir, THIS_FILE, True, False, False
     xHandleFile dir, SHEET_ASSETS_FILE, True, False, False
+    xHandleFile dir, SHEET_LEDGER_TEMPLATE_FILE, True, False, False
 End Sub
 
 Public Sub Project_CleanUpFiles()

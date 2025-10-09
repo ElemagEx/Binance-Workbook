@@ -2,7 +2,7 @@ Attribute VB_Name = "TableLastUpdate"
 Option Explicit
 Option Private Module
 
-Private Const COL_TRANSFERS As String = "Last Updates: Wallet Transfers"
+Private Const COL_TRANSFERS As String = "Wallet Transfers"
 Private Const COL_CONVERTIONS As String = "Conversions"
 Private Const COL_DUST_LOG As String = "Dust Log"
 Private Const COL_FIAT_BUYS As String = "Fiat Buys"
@@ -15,6 +15,8 @@ Private Const COL_DISTRIBUTIONS As String = "Distributions"
 Private Const COL_FLEXIBLE_EARNS As String = "Flexible Earns"
 Private Const COL_LOCKED_EARNS As String = "Locked Earns"
 
+Private Const FIRST_DATA_COL = 2
+
 Public Function IsDataCleanedUp()
     IsDataCleanedUp = False
     
@@ -22,7 +24,7 @@ Public Function IsDataCleanedUp()
     Set table = xGetTable()
 
     Dim i As Long
-    For i = 1 To table.ListColumns.count
+    For i = FIRST_DATA_COL To table.ListColumns.count
         If Not IsEmpty(table.ListColumns(i).DataBodyRange(1).Value) Then
             Exit Function
         End If
@@ -32,7 +34,13 @@ Public Function IsDataCleanedUp()
 End Function
 
 Public Sub CleanUpData()
-    xGetTable().ListRows(1).Range.ClearContents
+    Dim table As ListObject
+    Set table = xGetTable()
+
+    Dim i As Long
+    For i = FIRST_DATA_COL To table.ListColumns.count
+        table.ListColumns(i).DataBodyRange(1).ClearContents
+    Next i
 End Sub
 
 Public Property Get Transfers() As Date
@@ -132,7 +140,7 @@ Public Property Let LockedEarns(ByVal val As Date)
 End Property
 
 Public Function xGetTable() As ListObject
-    Set xGetTable = ThisWorkbook.Sheets(SHEET_CURRENCIES).ListObjects(TABLE_LAST_UPDATE)
+    Set xGetTable = ThisWorkbook.Sheets(SHEET_MISC).ListObjects(TABLE_LAST_UPDATE)
 End Function
 
 Private Function xGetLastUpdate(ByVal name As String) As Date

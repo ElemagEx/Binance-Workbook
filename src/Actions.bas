@@ -1,15 +1,19 @@
 Attribute VB_Name = "Actions"
 Option Explicit
 
+#Const IN_DEVELOPMENT = True
+
+Private Const HANDLE_ERRORS As Boolean = False
+
 Public Sub Action_ClearAssets()
     xActionHeader
-    On Error GoTo ErrHandler
-    
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
+
     ThisWorkbook.Sheets(SHEET_ASSETS).Activate
     TableUserInfo.ClearData
     TableWallet.ClearData
     
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -21,14 +25,14 @@ End Sub
 
 Public Sub Action_UpdateAssets()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     ThisWorkbook.Sheets(SHEET_ASSETS).Activate
     TableUserInfo.UpdateData
     TableWallet.UpdateData
     TableWallet.Evaluate
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -40,12 +44,12 @@ End Sub
 
 Public Sub Action_SortAssets()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     ThisWorkbook.Sheets(SHEET_ASSETS).Activate
     TableWallet.Sort BinanceLedgers.GetOrderString()
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -57,11 +61,11 @@ End Sub
 
 Public Sub Action_ShowAssets()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     ThisWorkbook.Sheets(SHEET_ASSETS).Activate
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -73,14 +77,14 @@ End Sub
 
 Public Sub Action_CollectUsedCurrencies()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     ThisWorkbook.Sheets(SHEET_CURRENCIES).Activate
     TableCurrencies.UpdateData
     
     BinanceLedgers.RefreshCoinsInfo
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -92,14 +96,14 @@ End Sub
 
 Public Sub Action_CollectAllCurrencies()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     ThisWorkbook.Sheets(SHEET_CURRENCIES).Activate
     TableCurrencies.CollectAllData
 
     BinanceLedgers.RefreshCoinsInfo
     
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -111,12 +115,12 @@ End Sub
 
 Public Sub Action_CompactCurrencies()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     ThisWorkbook.Sheets(SHEET_CURRENCIES).Activate
     TableCurrencies.CompactData
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -128,11 +132,11 @@ End Sub
 
 Public Sub Action_OpenCurrentTickerLedger()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     BinanceLedgers.OpenCurrentTickerLedger
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -144,7 +148,7 @@ End Sub
 
 Public Sub Action_UpdateTransfers()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     Dim ops As New BinanceOps
     ops.Collect_Transfers TableLastUpdate.Transfers
@@ -153,7 +157,7 @@ Public Sub Action_UpdateTransfers()
     
     TableLastUpdate.Transfers = ops.endDate
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -165,7 +169,7 @@ End Sub
 
 Public Sub Action_UpdateConversions()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
 
     Dim ops As New BinanceOps
     ops.Collect_Conversions TableLastUpdate.Convertions
@@ -176,7 +180,7 @@ Public Sub Action_UpdateConversions()
 
     xCheckForUnappliedOps ops
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -188,7 +192,7 @@ End Sub
 
 Public Sub Action_UpdateDustLog()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
 
     Dim ops As New BinanceOps
     ops.Collect_DustLog TableLastUpdate.DustLog
@@ -199,7 +203,7 @@ Public Sub Action_UpdateDustLog()
     
     TableLastUpdate.DustLog = ops.endDate
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -211,7 +215,7 @@ End Sub
 
 Public Sub Action_UpdateFiatBuys()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     Dim ops As New BinanceOps
     ops.Collect_FiatBuys TableLastUpdate.FiatBuys
@@ -220,7 +224,7 @@ Public Sub Action_UpdateFiatBuys()
     
     TableLastUpdate.FiatBuys = ops.endDate
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -232,7 +236,7 @@ End Sub
 
 Public Sub Action_UpdateFiatSells()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     Dim ops As New BinanceOps
     ops.Collect_FiatSells TableLastUpdate.FiatSells
@@ -241,7 +245,7 @@ Public Sub Action_UpdateFiatSells()
     
     TableLastUpdate.FiatSells = ops.endDate
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -253,7 +257,7 @@ End Sub
 
 Public Sub Action_UpdateFiatDeposits()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     Dim ops As New BinanceOps
     ops.Collect_FiatDeposits TableLastUpdate.FiatDeposits
@@ -262,7 +266,7 @@ Public Sub Action_UpdateFiatDeposits()
     
     TableLastUpdate.FiatDeposits = ops.endDate
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -274,7 +278,7 @@ End Sub
 
 Public Sub Action_UpdateFiatWithdraws()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     Dim ops As New BinanceOps
     ops.Collect_FiatWithdraws TableLastUpdate.FiatWithdraws
@@ -283,7 +287,7 @@ Public Sub Action_UpdateFiatWithdraws()
     
     TableLastUpdate.FiatWithdraws = ops.endDate
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -295,7 +299,7 @@ End Sub
 
 Public Sub Action_UpdateCryptoDeposits()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     Dim ops As New BinanceOps
     ops.Collect_CryptoDeposits TableLastUpdate.CryptoDeposits
@@ -304,7 +308,7 @@ Public Sub Action_UpdateCryptoDeposits()
     
     TableLastUpdate.CryptoDeposits = ops.endDate
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -316,7 +320,7 @@ End Sub
 
 Public Sub Action_UpdateCryptoWithdraws()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     Dim ops As New BinanceOps
     ops.Collect_CryptoWithdraws TableLastUpdate.CryptoWithdraws
@@ -325,7 +329,7 @@ Public Sub Action_UpdateCryptoWithdraws()
     
     TableLastUpdate.CryptoWithdraws = ops.endDate
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -337,7 +341,7 @@ End Sub
 
 Public Sub Action_UpdateCryptoDistributions()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     Dim ops As New BinanceOps
     ops.Collect_Distributions TableLastUpdate.Distributions
@@ -346,7 +350,7 @@ Public Sub Action_UpdateCryptoDistributions()
     
     TableLastUpdate.Distributions = ops.endDate
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -358,7 +362,7 @@ End Sub
 
 Public Sub Action_UpdateFlexibleEarn()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     Dim ops As New BinanceOps
     ops.Collect_FlexibleEarnSubscriptions TableLastUpdate.FlexibleEarns
@@ -368,7 +372,7 @@ Public Sub Action_UpdateFlexibleEarn()
     
     TableLastUpdate.FlexibleEarns = ops.endDate
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -380,7 +384,7 @@ End Sub
 
 Public Sub Action_UpdateLockedEarn()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     Dim ops As New BinanceOps
     ops.Collect_LockedEarnSubscriptions TableLastUpdate.LockedEarns
@@ -390,7 +394,7 @@ Public Sub Action_UpdateLockedEarn()
     
     TableLastUpdate.LockedEarns = ops.endDate
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -402,11 +406,11 @@ End Sub
 
 Public Sub Action_UpdateTrades()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     BinanceLedgers.UpdateCurrentLedgerTrades
     
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -418,7 +422,7 @@ End Sub
 
 Public Sub Action_CheckUnappliedOperations()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     Dim ops As New BinanceOps
     
@@ -429,7 +433,7 @@ Public Sub Action_CheckUnappliedOperations()
     
     TableLastUpdate.LockedEarns = ops.endDate
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter
@@ -441,9 +445,9 @@ End Sub
 
 Public Sub Action_RebuildEvalTickers()
     xActionHeader
-    On Error GoTo ErrHandler
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
 
-    On Error GoTo 0
+    If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:
     xActionFooter

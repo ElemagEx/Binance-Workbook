@@ -73,7 +73,7 @@ Public Function EvaluateCost(ByVal ticker As String, ByVal amount As Variant) As
 
     EvaluateCost = Empty
     
-    If amount = CDec(0) Then Exit Function
+    If IsEmpty(amount) Or amount = CDec(0) Then Exit Function
 
     If Not m_paths.Exists(ticker) Then Exit Function
 
