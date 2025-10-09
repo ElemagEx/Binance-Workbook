@@ -17,7 +17,7 @@ Private Sub Worksheet_Change(ByVal Target As Range)
     
     Application.EnableEvents = False
     On Error Resume Next
-    TableWallet.OnQuoteChange
+    TableAssets.OnQuoteChange
     Application.EnableEvents = True
 End Sub
 

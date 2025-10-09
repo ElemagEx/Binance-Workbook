@@ -53,7 +53,7 @@ Public Sub OpenCurrentTickerLedger()
     Set ws = ActiveSheet
     
     Dim ticker As String
-    If ticker = "" Then ticker = TableWallet.GetSelectedTicker()
+    If ticker = "" Then ticker = TableAssets.GetSelectedTicker()
     If ticker = "" Then ticker = TableCurrencies.GetSelectedTicker()
     
     If ticker = "" Then
@@ -87,7 +87,7 @@ Public Sub PopulateOperations(ByVal ops As BinanceOps, Optional ByVal override A
         Dim onlyDelOps As Boolean
         onlyDelOps = ops.HasOnlyDelOps(ticker)
     
-        If Not onlyDelOps Then TableWallet.CheckTicker ticker
+        If Not onlyDelOps Then TableAssets.CheckTicker ticker
         
         Dim ledger As BinanceLedger
         Set ledger = xFindLedger(ticker, Not onlyDelOps)

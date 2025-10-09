@@ -303,7 +303,7 @@ Private Sub xCollectData(ByVal addSelfTickers As Boolean, ByVal addWalletTickers
         Next ticker
     End If
     If addWalletTickers Then
-        For Each ticker In TableWallet.tickers
+        For Each ticker In TableAssets.tickers
             coins.AddTicker ticker
         Next ticker
     End If

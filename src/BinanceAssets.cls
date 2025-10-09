@@ -19,7 +19,7 @@ End Property
 '
 '
 '
-Public Sub CollectSpotWalletAssets(ByVal name As String, Optional ByVal filter As String = "")
+Public Sub CollectSpotAssets(ByVal name As String, Optional ByVal filter As String = "")
 
     Dim assets As Collection
     Set assets = BinanceAPI.Wallet_GetUserAssets(filter, False)
@@ -40,7 +40,7 @@ End Sub
 '
 '
 '
-Public Sub CollectFundingWalletAssets(ByVal name As String, Optional ByVal filter As String = "")
+Public Sub CollectFundingAssets(ByVal name As String, Optional ByVal filter As String = "")
 
     Dim assets As Collection
     Set assets = BinanceAPI.Wallet_GetFundingAssets(filter, False)

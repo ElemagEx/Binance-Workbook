@@ -1,4 +1,4 @@
-Attribute VB_Name = "TableWallet"
+Attribute VB_Name = "TableAssets"
 Option Explicit
 Option Private Module
 
@@ -110,8 +110,8 @@ Public Sub UpdateData()
     
     Dim assets As New BinanceAssets
     
-    assets.CollectSpotWalletAssets COL_SPOT_AMOUNT
-    assets.CollectFundingWalletAssets COL_FUNDING_AMOUNT
+    assets.CollectSpotAssets COL_SPOT_AMOUNT
+    assets.CollectFundingAssets COL_FUNDING_AMOUNT
     assets.CollectSimpleEarnLockedAssets COL_EARN_AMOUNT
     assets.CollectSimpleEarnFlexibleAssets COL_DYNAMIC_AMOUNT
     
@@ -215,7 +215,7 @@ Public Function OnQuoteChange()
 End Function
 
 Public Function xGetTable() As ListObject
-    Set xGetTable = ThisWorkbook.Sheets(SHEET_ASSETS).ListObjects(TABLE_WALLET)
+    Set xGetTable = ThisWorkbook.Sheets(SHEET_ASSETS).ListObjects(TABLE_ASSETS)
 End Function
 
 Private Function xFindTickerRowIndex(ByVal ticker As String, ByVal addIfNotFound As Boolean) As Long

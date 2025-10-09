@@ -11,7 +11,7 @@ Public Sub Action_ClearAssets()
 
     ThisWorkbook.Sheets(SHEET_ASSETS).Activate
     TableUserInfo.ClearData
-    TableWallet.ClearData
+    TableAssets.ClearData
     
     If HANDLE_ERRORS Then On Error GoTo 0
 
@@ -29,8 +29,8 @@ Public Sub Action_UpdateAssets()
     
     ThisWorkbook.Sheets(SHEET_ASSETS).Activate
     TableUserInfo.UpdateData
-    TableWallet.UpdateData
-    TableWallet.Evaluate
+    TableAssets.UpdateData
+    TableAssets.Evaluate
 
     If HANDLE_ERRORS Then On Error GoTo 0
 
@@ -47,7 +47,7 @@ Public Sub Action_SortAssets()
     If HANDLE_ERRORS Then On Error GoTo ErrHandler
     
     ThisWorkbook.Sheets(SHEET_ASSETS).Activate
-    TableWallet.Sort BinanceLedgers.GetOrderString()
+    TableAssets.Sort BinanceLedgers.GetOrderString()
 
     If HANDLE_ERRORS Then On Error GoTo 0
 

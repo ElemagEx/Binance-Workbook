@@ -10,7 +10,7 @@ Public Const SHEET_LEDGER_TEMPLATE As String = "Ledger Template"
 Public Const LEDGER_SHEET_SUFFIX As String = "Ledger"
 
 ' Assets Sheet Tables
-Public Const TABLE_WALLET As String = "Wallet"
+Public Const TABLE_ASSETS As String = "Assets"
 Public Const TABLE_USER_INFO As String = "UserInfo"
 Public Const TABLE_LAST_UPDATE As String = "LastUpdate"
 ' Currencies Sheet Tables
