@@ -81,6 +81,21 @@ Public Sub UpdateCurrentLedgerTrades()
     ledger.UpdateTrades
 End Sub
 
+Public Sub EvaluateCurrentLedgerCosts()
+    Dim ws As Worksheet
+    Set ws = ActiveSheet
+    
+    Dim ledger As BinanceLedger
+    Set ledger = xOpenLedger(ws)
+    
+    If ledger Is Nothing Then
+        MsgBox "Open Ledger worksheet first"
+        Exit Sub
+    End If
+    
+    ledger.Evaluate
+End Sub
+
 Public Sub PopulateOperations(ByVal ops As BinanceOps, Optional ByVal override As Boolean)
     Dim ticker As Variant
     For Each ticker In ops.tickers

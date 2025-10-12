@@ -96,7 +96,7 @@ Public Sub Collect_Transfers(ByVal lastUpdateTime As Date)
     
                 Dim item As Dictionary
                 For Each item In list
-                    stamp = xUnixTimestampToDate(item("timestamp"))
+                    stamp = UnixTimestampToDate(item("timestamp"))
                     
                     If endTime > stamp Then endTime = stamp
                 
@@ -148,7 +148,7 @@ Public Sub Collect_Conversions(ByVal lastUpdateTime As Date)
     
             Dim item As Dictionary
             For Each item In list
-                stamp = xUnixTimestampToDate(item("createTime"))
+                stamp = UnixTimestampToDate(item("createTime"))
                 
                 If endTime > stamp Then endTime = stamp
                 
@@ -211,7 +211,7 @@ Public Sub Collect_DustLog(ByVal lastUpdateTime As Date)
     
             Dim item As Dictionary
             For Each item In list
-                stamp = xUnixTimestampToDate(item("operateTime"))
+                stamp = UnixTimestampToDate(item("operateTime"))
                 
                 If endTime > stamp Then endTime = stamp
                 
@@ -253,7 +253,7 @@ Public Sub Collect_FiatBuys(ByVal lastUpdateTime As Date)
     
             Dim item As Dictionary
             For Each item In list
-                stamp = xUnixTimestampToDate(item("updateTime"))
+                stamp = UnixTimestampToDate(item("updateTime"))
                 
                 If endTime > stamp Then endTime = stamp
                 
@@ -323,7 +323,7 @@ Public Sub Collect_FiatSells(ByVal lastUpdateTime As Date)
     
             Dim item As Dictionary
             For Each item In list
-                stamp = xUnixTimestampToDate(item("updateTime"))
+                stamp = UnixTimestampToDate(item("updateTime"))
                 
                 If endTime > stamp Then endTime = stamp
                 
@@ -393,7 +393,7 @@ Public Sub Collect_FiatDeposits(ByVal lastUpdateTime As Date)
     
             Dim item As Dictionary
             For Each item In list
-                stamp = xUnixTimestampToDate(item("updateTime"))
+                stamp = UnixTimestampToDate(item("updateTime"))
                 
                 If endTime > stamp Then endTime = stamp
                 
@@ -444,7 +444,7 @@ Public Sub Collect_FiatWithdraws(ByVal lastUpdateTime As Date)
     
             Dim item As Dictionary
             For Each item In list
-                stamp = xUnixTimestampToDate(item("updateTime"))
+                stamp = UnixTimestampToDate(item("updateTime"))
                 
                 If endTime > stamp Then endTime = stamp
                 
@@ -487,7 +487,7 @@ Public Sub Collect_CryptoDeposits(ByVal lastUpdateTime As Date, Optional ByVal f
             
             Dim item As Dictionary
             For Each item In list
-                stamp = xUnixTimestampToDate(item("completeTime"))
+                stamp = UnixTimestampToDate(item("completeTime"))
                 
                 If endTime > stamp Then endTime = stamp
                 
@@ -583,7 +583,7 @@ Public Sub Collect_Distributions(ByVal lastUpdateTime As Date, Optional ByVal fi
     
             Dim item As Dictionary
             For Each item In list
-                stamp = xUnixTimestampToDate(item("divTime"))
+                stamp = UnixTimestampToDate(item("divTime"))
                 
                 If endTime > stamp Then endTime = stamp
                 
@@ -628,7 +628,7 @@ Public Sub Collect_FlexibleEarnSubscriptions(ByVal lastUpdateTime As Date, Optio
         
             Dim item As Dictionary
             For Each item In list
-                stamp = xUnixTimestampToDate(item("time"))
+                stamp = UnixTimestampToDate(item("time"))
                 
                 If endTime > stamp Then endTime = stamp
                 
@@ -642,7 +642,7 @@ Public Sub Collect_FlexibleEarnSubscriptions(ByVal lastUpdateTime As Date, Optio
                     
                     Select Case item("type")
                         Case "CONVERT"
-                            AddSimpleOp ticker, stamp, WALLET_LOCKED_EARN, OP_WALLET_OUT, 0, 0, amount, "cvt:" & WALLET_FLEXIBLE_EARN, ID_PREFIX_WALLET_CVT & tranId
+                            AddSimpleOp ticker, stamp, WALLET_LOCKED_EARN, OP_WALLET_OUT, 0, amount, 0, "cvt:" & WALLET_FLEXIBLE_EARN, ID_PREFIX_WALLET_CVT & tranId
                         
                         Case "AUTO", "NORMAL"
                             If item("sourceAccount") = "SPOT" Or (item("sourceAccount") = "SPOTANDFUNDING" And item("amtFromSpot") > 0) Then
@@ -694,7 +694,7 @@ Public Sub Collect_FlexibleEarnRedemptions(ByVal lastUpdateTime As Date, Optiona
         
             Dim item As Dictionary
             For Each item In list
-                stamp = xUnixTimestampToDate(item("time"))
+                stamp = UnixTimestampToDate(item("time"))
                 
                 If endTime > stamp Then endTime = stamp
                 
@@ -751,7 +751,7 @@ Public Sub Collect_LockedEarnSubscriptions(ByVal lastUpdateTime As Date, Optiona
         
             Dim item As Dictionary
             For Each item In list
-                stamp = xUnixTimestampToDate(item("time"))
+                stamp = UnixTimestampToDate(item("time"))
                 
                 If endTime > stamp Then endTime = stamp
                 
@@ -817,7 +817,7 @@ Public Sub Collect_LockedEarnRedemptions(ByVal lastUpdateTime As Date, Optional 
         
             Dim item As Dictionary
             For Each item In list
-                stamp = xUnixTimestampToDate(item("time"))
+                stamp = UnixTimestampToDate(item("time"))
                 
                 If endTime > stamp Then endTime = stamp
                 
@@ -865,7 +865,7 @@ Public Sub Collect_MySpotTrades(ByVal lastUpdateTime As Date, ByVal ticker As St
             
             Dim item As Dictionary
             For Each item In list
-                stamp = xUnixTimestampToDate(item("time"))
+                stamp = UnixTimestampToDate(item("time"))
                 
                 If endTime > stamp Then endTime = stamp
                 
@@ -1008,10 +1008,6 @@ Private Sub xAddOp(ByVal ticker As String, ByVal op As BinanceOp)
 
     m_ops(ticker).Add op
 End Sub
-
-Private Function xUnixTimestampToDate(ByVal unixTime As LongLong) As Date
-    xUnixTimestampToDate = DateAdd("s", unixTime / 1000, "1/1/1970")
-End Function
 
 Private Sub xHandleSimpleConversion(ByVal item As Dictionary, ByVal stamp As Date, ByVal wallet As String)
     AddExchangeOps _

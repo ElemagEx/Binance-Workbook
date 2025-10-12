@@ -23,13 +23,13 @@ Private Const ROW_TRIVIA_BALANCE As Long = 8
 Private Const ROW_TRIVIA_DYNAMIC As Long = 9
 Private Const ROW_TRIVIA_DIVIATION As Long = 10
 Private Const ROW_TRIVIA_ACTIVITY_START_DATE As Long = 11
-Private Const ROW_TRIVIA_KLINES_PERIOD As Long = 12
+Private Const ROW_TRIVIA_KLINES_INTERVAL As Long = 12
 
 Private Const COL_SUMMARY_ACQUIRED As String = "Acquired"
 Private Const COL_SUMMARY_SPENT As String = "Spent"
 Private Const COL_SUMMARY_CHARGE As String = "Charge"
 Private Const COL_SUMMARY_BALANCE As String = "Balance"
-Private Const col_SUMMARY_BNB_FEES As String = "BNB fees"
+Private Const COL_SUMMARY_BNB_FEES As String = "BNB fees"
 Private Const COL_SUMMARY_DEBIT As String = "Debit"
 Private Const COL_SUMMARY_CREDIT As String = "Credit"
 Private Const COL_SUMMARY_COMMISSION As String = "Commission"
@@ -58,17 +58,17 @@ Private Const COL_DETAILS_ID As String = "ID"
 Private m_ws As Worksheet
 Private m_ticker As String
 
-Public Property Get ticker() As String
-    ticker = m_ticker
-End Property
-
-Public Property Get quote() As String
-    quote = m_ws.ListObjects(xTableName(TABLE_TRIVIA)).ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_QUOTE).Value
-End Property
-
 Public Property Get ActivityStartDate() As Date
     ActivityStartDate = m_ws.ListObjects(xTableName(TABLE_TRIVIA)).ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_ACTIVITY_START_DATE).Value
 End Property
+
+Public Function GetTicker() As String
+    GetTicker = m_ticker
+End Function
+
+Public Function GetQuote() As String
+    GetQuote = m_ws.ListObjects(xTableName(TABLE_TRIVIA)).ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_QUOTE).Value
+End Function
 
 Public Function IsValid() As Boolean
     IsValid = True
@@ -120,7 +120,7 @@ End Sub
 
 Public Sub ClearCosts()
     Dim info As PriceQuote
-    Set info = TableEvaluation.FindQuoteInfo(quote)
+    Set info = TableEvaluation.FindQuoteInfo(GetQuote())
     
     Dim numberFormat As String
     If info Is Nothing Then
@@ -205,6 +205,25 @@ Public Sub UpdateTrades()
     TableCurrencies.SetTradesLastUpdate m_ticker, ops.endDate
 End Sub
 
+Public Sub Evaluate()
+    Dim quote As String
+    quote = GetQuote()
+    
+    Dim periods As Dictionary
+    Set periods = xCollectPeriods(quote)
+
+    Dim evaluator As New PriceEvaluator
+    evaluator.GetQuotePrices quote, Nothing, periods
+    
+    Dim info As PriceQuote
+    Set info = evaluator.GetQuoteInfo()
+    
+    Dim table As ListObject
+    Set table = m_ws.ListObjects(xTableName(TABLE_DETAILS))
+    
+
+End Sub
+
 Public Sub PopulateOperations(ByVal ops As Collection, Optional ByVal override As Boolean = False)
     Dim table As ListObject
     Set table = m_ws.ListObjects(xTableName(TABLE_DETAILS))
@@ -232,11 +251,13 @@ Public Sub PopulateOperations(ByVal ops As Collection, Optional ByVal override A
             table.ListColumns(COL_DETAILS_OPERATION).DataBodyRange(rowIndex).Value = op.operation
             table.ListColumns(COL_DETAILS_ACQUIRED).DataBodyRange(rowIndex).Value = op.acquired
             table.ListColumns(COL_DETAILS_SPENT).DataBodyRange(rowIndex).Value = op.spent
-            table.ListColumns(COL_DETAILS_TICKER).DataBodyRange(rowIndex).Value = op.ticker
-            table.ListColumns(COL_DETAILS_PRICE).DataBodyRange(rowIndex).Value = op.price
-            table.ListColumns(COL_DETAILS_AMOUNT).DataBodyRange(rowIndex).Value = op.amount
-            table.ListColumns(COL_DETAILS_CHARGE).DataBodyRange(rowIndex).Value = op.charge
-            table.ListColumns(COL_DETAILS_BNB_FEE).DataBodyRange(rowIndex).Value = op.bnb_fee
+            If Len(op.ticker) > 0 Then
+                table.ListColumns(COL_DETAILS_TICKER).DataBodyRange(rowIndex).Value = op.ticker
+                table.ListColumns(COL_DETAILS_PRICE).DataBodyRange(rowIndex).Value = op.price
+                table.ListColumns(COL_DETAILS_AMOUNT).DataBodyRange(rowIndex).Value = op.amount
+                table.ListColumns(COL_DETAILS_CHARGE).DataBodyRange(rowIndex).Value = op.charge
+                table.ListColumns(COL_DETAILS_BNB_FEE).DataBodyRange(rowIndex).Value = op.bnb_fee
+            End If
             table.ListColumns(COL_DETAILS_NOTE).DataBodyRange(rowIndex).Value = op.note
             table.ListColumns(COL_DETAILS_ID).DataBodyRange(rowIndex).Value = op.id
         End If
@@ -297,6 +318,64 @@ Private Sub xSort()
             .header = xlYes
             .Apply
         End With
+    End If
+End Sub
+
+Private Function xCollectPeriods(ByVal quote As String) As Dictionary
+    Set xCollectPeriods = Nothing
+    
+    If quote = "" Then Exit Function
+
+    Dim interval As String
+    interval = CalcKlineInterval(m_ws.ListObjects(xTableName(TABLE_TRIVIA)).ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_KLINES_INTERVAL).Value)
+    
+    Dim table As ListObject
+    Set table = m_ws.ListObjects(xTableName(TABLE_DETAILS))
+
+    Dim periods As New Dictionary
+    
+    Dim rowIndex As Long
+    For rowIndex = 1 To table.ListRows.count
+        If _
+            IsEmpty(table.ListColumns(COL_DETAILS_DEBIT).DataBodyRange(rowIndex).Value) Or _
+            IsEmpty(table.ListColumns(COL_DETAILS_CREDIT).DataBodyRange(rowIndex).Value) _
+        Then
+            Dim stamp As Date
+            stamp = table.ListColumns(COL_DETAILS_STAMP).DataBodyRange(rowIndex).Value
+            
+            xAddTickerToPeriods periods, m_ticker, stamp, interval, quote
+            
+            Dim ticker As String
+            ticker = table.ListColumns(COL_DETAILS_TICKER).DataBodyRange(rowIndex).Value
+            
+            If ticker <> "" Then
+                xAddTickerToPeriods periods, ticker, stamp, interval, quote
+            End If
+            
+            If Not IsEmpty(table.ListColumns(COL_DETAILS_BNB_FEE).DataBodyRange(rowIndex).Value) Then
+                xAddTickerToPeriods periods, STR_BNB, stamp, interval, quote
+            End If
+        End If
+    Next rowIndex
+
+    Set xCollectPeriods = periods
+End Function
+
+Private Sub xAddTickerToPeriods(ByVal periods As Dictionary, ByVal ticker As String, ByVal stamp As Date, ByVal interval As String, ByVal quote As String)
+    Dim period As PricePeriod
+    
+    If periods.Exists(ticker) Then
+        Set period = periods(ticker)
+        If period.startDate > stamp Then period.startDate = stamp
+        If period.endDate < stamp Then period.endDate = stamp
+    Else
+        Set period = New PricePeriod
+        period.ticker = ticker
+        period.interval = interval
+        period.startDate = stamp
+        period.endDate = stamp
+        period.path = TableCurrencies.GetEvalPath(ticker, quote)
+        periods.Add ticker, period
     End If
 End Sub
 

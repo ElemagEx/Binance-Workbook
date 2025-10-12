@@ -175,20 +175,20 @@ Public Sub Evaluate()
         Dim ticker As String
         ticker = table.ListColumns(COL_TICKER).DataBodyRange(rowIndex).Value
         
-        table.ListColumns(COL_PRICE).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, CDec(1))
+        table.ListColumns(COL_PRICE).DataBodyRange(rowIndex).Value = evaluator.EvaluateCurrentCost(ticker, CDec(1))
         
         Dim amount As Variant
         amount = table.ListColumns(COL_SPOT_AMOUNT).DataBodyRange(rowIndex).Value
-        table.ListColumns(COL_SPOT_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, amount)
+        table.ListColumns(COL_SPOT_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCurrentCost(ticker, amount)
         
         amount = table.ListColumns(COL_FUNDING_AMOUNT).DataBodyRange(rowIndex).Value
-        table.ListColumns(COL_FUNDING_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, amount)
+        table.ListColumns(COL_FUNDING_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCurrentCost(ticker, amount)
         
         amount = table.ListColumns(COL_EARN_AMOUNT).DataBodyRange(rowIndex).Value
-        table.ListColumns(COL_EARN_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, amount)
+        table.ListColumns(COL_EARN_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCurrentCost(ticker, amount)
         
         amount = table.ListColumns(COL_DYNAMIC_AMOUNT).DataBodyRange(rowIndex).Value
-        table.ListColumns(COL_DYNAMIC_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCost(ticker, amount)
+        table.ListColumns(COL_DYNAMIC_COST).DataBodyRange(rowIndex).Value = evaluator.EvaluateCurrentCost(ticker, amount)
     Next rowIndex
 End Sub
 
@@ -241,7 +241,7 @@ Private Function xFindTickerRowIndex(ByVal ticker As String, ByVal addIfNotFound
     xFindTickerRowIndex = index
 End Function
 
-Public Function xCollectPaths(ByVal quote As String) As Dictionary
+Private Function xCollectPaths(ByVal quote As String) As Dictionary
     Dim paths As New Dictionary
     
     Set xCollectPaths = paths

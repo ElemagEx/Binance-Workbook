@@ -257,6 +257,34 @@ Public Sub CompactData()
     table.ListColumns(COL_MARKETS).DataBodyRange.formula = formula
 End Sub
 
+Public Function GetEvalPath(ByVal ticker As String, ByVal quote As String) As String
+    GetEvalPath = ""
+    
+    Dim table As ListObject
+    Set table = xGetTable()
+    
+    Dim colIndexFirst, colIndexLast As Long
+    
+    colIndexFirst = table.ListColumns(COL_INSERT_EVALUATION_AFTER).index + 1
+    colIndexLast = table.ListColumns(COL_INSERT_EVALUATION_BEFORE).index - 1
+
+    Dim colIndex As Long
+    For colIndex = colIndexFirst To colIndexLast
+        If table.ListColumns(colIndex).name = EVAL_PREFIX & quote Then
+            Exit For
+        End If
+    Next colIndex
+    
+    If colIndex > colIndexLast Then Exit Function
+
+    Dim rowIndex As Long
+    rowIndex = xFindTickerRowIndex(ticker, False)
+
+    If rowIndex > 0 Then
+        GetEvalPath = table.ListColumns(colIndex).DataBodyRange(rowIndex).Value
+    End If
+End Function
+
 Public Sub CollectEvalPaths(ByVal paths As Dictionary, ByVal quote As String)
     Dim table As ListObject
     Set table = xGetTable()

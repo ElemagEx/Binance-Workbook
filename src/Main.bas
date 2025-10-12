@@ -122,6 +122,7 @@ Public Enum MAX_LIMIT
     SIMPLE_EARN_OPERATIONS = 100
     
     SPOT_TRADING_MY_TRADES = 1000
+    SPOT_TRADING_KLINES = 1000
 
     CONVERT_TRADE_HISTORY = 1000
     
@@ -189,9 +190,35 @@ Public Sub ResetExchangeTimezone(Optional ByVal tz As String = "")
     table.ListColumns("Exchange Timezone").DataBodyRange(1).Value = tz
 End Sub
 
+Public Function UnixTimestampToDate(ByVal unixTime As LongLong) As Date
+    UnixTimestampToDate = DateAdd("s", unixTime / 1000, "1/1/1970")
+End Function
+
 Public Function Str2Dec(ByVal str As String) As Variant
     Dim val As String
     val = Replace(str, ".", Application.DecimalSeparator)
     Str2Dec = CDec(val)
 End Function
 
+Public Function CalcKlineInterval(ByVal val As String) As String
+    Dim str As String
+    Select Case val
+        Case "5 minutes"
+            str = "5m"
+        Case "15 minutes"
+            str = "15m"
+        Case "30 minutes"
+            str = "30m"
+        Case "1 hour"
+            str = "1h"
+        Case "4 hours"
+            str = "4h"
+        Case "8 hours"
+            str = "8h"
+        Case "1 day"
+            str = "1d"
+        Case Else
+            Assert_Fail
+    End Select
+    CalcKlineInterval = str
+End Function

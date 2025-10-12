@@ -88,7 +88,7 @@ Private Function xGetBinanceServerTime() As String
     Dim response As WebResponse
     Set response = client.GetJson("/api/v3/time")
     
-    If response.StatusCode = WebStatusCode.Ok Then
+    If response.StatusCode = WebStatusCode.OK Then
         xGetBinanceServerTime = format(response.data("serverTime"), "0")
     Else
         xGetBinanceServerTime = "0"

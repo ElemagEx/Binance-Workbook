@@ -27,6 +27,8 @@ Public Function GetProjectFiles(ByVal thirdParty As Boolean) As Collection
         files.Add "src/BinanceLedgers.bas"
         files.Add "src/BinanceWebQuery.cls"
         files.Add "src/PriceEvaluator.cls"
+        files.Add "src/PricePeriod.cls"
+        files.Add "src/PriceKline.cls"
         files.Add "src/PriceQuote.cls"
         files.Add "src/TableAssets.bas"
         files.Add "src/TableDustLog.bas"

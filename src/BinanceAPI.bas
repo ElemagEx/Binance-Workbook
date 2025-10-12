@@ -7,6 +7,31 @@ Public Const BASE_URL As String = "https://api.binance.com"
 
 Private s_CurrentWeight As Long
 '
+' Binance SpotTrading Public API: GET /api/v3/klines
+'
+Public Function SpotTrading_GetKlines( _
+    ByVal symbol As String, _
+    ByVal interval As String, _
+    Optional ByVal startTime As Date = 0, _
+    Optional ByVal endTime As Date = 0, _
+    Optional ByVal limit As Long = -1, _
+    Optional ByVal timeZone As String = "" _
+    ) As Collection
+    Dim query As New BinanceWebQuery
+    
+    query.api = "/api/v3/klines"
+    query.weight = 2
+    
+    query.AddStringParam "symbol", symbol
+    query.AddStringParam "interval", interval
+    query.AddDateParam "startTime", startTime
+    query.AddDateParam "endTime", endTime
+    query.AddLongParam "limit", limit
+    query.AddStringParam "timeZone", timeZone
+    
+    Set SpotTrading_GetKlines = xExecuteWebQuery(query)
+End Function
+'
 ' Binance SpotTrading Public API: GET /api/v3/ticker/price
 '
 Public Function SpotTrading_GetPrice(ByVal symbol As String) As Dictionary
@@ -536,7 +561,7 @@ Private Function xExecuteWebQuery(ByVal query As BinanceWebQuery)
     
     xCheckResponseHeaders response.Headers
     
-    If response.StatusCode = WebStatusCode.Ok Then
+    If response.StatusCode = WebStatusCode.OK Then
         Debug.Print "Success! Received response from server."
         Set xExecuteWebQuery = response.data
     Else

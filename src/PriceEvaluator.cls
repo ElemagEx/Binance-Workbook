@@ -10,6 +10,7 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Private m_mainFiatQuote As String
+Private m_periods As Dictionary
 Private m_prices As Dictionary
 Private m_quotes As Collection
 Private m_paths As Dictionary
@@ -19,28 +20,36 @@ Private m_quote As PriceQuote
 Public Sub GetAllEvalSymbols()
     Assert_Check m_prices Is Nothing
     
-    Set m_prices = xGetPrices()
-    
+    m_mainFiatQuote = GetMainFiatCurrency()
+
     Set m_infos = TableEvaluation.GetInfos()
     
-    m_mainFiatQuote = GetMainFiatCurrency()
+    xCollectPrices
     xCollectCommonQuotes
 End Sub
 
-Public Sub GetQuotePrices(ByVal quote As String, Optional ByVal paths As Dictionary = Nothing)
+Public Sub GetQuotePrices( _
+    ByVal quote As String, _
+    Optional ByVal paths As Dictionary = Nothing, _
+    Optional ByVal periods As Dictionary = Nothing _
+    )
     Assert_Check m_prices Is Nothing
     
-    xInitQuote quote, paths
+    m_mainFiatQuote = GetMainFiatCurrency()
     
-    Dim symbols As Collection
-    Set symbols = xCalcSymbols()
-    
-    Set m_prices = xGetPrices(symbols)
+    xInitQuote quote
     
     Set m_infos = TableEvaluation.GetInfos()
     
-    m_mainFiatQuote = GetMainFiatCurrency()
+    Set m_paths = IIf(paths Is Nothing, New Dictionary, paths)
+    Set m_periods = IIf(periods Is Nothing, New Dictionary, periods)
+    
+    Dim symbols As Collection
+    Set symbols = xCalcSymbols(m_paths)
+    
+    xCollectPrices symbols
     xCollectCommonQuotes
+    xCollectKlines
 End Sub
 
 Public Function GetQuoteInfo() As PriceQuote
@@ -68,23 +77,31 @@ Public Function EvaluatePath(ByVal isFiat As Boolean, ByVal base As String, ByVa
     EvaluatePath = IIf(path = "", STR_NA, Mid(path, 2))
 End Function
 
-Public Function EvaluateCost(ByVal ticker As String, ByVal amount As Variant) As Variant
+Public Function EvaluateCurrentCost(ByVal ticker As String, ByVal amount As Variant) As Variant
     Assert_Check Not m_prices Is Nothing
 
-    EvaluateCost = Empty
+    EvaluateCurrentCost = Empty
     
     If IsEmpty(amount) Or amount = CDec(0) Then Exit Function
 
     If Not m_paths.Exists(ticker) Then Exit Function
 
-    If IsEmpty(m_paths(ticker)) Then Exit Function
-
-    EvaluateCost = xEvalCost(amount, m_paths(ticker))
+    EvaluateCurrentCost = xEvalCurrentCost(amount, m_paths(ticker))
 End Function
 
-Private Sub xInitQuote(ByVal quote As String, ByVal paths As Dictionary)
-    Set m_paths = IIf(paths Is Nothing, New Dictionary, paths)
+Public Function EvaluateHistoricalCost(ByVal ticker As String, ByVal amount As Variant, ByVal stamp As Date) As Variant
+    Assert_Check Not m_periods Is Nothing
+
+    EvaluateHistoricalCost = Empty
     
+    If IsEmpty(amount) Or amount = CDec(0) Then Exit Function
+    
+    If Not m_periods.Exists(ticker) Then Exit Function
+    
+    EvaluateHistoricalCost = xEvalHistoricalCost(amount, m_periods(ticker), stamp)
+End Function
+
+Private Sub xInitQuote(ByVal quote As String)
     Set m_quote = TableEvaluation.FindQuoteInfo(quote)
     
     If m_quote Is Nothing Then
@@ -104,13 +121,13 @@ Private Sub xInitQuote(ByVal quote As String, ByVal paths As Dictionary)
     End If
 End Sub
 
-Private Function xCalcSymbols() As Collection
+Private Function xCalcSymbols(ByVal paths As Dictionary) As Collection
     Dim ops As New Dictionary
     
     Dim ticker As Variant
-    For Each ticker In m_paths.Keys
+    For Each ticker In paths.Keys
         Dim path As String
-        path = m_paths(ticker)
+        path = paths(ticker)
 
         Dim parts() As String
         parts = Split(path, ",")
@@ -137,19 +154,62 @@ Private Function xCalcSymbols() As Collection
     Set xCalcSymbols = symbols
 End Function
 
-Private Function xGetPrices(Optional ByVal symbols As Collection = Nothing) As Dictionary
-    Dim prices As New Dictionary
+Private Sub xCollectPrices(Optional ByVal symbols As Collection = Nothing)
+    If Not symbols Is Nothing Then
+        If symbols.count = 0 Then Exit Sub
+    End If
     
     Dim list As Collection
     Set list = BinanceAPI.SpotTrading_GetPrices(symbols)
     
+    Set m_prices = New Dictionary
+    
     Dim item As Dictionary
     For Each item In list
-        prices.Add item("symbol"), Str2Dec(item("price"))
+        m_prices.Add item("symbol"), Str2Dec(item("price"))
     Next item
+End Sub
+
+Private Sub xCollectKlines()
+    Dim paths As New Dictionary
+
+    Dim ticker As Variant
+    For Each ticker In m_periods.Keys
+        Dim period As PricePeriod
+        Set period = m_periods(ticker)
+
+        paths.RemoveAll
+        paths.Add ticker, period.path
+        
+        Dim symbols As Collection
+        Set symbols = xCalcSymbols(paths)
+        
+        Dim endDate As Date
+        endDate = period.endDate
+        
+        Dim symbol As Variant
+        For Each symbol In symbols
+            Do
+                Dim list As Collection
+                Set list = BinanceAPI.SpotTrading_GetKlines(symbol, period.interval, period.startDate, endDate, MAX_LIMIT.SPOT_TRADING_KLINES)
+            
+                Dim klines As Collection
+                Set klines = New Collection
+                
+                period.data.Add symbol, klines
     
-    Set xGetPrices = prices
-End Function
+                Dim item As Collection
+                For Each item In list
+                    Dim kline As PriceKline
+                    Set kline = New PriceKline
+                    kline.InitFromBinance item
+                    klines.Add kline
+                    If endDate > kline.closeTime Then endDate = kline.closeTime
+                Next item
+            Loop While list.count = MAX_LIMIT.SPOT_TRADING_KLINES
+        Next symbol
+    Next ticker
+End Sub
 
 Private Sub xCollectCommonQuotes()
     Set m_quotes = New Collection
@@ -255,10 +315,10 @@ Private Function xFindMarketPath(ByVal base As String, ByVal quote As String) As
     xFindMarketPath = ""
 End Function
 
-Private Function xEvalCost(ByVal amount As Variant, ByVal path As String) As Variant
-    xEvalCost = Empty
+Private Function xEvalCurrentCost(ByVal amount As Variant, ByVal path As String) As Variant
+    xEvalCurrentCost = Empty
     
-    If path = STR_NA Then Exit Function
+    If IsEmpty(path) Or path = STR_NA Then Exit Function
     
     Dim parts() As String
     parts = Split(path, ",")
@@ -291,6 +351,47 @@ Private Function xEvalCost(ByVal amount As Variant, ByVal path As String) As Var
         End If
     Next i
     
-    xEvalCost = Round(cost, 8)
+    xEvalCurrentCost = Round(cost, 8)
 End Function
 
+Private Function xEvalHistoricalCost(ByVal amount As Variant, ByVal period As PricePeriod, ByVal stamp As Date) As Variant
+    xEvalHistoricalCost = Empty
+    
+    If IsEmpty(period.path) Or period.path = STR_NA Then Exit Function
+    
+    Dim parts() As String
+    parts = Split(period.path, ",")
+    
+    Dim kline As PriceKline
+    Dim op, symbol As String
+    Dim cost, price As Variant
+    
+    cost = CDec(amount)
+    
+    Dim i As Long
+    For i = LBound(parts) To UBound(parts)
+        If parts(i) <> "=" Then
+            op = Left(parts(i), 1)
+            symbol = Mid(parts(i), 2)
+            Select Case op
+                Case "*"
+                    Set kline = period.FindKline(symbol, stamp)
+                    If kline Is Nothing Then Exit Function
+                    price = kline.avaregePriceStd
+                    cost = cost * price
+                Case "/"
+                    Set kline = period.FindKline(symbol, stamp)
+                    If kline Is Nothing Then Exit Function
+                    price = kline.avaregePriceStd
+                    If price = 0 Then Exit Function
+                    cost = cost / price
+                Case "$"
+                    Exit Function
+                Case Else
+                    Assert_Fail
+            End Select
+        End If
+    Next i
+    
+    xEvalHistoricalCost = Round(cost, 8)
+End Function

@@ -420,6 +420,22 @@ ErrHandler:
     Resume Finalize
 End Sub
 
+Public Sub Action_EvaluateLedger()
+    xActionHeader
+    If HANDLE_ERRORS Then On Error GoTo ErrHandler
+    
+    BinanceLedgers.EvaluateCurrentLedgerCosts
+    
+    If HANDLE_ERRORS Then On Error GoTo 0
+
+Finalize:
+    xActionFooter
+    Exit Sub
+ErrHandler:
+    HandleError Err.Number, Err.source, Err.Description
+    Resume Finalize
+End Sub
+
 Public Sub Action_CheckUnappliedOperations()
     xActionHeader
     If HANDLE_ERRORS Then On Error GoTo ErrHandler
