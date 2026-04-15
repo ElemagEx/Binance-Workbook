@@ -26,7 +26,7 @@ Public Function FindKline(ByVal symbol As String, ByVal stamp As Date) As PriceK
     
     Dim kline As Variant
     For Each kline In klines
-        If kline.startTime <= stamp And stamp <= kline.endTime Then
+        If kline.openTime <= stamp And stamp <= kline.closeTime Then
             Set FindKline = kline
             Exit Function
         End If

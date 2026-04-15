@@ -26,10 +26,10 @@ End Property
 
 Public Sub InitFromBinance(ByVal item As Collection)
     openTime = UnixTimestampToDate(item(1))
-    openPrice = item(2)
-    highPrice = item(3)
-    lowPrice = item(4)
-    closePrice = item(5)
+    openPrice = Str2Dec(item(2))
+    highPrice = Str2Dec(item(3))
+    lowPrice = Str2Dec(item(4))
+    closePrice = Str2Dec(item(5))
     closeTime = UnixTimestampToDate(item(7))
 End Sub
 

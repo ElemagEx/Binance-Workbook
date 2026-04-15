@@ -151,19 +151,22 @@ Public Sub ClearCosts()
     
     Set table = m_ws.ListObjects(xTableName(TABLE_DETAILS))
 
-    If table.ListRows.count > 0 Then
-        table.ListColumns(COL_DETAILS_DEBIT).DataBodyRange.ClearContents
-        table.ListColumns(COL_DETAILS_CREDIT).DataBodyRange.ClearContents
-        table.ListColumns(COL_DETAILS_COMMISSION).DataBodyRange.ClearContents
+    Dim rowIndex As Long
+    If table.ListRows.count = 0 Then rowIndex = table.ListRows.Add().index
+
+    table.ListColumns(COL_DETAILS_DEBIT).DataBodyRange.numberFormat = numberFormat
+    table.ListColumns(COL_DETAILS_CREDIT).DataBodyRange.numberFormat = numberFormat
+    table.ListColumns(COL_DETAILS_COMMISSION).DataBodyRange.numberFormat = numberFormat
         
-        table.ListColumns(COL_DETAILS_DEBIT).DataBodyRange.numberFormat = numberFormat
-        table.ListColumns(COL_DETAILS_CREDIT).DataBodyRange.numberFormat = numberFormat
-        table.ListColumns(COL_DETAILS_COMMISSION).DataBodyRange.numberFormat = numberFormat
-    End If
+    table.ListColumns(COL_DETAILS_DEBIT).DataBodyRange.ClearContents
+    table.ListColumns(COL_DETAILS_CREDIT).DataBodyRange.ClearContents
+    table.ListColumns(COL_DETAILS_COMMISSION).DataBodyRange.ClearContents
     
     table.ListColumns(COL_DETAILS_DEBIT).Total.numberFormat = numberFormat
     table.ListColumns(COL_DETAILS_CREDIT).Total.numberFormat = numberFormat
     table.ListColumns(COL_DETAILS_COMMISSION).Total.numberFormat = numberFormat
+    
+    If rowIndex > 0 Then table.ListRows(rowIndex).Delete
 End Sub
 
 Public Sub ApplyMainQuote()
@@ -209,19 +212,74 @@ Public Sub Evaluate()
     Dim quote As String
     quote = GetQuote()
     
+    If quote = "" Then Exit Sub
+    
     Dim periods As Dictionary
     Set periods = xCollectPeriods(quote)
 
     Dim evaluator As New PriceEvaluator
     evaluator.GetQuotePrices quote, Nothing, periods
     
-    Dim info As PriceQuote
-    Set info = evaluator.GetQuoteInfo()
-    
     Dim table As ListObject
     Set table = m_ws.ListObjects(xTableName(TABLE_DETAILS))
     
+    Dim rowIndex As Long
+    For rowIndex = 1 To table.ListRows.count
+        If _
+            IsEmpty(table.ListColumns(COL_DETAILS_DEBIT).DataBodyRange(rowIndex).Value) Or _
+            IsEmpty(table.ListColumns(COL_DETAILS_CREDIT).DataBodyRange(rowIndex).Value) _
+        Then
+            Dim stamp As Date
+            stamp = table.ListColumns(COL_DETAILS_STAMP).DataBodyRange(rowIndex).Value
+            
+            Dim ticker As String
+            ticker = table.ListColumns(COL_DETAILS_TICKER).DataBodyRange(rowIndex).Value
+        
+            Dim amount1, amount2 As Variant
+            
+            If ticker = "" Then
+                amount1 = table.ListColumns(COL_DETAILS_ACQUIRED).DataBodyRange(rowIndex).Value
+                amount1 = evaluator.EvaluateHistoricalCost(stamp, m_ticker, amount1)
+            
+                amount2 = table.ListColumns(COL_DETAILS_SPENT).DataBodyRange(rowIndex).Value
+                amount2 = evaluator.EvaluateHistoricalCost(stamp, m_ticker, amount2)
+                
+                table.ListColumns(COL_DETAILS_DEBIT).DataBodyRange(rowIndex).Value = amount1
+                table.ListColumns(COL_DETAILS_CREDIT).DataBodyRange(rowIndex).Value = amount2
+            Else
+                If IsInOp(table.ListColumns(COL_DETAILS_OPERATION).DataBodyRange(rowIndex).Value) Then
+                    amount1 = table.ListColumns(COL_DETAILS_ACQUIRED).DataBodyRange(rowIndex).Value
+                    amount2 = table.ListColumns(COL_DETAILS_AMOUNT).DataBodyRange(rowIndex).Value
+                    
+                    amount1 = evaluator.EvaluateHistoricalCostEx(stamp, m_ticker, ticker, amount1, amount2)
+                    
+                    amount2 = table.ListColumns(COL_DETAILS_SPENT).DataBodyRange(rowIndex).Value
+                    amount2 = evaluator.EvaluateHistoricalCost(stamp, m_ticker, amount2)
+                    
+                    ticker = m_ticker
+                Else
+                    amount1 = table.ListColumns(COL_DETAILS_SPENT).DataBodyRange(rowIndex).Value
+                    amount2 = table.ListColumns(COL_DETAILS_AMOUNT).DataBodyRange(rowIndex).Value
+                
+                    amount2 = evaluator.EvaluateHistoricalCostEx(stamp, m_ticker, ticker, amount1, amount2)
+                    
+                    amount1 = table.ListColumns(COL_DETAILS_ACQUIRED).DataBodyRange(rowIndex).Value
+                    amount1 = evaluator.EvaluateHistoricalCost(stamp, m_ticker, amount1)
+                End If
 
+                table.ListColumns(COL_DETAILS_DEBIT).DataBodyRange(rowIndex).Value = amount1
+                table.ListColumns(COL_DETAILS_CREDIT).DataBodyRange(rowIndex).Value = amount2
+            
+                amount1 = table.ListColumns(COL_DETAILS_CHARGE).DataBodyRange(rowIndex).Value
+                amount2 = table.ListColumns(COL_DETAILS_BNB_FEE).DataBodyRange(rowIndex).Value
+                
+                amount1 = evaluator.EvaluateHistoricalCost(stamp, ticker, amount1)
+                amount2 = evaluator.EvaluateHistoricalCost(stamp, STR_BNB, amount2)
+                
+                table.ListColumns(COL_DETAILS_COMMISSION).DataBodyRange(rowIndex).Value = CDec(amount1) + CDec(amount2)
+            End If
+        End If
+    Next rowIndex
 End Sub
 
 Public Sub PopulateOperations(ByVal ops As Collection, Optional ByVal override As Boolean = False)
@@ -322,18 +380,16 @@ Private Sub xSort()
 End Sub
 
 Private Function xCollectPeriods(ByVal quote As String) As Dictionary
-    Set xCollectPeriods = Nothing
+    Dim periods As New Dictionary
     
-    If quote = "" Then Exit Function
-
+    Set xCollectPeriods = periods
+    
     Dim interval As String
     interval = CalcKlineInterval(m_ws.ListObjects(xTableName(TABLE_TRIVIA)).ListColumns(COL_TRIVIA_VALUE).DataBodyRange(ROW_TRIVIA_KLINES_INTERVAL).Value)
     
     Dim table As ListObject
     Set table = m_ws.ListObjects(xTableName(TABLE_DETAILS))
 
-    Dim periods As New Dictionary
-    
     Dim rowIndex As Long
     For rowIndex = 1 To table.ListRows.count
         If _
@@ -357,8 +413,6 @@ Private Function xCollectPeriods(ByVal quote As String) As Dictionary
             End If
         End If
     Next rowIndex
-
-    Set xCollectPeriods = periods
 End Function
 
 Private Sub xAddTickerToPeriods(ByVal periods As Dictionary, ByVal ticker As String, ByVal stamp As Date, ByVal interval As String, ByVal quote As String)

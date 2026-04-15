@@ -82,23 +82,49 @@ Public Function EvaluateCurrentCost(ByVal ticker As String, ByVal amount As Vari
 
     EvaluateCurrentCost = Empty
     
-    If IsEmpty(amount) Or amount = CDec(0) Then Exit Function
+    If IsEmpty(amount) Then Exit Function
 
     If Not m_paths.Exists(ticker) Then Exit Function
 
+    If amount = CDec(0) Then
+        EvaluateCurrentCost = CDec(0)
+        Exit Function
+    End If
+    
     EvaluateCurrentCost = xEvalCurrentCost(amount, m_paths(ticker))
 End Function
 
-Public Function EvaluateHistoricalCost(ByVal ticker As String, ByVal amount As Variant, ByVal stamp As Date) As Variant
+Public Function EvaluateHistoricalCost(ByVal stamp As Date, ByVal ticker As String, ByVal amount As Variant) As Variant
     Assert_Check Not m_periods Is Nothing
 
     EvaluateHistoricalCost = Empty
     
-    If IsEmpty(amount) Or amount = CDec(0) Then Exit Function
+    If IsEmpty(amount) Then Exit Function
     
     If Not m_periods.Exists(ticker) Then Exit Function
     
-    EvaluateHistoricalCost = xEvalHistoricalCost(amount, m_periods(ticker), stamp)
+    If amount = CDec(0) Then
+        EvaluateHistoricalCost = CDec(0)
+        Exit Function
+    End If
+    
+    EvaluateHistoricalCost = xEvalHistoricalCost(stamp, amount, m_periods(ticker))
+End Function
+
+Public Function EvaluateHistoricalCostEx( _
+    ByVal stamp As Date, _
+    ByVal ticker1 As String, _
+    ByVal ticker2 As String, _
+    ByVal amount1 As Variant, _
+    ByVal amount2 As Variant _
+    ) As Variant
+    Assert_Check Not m_periods Is Nothing
+
+    If xIsPathLess(ticker1, ticker2) Then
+        EvaluateHistoricalCostEx = EvaluateHistoricalCost(stamp, ticker1, amount1)
+    Else
+        EvaluateHistoricalCostEx = EvaluateHistoricalCost(stamp, ticker2, amount2)
+    End If
 End Function
 
 Private Sub xInitQuote(ByVal quote As String)
@@ -177,21 +203,21 @@ Private Sub xCollectKlines()
     For Each ticker In m_periods.Keys
         Dim period As PricePeriod
         Set period = m_periods(ticker)
-
+        
         paths.RemoveAll
         paths.Add ticker, period.path
         
         Dim symbols As Collection
         Set symbols = xCalcSymbols(paths)
         
-        Dim endDate As Date
-        endDate = period.endDate
-        
         Dim symbol As Variant
         For Each symbol In symbols
+            Dim startDate, endDate As Date
+            startDate = DateAdd("d", -1, period.startDate)
+            endDate = DateAdd("d", 1, period.endDate)
             Do
                 Dim list As Collection
-                Set list = BinanceAPI.SpotTrading_GetKlines(symbol, period.interval, period.startDate, endDate, MAX_LIMIT.SPOT_TRADING_KLINES)
+                Set list = BinanceAPI.SpotTrading_GetKlines(symbol, period.interval, startDate, endDate, MAX_LIMIT.SPOT_TRADING_KLINES)
             
                 Dim klines As Collection
                 Set klines = New Collection
@@ -354,7 +380,7 @@ Private Function xEvalCurrentCost(ByVal amount As Variant, ByVal path As String)
     xEvalCurrentCost = Round(cost, 8)
 End Function
 
-Private Function xEvalHistoricalCost(ByVal amount As Variant, ByVal period As PricePeriod, ByVal stamp As Date) As Variant
+Private Function xEvalHistoricalCost(ByVal stamp As Date, ByVal amount As Variant, ByVal period As PricePeriod) As Variant
     xEvalHistoricalCost = Empty
     
     If IsEmpty(period.path) Or period.path = STR_NA Then Exit Function
@@ -394,4 +420,69 @@ Private Function xEvalHistoricalCost(ByVal amount As Variant, ByVal period As Pr
     Next i
     
     xEvalHistoricalCost = Round(cost, 8)
+End Function
+
+Private Function xIsPathLess(ByVal ticker1 As String, ByVal ticker2 As String)
+    Dim path1, path2 As String
+    path1 = IIf(m_periods.Exists(ticker1), m_periods(ticker1).path, STR_NA)
+    path2 = IIf(m_periods.Exists(ticker2), m_periods(ticker2).path, STR_NA)
+    
+    If path1 = path2 Then
+        xIsPathLess = False
+        Exit Function
+    End If
+    If path1 = STR_NA Then
+        xIsPathLess = False
+        Exit Function
+    End If
+    If path2 = STR_NA Then
+        xIsPathLess = True
+        Exit Function
+    End If
+    If path1 = "=" Then
+        xIsPathLess = True
+        Exit Function
+    End If
+    If path2 = "=" Then
+        xIsPathLess = False
+        Exit Function
+    End If
+    
+    Dim parts1() As String
+    Dim parts2() As String
+    parts1 = Split(path1, ",")
+    parts2 = Split(path2, ",")
+    
+    Dim i, count1, count2 As Long
+    count1 = UBound(parts1) - LBound(parts1) + 1
+    count2 = UBound(parts2) - LBound(parts2) + 1
+    
+    If count1 < count2 Then
+        xIsPathLess = True
+        Exit Function
+    End If
+    If count1 > count2 Then
+        xIsPathLess = False
+        Exit Function
+    End If
+    
+    For i = 0 To count1 - 1
+        Dim op1, op2 As String
+        op1 = Left(parts1(LBound(parts1) + i), 1)
+        op2 = Left(parts2(LBound(parts2) + i), 1)
+        
+        If op1 <> op2 Then
+            Select Case op1
+                Case "*"
+                    xIsPathLess = True
+                Case "/", "$"
+                    xIsPathLess = False
+                Case Else
+                    Assert_Fail
+            End Select
+            Exit Function
+        End If
+    Next i
+    
+    xIsPathLess = False
 End Function

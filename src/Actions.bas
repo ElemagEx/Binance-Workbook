@@ -447,8 +447,6 @@ Public Sub Action_CheckUnappliedOperations()
     
     BinanceLedgers.PopulateOperations ops, True
     
-    TableLastUpdate.LockedEarns = ops.endDate
-
     If HANDLE_ERRORS Then On Error GoTo 0
 
 Finalize:

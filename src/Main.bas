@@ -67,8 +67,6 @@ Public Const OP_BUY As String = "buy"
 Public Const OP_SELL As String = "sell"
 Public Const OP_INCOME As String = "income"
 Public Const OP_EXPENCE As String = "expence"
-Public Const OP_DUST_IN As String = "dust-in"
-Public Const OP_DUST_OUT As String = "dust-out"
 Public Const OP_DEPOSIT As String = "deposit"
 Public Const OP_WITHDRAW As String = "withdraw"
 Public Const OP_WALLET_IN As String = "wallet-in"
@@ -222,3 +220,26 @@ Public Function CalcKlineInterval(ByVal val As String) As String
     End Select
     CalcKlineInterval = str
 End Function
+
+Public Function IsInOp(ByVal op As String) As Boolean
+    Select Case op
+        Case OP_BUY, OP_INCOME, OP_DEPOSIT, OP_WALLET_IN, OP_CONVERT_IN, OP_COMMISSION
+            IsInOp = True
+        Case OP_SELL, OP_EXPENCE, OP_WITHDRAW, OP_WALLET_OUT, OP_CONVERT_OUT, OP_DISTRIBUTION
+            IsInOp = False
+        Case Else
+            Assert_Fail
+    End Select
+End Function
+
+Public Function IsOutOp(ByVal op As String) As Boolean
+    Select Case op
+        Case OP_BUY, OP_INCOME, OP_DEPOSIT, OP_WALLET_IN, OP_CONVERT_IN, OP_COMMISSION
+            IsOutOp = False
+        Case OP_SELL, OP_EXPENCE, OP_WITHDRAW, OP_WALLET_OUT, OP_CONVERT_OUT, OP_DISTRIBUTION
+            IsOutOp = True
+        Case Else
+            Assert_Fail
+    End Select
+End Function
+
